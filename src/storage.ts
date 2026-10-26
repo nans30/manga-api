@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Manga, ReadingHistoryItem } from './types';
+import { LibraryBackupSchema } from './schemas/ciaran.schema';
 import scrapedCache from './data/mangadex-cache.json';
 
 const BOOKMARKS_KEY = 'ciaran_bookmarks_v1';
@@ -8,16 +9,15 @@ const READ_CHAPTERS_KEY = 'ciaran_read_chapters_v1';
 const THEME_KEY = 'ciaran_theme_v1';
 const READER_MODE_KEY = 'ciaran_reader_mode_v1';
 const SYS_LANG_KEY = 'ciaran_sys_lang_v1';
-const MANGA_SESSION_CACHE_KEY = 'ciaran_manga_cache_v1';
 
 export type ThemeMode = 'dark' | 'light';
 export type ReaderViewMode = 'scroll' | 'tap';
 export type SystemLang = 'id' | 'en';
 
-// In-memory map of all Manga objects seen during the session (prevents "Manga Not Found" on navigation!)
+// Fast, bounded in-memory LRU cache (max 250 items, zero synchronous JSON.stringify lag!)
+const MAX_MEMORY_MANGA = 250;
 const memoryMangaMap = new Map<string, Manga>();
 
-// Pre-populate from static scraped cache
 try {
   const rawCache: any = scrapedCache;
   const initialAll: Manga[] = [
@@ -34,31 +34,20 @@ export function cacheMangaObjects(list: Manga[]) {
   if (!Array.isArray(list)) return;
   for (const m of list) {
     if (m && m.id) {
+      if (memoryMangaMap.has(m.id)) {
+        memoryMangaMap.delete(m.id);
+      } else if (memoryMangaMap.size >= MAX_MEMORY_MANGA) {
+        const oldestKey = memoryMangaMap.keys().next().value;
+        if (oldestKey !== undefined) memoryMangaMap.delete(oldestKey);
+      }
       memoryMangaMap.set(m.id, m);
     }
   }
-  try {
-    const entries = Array.from(memoryMangaMap.values()).slice(-300);
-    sessionStorage.setItem(MANGA_SESSION_CACHE_KEY, JSON.stringify(entries));
-  } catch {}
 }
 
 export function getCachedMangaById(id?: string): Manga | null {
   if (!id) return null;
-  if (memoryMangaMap.has(id)) {
-    return memoryMangaMap.get(id)!;
-  }
-  try {
-    const raw = sessionStorage.getItem(MANGA_SESSION_CACHE_KEY);
-    if (raw) {
-      const parsed: Manga[] = JSON.parse(raw);
-      for (const m of parsed) {
-        if (m && m.id) memoryMangaMap.set(m.id, m);
-      }
-      if (memoryMangaMap.has(id)) return memoryMangaMap.get(id)!;
-    }
-  } catch {}
-  return null;
+  return memoryMangaMap.get(id) || null;
 }
 
 export function getSysLang(): SystemLang {
@@ -217,41 +206,19 @@ export function exportLibraryData(): string {
 export function importLibraryData(jsonStr: string): boolean {
   try {
     if (jsonStr.length > 5 * 1024 * 1024) return false;
-    const parsed = JSON.parse(jsonStr);
-    const isSafeUrl = (u: unknown) =>
-      typeof u === 'string' &&
-      (u.startsWith('/api/proxy-image') || u.startsWith('https://'));
+    const rawParsed = JSON.parse(jsonStr);
 
-    if (Array.isArray(parsed.bookmarks)) {
-      const cleanBookmarks = parsed.bookmarks
-        .slice(0, 500)
-        .filter((b: any) => b && typeof b.id === 'string' && typeof b.title === 'string')
-        .map((b: any) => ({
-          ...b,
-          coverUrl: isSafeUrl(b.coverUrl)
-            ? b.coverUrl
-            : 'https://placehold.co/512x728/18181b/f9cb55?text=No+Cover',
-        }));
-      localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(cleanBookmarks));
+    // Strict Zod schema validation (blocks Prototype Pollution, extra fields & javascript: XSS)
+    const validated = LibraryBackupSchema.safeParse(rawParsed);
+    if (!validated.success) {
+      return false;
     }
-    if (Array.isArray(parsed.history)) {
-      const cleanHistory = parsed.history
-        .slice(0, 100)
-        .filter((h: any) => h && typeof h.mangaId === 'string' && typeof h.chapterId === 'string')
-        .map((h: any) => ({
-          ...h,
-          coverUrl: isSafeUrl(h.coverUrl)
-            ? h.coverUrl
-            : 'https://placehold.co/512x728/18181b/f9cb55?text=No+Cover',
-        }));
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(cleanHistory));
-    }
-    if (Array.isArray(parsed.readChapters)) {
-      const cleanRead = parsed.readChapters
-        .slice(0, 2000)
-        .filter((id: any) => typeof id === 'string');
-      localStorage.setItem(READ_CHAPTERS_KEY, JSON.stringify(cleanRead));
-    }
+
+    const { bookmarks, history, readChapters } = validated.data;
+    localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(bookmarks));
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    localStorage.setItem(READ_CHAPTERS_KEY, JSON.stringify(readChapters));
+
     window.dispatchEvent(new Event('ciaran-storage-update'));
     return true;
   } catch {

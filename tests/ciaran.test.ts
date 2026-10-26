@@ -150,6 +150,8 @@ describe('Integration Tests: Ciaran Express API Endpoints', () => {
     expect(res.status).toBe(400);
     expect(res.headers.get('x-content-type-options')).toBe('nosniff');
     expect(res.headers.get('x-frame-options')).toBe('SAMEORIGIN');
+    expect(res.headers.get('permissions-policy')).toContain('camera=()');
+    expect(res.headers.get('cross-origin-resource-policy')).toBe('same-origin');
     expect(res.headers.get('x-powered-by')).toBeNull();
 
     const body = (await res.json()) as { error: string };

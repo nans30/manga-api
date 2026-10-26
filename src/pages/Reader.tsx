@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { Chapter, ChapterPage } from '../types';
 import {
@@ -9,6 +9,7 @@ import {
   getTheme,
   setTheme,
   ThemeMode,
+  getCachedMangaById,
 } from '../storage';
 import {
   X,
@@ -78,30 +79,17 @@ export const Reader: React.FC = () => {
 
           const mId = json.chapter?.mangaId || mangaIdParam;
           if (mId) {
-            fetch(`/api/manga/${mId}`)
-              .then((r) => r.json())
-              .then((mJson) => {
-                if (mJson.data) {
-                  setMangaInfo(mJson.data);
-                  addReadingHistory({
-                    mangaId: mId,
-                    mangaTitle: mJson.data.title,
-                    author: mJson.data.author,
-                    coverUrl: mJson.data.coverUrl,
-                    chapterId: chapterId,
-                    chapterNumber: json.chapter?.chapter || '1',
-                    chapterTitle: json.chapter?.title || '',
-                    language: json.chapter?.translatedLanguage || 'en',
-                    currentPage: 1,
-                    totalPages: loadedPages.length || 1,
-                    progressPercent: loadedPages.length
-                      ? Math.max(5, Math.round((1 / loadedPages.length) * 100))
-                      : 78,
-                    readAt: new Date().toISOString(),
-                  });
-                }
-              })
-              .catch(() => {});
+            const cachedM = getCachedMangaById(mId);
+            if (cachedM) {
+              setMangaInfo(cachedM);
+            } else {
+              fetch(`/api/manga/${mId}`)
+                .then((r) => r.json())
+                .then((mJson) => {
+                  if (mJson.data) setMangaInfo(mJson.data);
+                })
+                .catch(() => {});
+            }
           }
         }
       })
@@ -155,25 +143,36 @@ export const Reader: React.FC = () => {
       ? chapterList[currentIndex + 1]
       : null;
 
-  const goPrevPage = () => {
+  const goPrevPage = useCallback(() => {
     if (currentPage > 0) {
       setCurrentPage((p) => p - 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (prevChapter) {
       navigate(`/read/${prevChapter.id}?mangaId=${activeMangaId}&lang=${langParam}`);
     }
-  };
+  }, [currentPage, prevChapter, navigate, activeMangaId, langParam]);
 
-  const goNextPage = () => {
+  const goNextPage = useCallback(() => {
     if (currentPage < pages.length - 1) {
       setCurrentPage((p) => p + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (nextChapter) {
       navigate(`/read/${nextChapter.id}?mangaId=${activeMangaId}&lang=${langParam}`);
     }
-  };
+  }, [currentPage, pages.length, nextChapter, navigate, activeMangaId, langParam]);
 
-  // Keyboard Left / Right arrow support on PC
+  // Preload next 2 pages in background when in Tap mode for 0ms page turn
+  useEffect(() => {
+    if (mode !== 'tap' || pages.length === 0) return;
+    [currentPage + 1, currentPage + 2].forEach((idx) => {
+      if (pages[idx]) {
+        const img = new Image();
+        img.src = pages[idx].url;
+      }
+    });
+  }, [mode, currentPage, pages]);
+
+  // Keyboard Left / Right arrow support on PC (Fixed dependency array)
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (mode !== 'tap') return;
@@ -182,7 +181,7 @@ export const Reader: React.FC = () => {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  });
+  }, [mode, goNextPage, goPrevPage]);
 
   // Track visible page index during vertical scroll mode
   useEffect(() => {
