@@ -219,7 +219,7 @@ app.get('/api/tags', async (_req: Request, res: Response) => {
 // 4. Get Single Manga Detail + Statistics
 app.get('/api/manga/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
     const params = new URLSearchParams();
     params.append('includes[]', 'cover_art');
     params.append('includes[]', 'author');
@@ -264,7 +264,7 @@ app.get('/api/manga/:id', async (req: Request, res: Response) => {
 // 5. Get Manga Chapters Feed (Supports ID, EN, or All languages)
 app.get('/api/manga/:id/chapters', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
     const { lang = 'all', limit = '500', offset = '0' } = req.query as Record<string, string>;
 
     const params = new URLSearchParams();
@@ -326,7 +326,7 @@ app.get('/api/manga/:id/chapters', async (req: Request, res: Response) => {
 // 6. Get Chapter Pages (At-Home Server Images)
 app.get('/api/chapter/:chapterId', async (req: Request, res: Response) => {
   try {
-    const { chapterId } = req.params;
+    const chapterId = String(req.params.chapterId);
     const { quality = 'data-saver' } = req.query as Record<string, string>;
 
     const [atHomeRes, chapterInfoRes] = await Promise.all([

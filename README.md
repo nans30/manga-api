@@ -33,12 +33,3 @@ Dirancang khusus agar nyaman dibaca di **PC (Desktop)** maupun **HP (Mobile)** d
 *(Catatan: Anda **tidak perlu** menyalakan MySQL, PostgreSQL, atau Nginx di FlyEnv!)*
 
 ---
-
-## Cara Publish Gratis ke Vercel (Agar Bisa Diakses di HP)
-
-Project ini sudah dilengkapi konfigurasi [`vercel.json`](./vercel.json) dan Serverless Function [`api/index.ts`](./api/index.ts), sehingga Frontend React dan Backend Node.js akan otomatis berjalan bersama di Vercel:
-
-1. Upload folder `ciaran` ini ke repository **GitHub** Anda (bisa diset *Private*).
-2. Buka [vercel.com](https://vercel.com) -> klik **Add New Project** -> pilih repository `ciaran`.
-3. Langsung klik **Deploy** (tidak perlu mengubah setting apapun).
-4. Setelah selesai, buka link `.vercel.app` Anda di browser HP (Chrome/Safari) lalu pilih **"Add to Home Screen" / "Tambahkan ke Layar Utama"** agar tampil seperti aplikasi native!
