@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { Manga, MangaTag, ReadingHistoryItem } from '../types';
 import { MangaCard } from '../components/MangaCard';
 import { getReadingHistory } from '../storage';
+import scrapedCache from '../data/mangadex-cache.json';
 import {
   RefreshCw,
   Flame,
@@ -24,21 +25,44 @@ export const Home: React.FC = () => {
   const statusFilter = searchParams.get('status') || '';
   const page = Math.max(1, Number(searchParams.get('page') || '1'));
 
-  const [mangaList, setMangaList] = useState<Manga[]>([]);
-  const [tags, setTags] = useState<MangaTag[]>([]);
-  const [loading, setLoading] = useState(true);
+  const getInitialCachedList = (sortKey: string): Manga[] => {
+    const cache: any = scrapedCache;
+    if (sortKey === 'popular') return cache.popular || [];
+    if (sortKey === 'rating') return cache.rating || [];
+    return cache.latest || [];
+  };
+
+  const [mangaList, setMangaList] = useState<Manga[]>(() => getInitialCachedList(sort));
+  const [tags, setTags] = useState<MangaTag[]>(() =>
+    ((scrapedCache as any).tags || []).slice(0, 24)
+  );
+  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [lastUpdated, setLastUpdated] = useState<Date>(
+    () => new Date((scrapedCache as any).scrapedAt || Date.now())
+  );
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const [total, setTotal] = useState(0);
+  const [total, setTotal] = useState(10000);
   const [history, setHistory] = useState<ReadingHistoryItem[]>([]);
 
   const LIMIT = 24;
 
   const fetchManga = useCallback(
     async (silent = false) => {
-      if (!silent) setLoading(true);
-      else setRefreshing(true);
+      const isDefaultView = !query && !selectedTag && !statusFilter && page === 1;
+      if (isDefaultView && !silent) {
+        const cached = getInitialCachedList(sort);
+        if (cached.length > 0) {
+          setMangaList(cached);
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
+      } else if (!silent) {
+        setLoading(true);
+      } else {
+        setRefreshing(true);
+      }
 
       try {
         const params = new URLSearchParams();
@@ -51,13 +75,13 @@ export const Home: React.FC = () => {
 
         const res = await fetch(`/api/manga?${params.toString()}`);
         const json = await res.json();
-        if (json.data) {
+        if (json.data && json.data.length > 0) {
           setMangaList(json.data);
-          setTotal(Math.min(json.total || 0, 10000));
+          setTotal(Math.min(json.total || 10000, 10000));
           setLastUpdated(new Date());
         }
       } catch (err) {
-        console.error('Failed to load manga:', err);
+        console.error('Failed to load live manga, using scraped cache:', err);
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -76,7 +100,7 @@ export const Home: React.FC = () => {
     fetch('/api/tags')
       .then((r) => r.json())
       .then((json) => {
-        if (json.data) setTags(json.data.slice(0, 24));
+        if (json.data && json.data.length > 0) setTags(json.data.slice(0, 24));
       })
       .catch(() => {});
   }, []);
