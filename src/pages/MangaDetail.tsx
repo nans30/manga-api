@@ -2,37 +2,43 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Manga, Chapter } from '../types';
 import { isBookmarked, toggleBookmark, getReadChapters } from '../storage';
+import { ComicStarburstButton, NavBookmarkIcon } from '../components/Icons';
+import scrapedCache from '../data/mangadex-cache.json';
 import {
-  Bookmark,
-  BookmarkCheck,
+  X,
+  Menu,
   Star,
-  Users,
-  BookOpen,
   Globe,
-  ArrowLeft,
-  Play,
-  Calendar,
-  CheckCircle2,
   ArrowUpDown,
+  CheckCircle2,
+  Calendar,
 } from 'lucide-react';
 
 export const MangaDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const cache: any = scrapedCache;
 
-  const [manga, setManga] = useState<Manga | null>(null);
+  const findCachedManga = (mangaId?: string): Manga | null => {
+    if (!mangaId) return null;
+    const all = [...(cache.latest || []), ...(cache.popular || []), ...(cache.rating || [])];
+    return all.find((m: Manga) => m.id === mangaId) || null;
+  };
+
+  const [manga, setManga] = useState<Manga | null>(() => findCachedManga(id));
   const [chapters, setChapters] = useState<Chapter[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!manga);
   const [chaptersLoading, setChaptersLoading] = useState(true);
-  const [bookmarked, setBookmarked] = useState(false);
+  const [bookmarked, setBookmarked] = useState(() => (id ? isBookmarked(id) : false));
   const [langFilter, setLangFilter] = useState<'all' | 'id' | 'en'>('all');
   const [sortAsc, setSortAsc] = useState(false);
   const [readIds, setReadIds] = useState<string[]>([]);
+  const [expandedDesc, setExpandedDesc] = useState(false);
 
   useEffect(() => {
     if (!id) return;
-    setLoading(true);
     setReadIds(getReadChapters());
+    setBookmarked(isBookmarked(id));
 
     fetch(`/api/manga/${id}`)
       .then((r) => r.json())
@@ -42,7 +48,7 @@ export const MangaDetail: React.FC = () => {
           setBookmarked(isBookmarked(json.data.id));
         }
       })
-      .catch(console.error)
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -57,7 +63,7 @@ export const MangaDetail: React.FC = () => {
           setChapters(json.data);
         }
       })
-      .catch(console.error)
+      .catch(() => {})
       .finally(() => setChaptersLoading(false));
   }, [id, langFilter]);
 
@@ -67,21 +73,29 @@ export const MangaDetail: React.FC = () => {
     setBookmarked(next);
   };
 
-  if (loading) {
+  const scrollToChapters = () => {
+    const el = document.getElementById('chapters-section');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  if (loading && !manga) {
     return (
-      <div className="max-w-6xl mx-auto px-4 py-10 space-y-6 animate-pulse">
-        <div className="h-64 bg-zinc-900 rounded-2xl" />
-        <div className="h-96 bg-zinc-900 rounded-2xl" />
+      <div className="max-w-4xl mx-auto px-5 py-10 space-y-6 animate-pulse">
+        <div className="h-96 bg-[#ececec] dark:bg-[#1b1b1b] rounded-3xl" />
+        <div className="h-48 bg-[#ececec] dark:bg-[#1b1b1b] rounded-3xl" />
       </div>
     );
   }
 
   if (!manga) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-20 text-center space-y-4">
-        <p className="text-xl font-bold text-zinc-200">Manga tidak ditemukan</p>
-        <Link to="/" className="inline-block px-4 py-2 rounded-xl bg-orange-500 text-white text-sm">
-          Kembali ke Beranda
+      <div className="max-w-xl mx-auto px-5 py-24 text-center space-y-4">
+        <p className="font-manga text-2xl">MANGA NOT FOUND</p>
+        <Link
+          to="/books"
+          className="inline-block px-6 py-3 rounded-xl bg-[#f9cb55] text-[#121212] font-manga"
+        >
+          BACK TO ALL BOOKS
         </Link>
       </div>
     );
@@ -90,278 +104,286 @@ export const MangaDetail: React.FC = () => {
   const displayedChapters = sortAsc ? [...chapters].reverse() : chapters;
   const firstChapter = chapters.length > 0 ? chapters[chapters.length - 1] : null;
   const latestChapter = chapters.length > 0 ? chapters[0] : null;
+  const targetChapter = firstChapter || latestChapter;
+
+  const ratingScore = manga.rating ? Number(manga.rating).toFixed(1) : '5.0';
+  const shortDesc =
+    manga.description.length > 140 && !expandedDesc
+      ? manga.description.slice(0, 140).trim() + '... '
+      : manga.description;
 
   return (
-    <div className="pb-24 md:pb-16">
-      {/* Blurred Header Backdrop */}
-      <div className="relative overflow-hidden border-b border-zinc-800/80 bg-zinc-900/40">
-        <div className="absolute inset-0">
-          <img
-            src={manga.coverUrl}
-            alt={manga.title}
-            className="w-full h-full object-cover opacity-20 blur-2xl scale-110"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/85 to-zinc-950/60" />
-        </div>
-
-        <div className="relative z-10 max-w-6xl mx-auto px-4 pt-6 pb-8">
-          <button
-            onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 text-xs font-medium text-zinc-400 hover:text-white mb-6 bg-zinc-900/80 border border-zinc-800 px-3 py-1.5 rounded-lg"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Kembali
-          </button>
-
-          <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-center md:items-start">
-            {/* Cover Image */}
-            <img
-              src={manga.coverUrl}
-              alt={manga.title}
-              className="w-48 sm:w-56 aspect-[3/4.2] object-cover rounded-2xl shadow-2xl border border-zinc-700/80 shrink-0"
-            />
-
-            {/* Details */}
-            <div className="flex-1 text-center md:text-left space-y-4">
-              <div className="space-y-1">
-                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-2">
-                  <span className="px-2.5 py-0.5 text-xs font-bold uppercase rounded-md bg-orange-500 text-white">
-                    {manga.status}
-                  </span>
-                  {manga.year && (
-                    <span className="px-2.5 py-0.5 text-xs font-medium rounded-md bg-zinc-800 text-zinc-300">
-                      {manga.year}
-                    </span>
-                  )}
-                  {manga.rating && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-semibold rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/30">
-                      <Star className="w-3.5 h-3.5 fill-amber-400" />
-                      {manga.rating}
-                    </span>
-                  )}
-                  {manga.follows ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-medium rounded-md bg-zinc-800 text-zinc-300">
-                      <Users className="w-3.5 h-3.5 text-zinc-400" />
-                      {manga.follows.toLocaleString()}
-                    </span>
-                  ) : null}
-                </div>
-
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-tight">
-                  {manga.title}
-                </h1>
-                {manga.altTitle && (
-                  <p className="text-sm text-zinc-400 font-medium">{manga.altTitle}</p>
-                )}
-              </div>
-
-              <p className="text-sm text-zinc-300">
-                <span className="text-zinc-500">Author:</span>{' '}
-                <span className="font-medium text-zinc-200">{manga.author}</span>
-                {manga.artist && manga.artist !== manga.author && (
-                  <>
-                    {' '}
-                    • <span className="text-zinc-500">Artist:</span>{' '}
-                    <span className="font-medium text-zinc-200">{manga.artist}</span>
-                  </>
-                )}
-              </p>
-
-              {/* Genre Tags */}
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5">
-                {manga.tags.map((t) => (
-                  <Link
-                    key={t.id}
-                    to={`/?tag=${t.id}`}
-                    className="text-xs px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 transition-colors"
-                  >
-                    {t.name}
-                  </Link>
-                ))}
-              </div>
-
-              {/* Synopsis */}
-              <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed max-w-3xl whitespace-pre-line line-clamp-5 hover:line-clamp-none transition-all">
-                {manga.description}
-              </p>
-
-              {/* Action Buttons */}
-              <div className="pt-2 flex flex-wrap items-center justify-center md:justify-start gap-3">
-                {firstChapter && (
-                  <Link
-                    to={`/read/${firstChapter.id}?mangaId=${manga.id}&lang=${langFilter}`}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm shadow-lg shadow-orange-500/25 transition-all"
-                  >
-                    <Play className="w-4 h-4 fill-white" />
-                    Baca Ch. Awal ({firstChapter.chapter})
-                  </Link>
-                )}
-
-                {latestChapter && latestChapter.id !== firstChapter?.id && (
-                  <Link
-                    to={`/read/${latestChapter.id}?mangaId=${manga.id}&lang=${langFilter}`}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-100 font-semibold text-sm border border-zinc-700 transition-all"
-                  >
-                    <BookOpen className="w-4 h-4 text-orange-400" />
-                    Ch. Terbaru ({latestChapter.chapter})
-                  </Link>
-                )}
-
-                <button
-                  onClick={handleToggleBookmark}
-                  className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm border transition-all ${
-                    bookmarked
-                      ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
-                      : 'bg-zinc-900 hover:bg-zinc-800 border-zinc-800 text-zinc-200'
-                  }`}
-                >
-                  {bookmarked ? (
-                    <>
-                      <BookmarkCheck className="w-4 h-4" />
-                      Tersimpan di Koleksi
-                    </>
-                  ) : (
-                    <>
-                      <Bookmark className="w-4 h-4" />
-                      Simpan Bookmark
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className="relative min-h-screen pb-28 md:pb-16 overflow-hidden">
+      {/* Subtle Background Blur Artwork (Matches Screen 3 header backdrop) */}
+      <div className="pointer-events-none absolute top-0 left-0 right-0 h-96 overflow-hidden opacity-20 dark:opacity-25">
+        <img
+          src={manga.coverUrl}
+          alt=""
+          className="w-full h-full object-cover blur-2xl scale-110"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#f8f8f8]/80 to-[#f8f8f8] dark:via-[#121212]/80 dark:to-[#121212]" />
       </div>
 
-      {/* Chapters List Section */}
-      <div className="max-w-6xl mx-auto px-4 pt-8 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-900/70 border border-zinc-800/80 p-4 rounded-2xl">
-          <div className="flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-orange-400" />
-            <h2 className="text-lg font-bold text-white">
-              Daftar Chapter ({chapters.length})
+      <div className="relative z-10 max-w-5xl mx-auto px-5 sm:px-6 pt-5 space-y-10">
+        {/* Top Bar (Matches Screen 3: Close X on left, CHAPTER / Page in center, Menu ☰ on right) */}
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 -ml-2 text-[#121212] dark:text-[#f8f8f8] hover:text-[#f9cb55] transition-colors"
+            aria-label="Close"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          <div className="text-center">
+            <h2 className="font-manga text-xl sm:text-2xl tracking-wider text-[#121212] dark:text-[#f8f8f8] uppercase">
+              {latestChapter ? `CHAPTER ${latestChapter.chapter}` : 'MANGA PREVIEW'}
             </h2>
+            <p className="text-xs text-[#6e6e6e] dark:text-[#c1c1c1]">
+              {latestChapter ? `${latestChapter.pages || 32} Pages` : manga.status.toUpperCase()}
+            </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Language Switcher */}
-            <div className="flex items-center bg-zinc-950 border border-zinc-800 rounded-xl p-1">
-              <button
-                onClick={() => setLangFilter('all')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
-                  langFilter === 'all'
-                    ? 'bg-orange-500 text-white'
-                    : 'text-zinc-400 hover:text-zinc-200'
-                }`}
-              >
-                <Globe className="w-3.5 h-3.5" />
-                ID + EN
-              </button>
-              <button
-                onClick={() => setLangFilter('id')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                  langFilter === 'id'
-                    ? 'bg-orange-500 text-white'
-                    : 'text-zinc-400 hover:text-zinc-200'
-                }`}
-              >
-                🇮🇩 Indonesia
-              </button>
-              <button
-                onClick={() => setLangFilter('en')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                  langFilter === 'en'
-                    ? 'bg-orange-500 text-white'
-                    : 'text-zinc-400 hover:text-zinc-200'
-                }`}
-              >
-                🇬🇧 English
-              </button>
-            </div>
-
-            {/* Sort Order Toggle */}
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setSortAsc(!sortAsc)}
-              className="px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 hover:border-zinc-700 text-xs font-medium text-zinc-300 flex items-center gap-1.5"
+              onClick={handleToggleBookmark}
+              className="p-2 text-[#121212] dark:text-[#f8f8f8] hover:text-[#f9cb55] transition-colors"
+              title="Bookmark"
             >
-              <ArrowUpDown className="w-3.5 h-3.5 text-orange-400" />
-              {sortAsc ? 'Terlama → Terbaru' : 'Terbaru → Terlama'}
+              <NavBookmarkIcon active={bookmarked} className="w-5 h-5" />
+            </button>
+            <button
+              onClick={scrollToChapters}
+              className="p-2 -mr-2 text-[#121212] dark:text-[#f8f8f8] hover:text-[#f9cb55] transition-colors"
+              title="Lihat Daftar Chapter"
+            >
+              <Menu className="w-6 h-6" />
             </button>
           </div>
         </div>
 
-        {/* Chapters Items */}
-        {chaptersLoading ? (
-          <div className="space-y-2">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-14 rounded-xl bg-zinc-900 animate-pulse" />
-            ))}
+        {/* Main Screen 3 Layout (Responsive: Single column on Mobile, 2-column on Desktop) */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-10 items-center">
+          {/* Framed Manga Artwork Card (Exact double-border frame from Screen 3) */}
+          <div className="md:col-span-5 flex justify-center">
+            <div className="w-full max-w-sm p-2.5 rounded-[28px] border border-[#c1c1c1]/60 dark:border-[#c1c1c1]/35 bg-[#ffffff]/50 dark:bg-[#181818]/60 shadow-2xl">
+              <div className="aspect-[3/3.6] w-full rounded-[20px] overflow-hidden bg-[#ececec] dark:bg-[#1e1e1e]">
+                <img
+                  src={manga.coverUrlFull || manga.coverUrl}
+                  alt={manga.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
           </div>
-        ) : displayedChapters.length === 0 ? (
-          <div className="text-center py-14 bg-zinc-900/40 rounded-2xl border border-zinc-800 space-y-2">
-            <p className="text-zinc-300 font-semibold">
-              Belum ada chapter untuk filter bahasa ini.
-            </p>
-            {langFilter !== 'all' && (
-              <button
-                onClick={() => setLangFilter('all')}
-                className="text-xs text-orange-400 hover:underline"
-              >
-                Tampilkan Semua Bahasa (ID & EN)
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-            {displayedChapters.map((ch) => {
-              const isRead = readIds.includes(ch.id);
-              return (
+
+          {/* Right / Bottom Metadata & Starburst "READ NOW ->" Button */}
+          <div className="md:col-span-7 flex flex-col justify-between space-y-5">
+            {/* Author / Japanese Alt Title Row + 5.0 TOP Badge */}
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-sm sm:text-base font-medium text-[#6e6e6e] dark:text-[#c1c1c1] truncate">
+                {manga.altTitle || manga.author}
+              </span>
+
+              <div className="flex items-center gap-2.5 shrink-0">
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#121212] dark:text-[#f8f8f8]">
+                  <Star className="w-4 h-4 fill-current text-[#121212] dark:text-[#f8f8f8]" />
+                  {ratingScore}
+                </span>
+                <span className="px-2 py-0.5 rounded bg-[#f9cb55] text-[#121212] font-extrabold text-xs uppercase tracking-wider">
+                  TOP
+                </span>
+              </div>
+            </div>
+
+            {/* Big Stylized Manga Title ("VAST OCEAN" style) */}
+            <h1 className="font-manga text-3xl sm:text-4xl md:text-5xl text-[#121212] dark:text-[#f8f8f8] tracking-wide leading-tight uppercase">
+              {manga.title}
+            </h1>
+
+            {/* Genre Pills */}
+            <div className="flex flex-wrap gap-2">
+              {manga.tags.map((t) => (
                 <Link
-                  key={ch.id}
-                  to={`/read/${ch.id}?mangaId=${manga.id}&lang=${langFilter}`}
-                  className={`flex items-center justify-between p-3.5 rounded-xl border transition-all group ${
-                    isRead
-                      ? 'bg-zinc-900/30 border-zinc-800/50 text-zinc-500'
-                      : 'bg-zinc-900/80 border-zinc-800/90 hover:border-orange-500/60 text-zinc-100'
+                  key={t.id}
+                  to={`/books?tag=${t.id}`}
+                  className="px-3 py-1 rounded-lg bg-[#ececec] dark:bg-[#1e1e1e] border border-[#c1c1c1]/30 dark:border-[#2b2b2b] text-xs font-medium text-[#6e6e6e] dark:text-[#c1c1c1] hover:border-[#f9cb55] hover:text-[#121212] dark:hover:text-[#f8f8f8] transition-colors"
+                >
+                  {t.name}
+                </Link>
+              ))}
+            </div>
+
+            {/* Synopsis with yellow "read more" */}
+            <p className="text-xs sm:text-sm text-[#6e6e6e] dark:text-[#c1c1c1] leading-relaxed">
+              {shortDesc}
+              {manga.description.length > 140 && (
+                <button
+                  onClick={() => setExpandedDesc(!expandedDesc)}
+                  className="text-[#f9cb55] font-semibold hover:underline ml-1"
+                >
+                  {expandedDesc ? 'show less' : 'read more'}
+                </button>
+              )}
+            </p>
+
+            {/* Iconic Yellow Starburst Button: READ NOW -> */}
+            <div className="pt-3 flex flex-col sm:flex-row items-center gap-4">
+              <ComicStarburstButton
+                label="READ NOW"
+                onClick={() => {
+                  if (targetChapter) {
+                    navigate(`/read/${targetChapter.id}?mangaId=${manga.id}&lang=${langFilter}`);
+                  } else {
+                    scrollToChapters();
+                  }
+                }}
+              />
+
+              {latestChapter && firstChapter && latestChapter.id !== firstChapter.id && (
+                <Link
+                  to={`/read/${latestChapter.id}?mangaId=${manga.id}&lang=${langFilter}`}
+                  className="px-5 py-3 rounded-2xl bg-[#ffffff] dark:bg-[#1c1c1c] border border-[#c1c1c1]/40 dark:border-[#2b2b2b] hover:border-[#f9cb55] text-xs font-bold uppercase tracking-wider text-[#121212] dark:text-[#f8f8f8] transition-all"
+                >
+                  Read Latest (Ch. {latestChapter.chapter})
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ==================== CHAPTERS LIST SECTION ==================== */}
+        <section id="chapters-section" className="pt-8 space-y-5 border-t border-[#c1c1c1]/30 dark:border-[#262626]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="font-manga text-2xl tracking-wider text-[#121212] dark:text-[#f8f8f8]">
+                ALL CHAPTERS ({chapters.length})
+              </h2>
+              <p className="text-xs text-[#6e6e6e] dark:text-[#c1c1c1]">
+                Pilih chapter untuk mulai membaca (Mode Scroll atau Tap Kanan-Kiri)
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Language Switcher */}
+              <div className="flex items-center bg-[#ececec] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#2a2a2a] rounded-xl p-1">
+                <button
+                  onClick={() => setLangFilter('all')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                    langFilter === 'all'
+                      ? 'bg-[#f9cb55] text-[#121212]'
+                      : 'text-[#6e6e6e] dark:text-[#c1c1c1]'
                   }`}
                 >
-                  <div className="min-w-0 pr-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-800 border border-zinc-700 font-semibold">
-                        {ch.translatedLanguage === 'id' ? '🇮🇩 ID' : '🇬🇧 EN'}
-                      </span>
-                      <span className="font-bold text-sm group-hover:text-orange-400 transition-colors">
-                        Chapter {ch.chapter}
-                      </span>
-                      {isRead && (
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                      )}
-                    </div>
-                    {ch.title && (
-                      <p className="text-xs text-zinc-400 truncate mt-1">{ch.title}</p>
-                    )}
-                    <div className="flex items-center gap-3 text-[11px] text-zinc-500 mt-1">
-                      <span className="truncate max-w-[160px]">{ch.groupName}</span>
-                      <span>•</span>
-                      <span>{ch.pages} hal</span>
-                    </div>
-                  </div>
+                  <Globe className="w-3.5 h-3.5" />
+                  ID + EN
+                </button>
+                <button
+                  onClick={() => setLangFilter('id')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    langFilter === 'id'
+                      ? 'bg-[#f9cb55] text-[#121212]'
+                      : 'text-[#6e6e6e] dark:text-[#c1c1c1]'
+                  }`}
+                >
+                  🇮🇩 ID
+                </button>
+                <button
+                  onClick={() => setLangFilter('en')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    langFilter === 'en'
+                      ? 'bg-[#f9cb55] text-[#121212]'
+                      : 'text-[#6e6e6e] dark:text-[#c1c1c1]'
+                  }`}
+                >
+                  🇬🇧 EN
+                </button>
+              </div>
 
-                  <div className="text-right shrink-0">
-                    <span className="inline-flex items-center gap-1 text-xs text-zinc-400">
-                      <Calendar className="w-3 h-3" />
-                      {new Date(ch.publishAt).toLocaleDateString('id-ID', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: '2-digit',
-                      })}
-                    </span>
-                  </div>
-                </Link>
-              );
-            })}
+              {/* Sort Order */}
+              <button
+                onClick={() => setSortAsc(!sortAsc)}
+                className="px-3.5 py-2 rounded-xl bg-[#ececec] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#2a2a2a] text-xs font-semibold text-[#121212] dark:text-[#f8f8f8] flex items-center gap-1.5 hover:border-[#f9cb55]"
+              >
+                <ArrowUpDown className="w-3.5 h-3.5 text-[#f9cb55]" />
+                {sortAsc ? 'Oldest First' : 'Newest First'}
+              </button>
+            </div>
           </div>
-        )}
+
+          {chaptersLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-16 rounded-2xl bg-[#ececec] dark:bg-[#1b1b1b] animate-pulse"
+                />
+              ))}
+            </div>
+          ) : displayedChapters.length === 0 ? (
+            <div className="text-center py-14 rounded-3xl bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#262626] space-y-2">
+              <p className="text-sm font-semibold">Belum ada chapter untuk bahasa ini.</p>
+              {langFilter !== 'all' && (
+                <button
+                  onClick={() => setLangFilter('all')}
+                  className="text-xs text-[#f9cb55] font-semibold underline"
+                >
+                  Tampilkan Semua Bahasa (ID + EN)
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {displayedChapters.map((ch) => {
+                const isRead = readIds.includes(ch.id);
+                return (
+                  <Link
+                    key={ch.id}
+                    to={`/read/${ch.id}?mangaId=${manga.id}&lang=${langFilter}`}
+                    className={`flex items-center justify-between p-4 rounded-2xl border transition-all group ${
+                      isRead
+                        ? 'bg-[#ececec]/50 dark:bg-[#161616] border-[#c1c1c1]/20 dark:border-[#222222] opacity-60'
+                        : 'bg-[#ffffff] dark:bg-[#1b1b1b] border-[#c1c1c1]/30 dark:border-[#272727] hover:border-[#f9cb55]'
+                    }`}
+                  >
+                    <div className="min-w-0 pr-3">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded bg-[#f9cb55]/20 text-[#121212] dark:text-[#f9cb55] text-[10px] font-bold uppercase">
+                          {ch.translatedLanguage === 'id' ? '🇮🇩 ID' : '🇬🇧 EN'}
+                        </span>
+                        <span className="font-manga text-base tracking-wide text-[#121212] dark:text-[#f8f8f8] group-hover:text-[#f9cb55] transition-colors">
+                          CHAPTER {ch.chapter}
+                        </span>
+                        {isRead && <CheckCircle2 className="w-4 h-4 text-[#f9cb55] shrink-0" />}
+                      </div>
+                      {ch.title && (
+                        <p className="text-xs text-[#6e6e6e] dark:text-[#c1c1c1] truncate mt-1">
+                          {ch.title}
+                        </p>
+                      )}
+                      <p className="text-[11px] text-[#6e6e6e] dark:text-[#c1c1c1] mt-1">
+                        {ch.groupName} • {ch.pages} Pages
+                      </p>
+                    </div>
+
+                    <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                      <span className="text-[11px] text-[#6e6e6e] dark:text-[#c1c1c1] flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {new Date(ch.publishAt).toLocaleDateString('id-ID', {
+                          day: 'numeric',
+                          month: 'short',
+                        })}
+                      </span>
+                      <span className="text-[11px] font-bold text-[#f9cb55] group-hover:translate-x-0.5 transition-transform">
+                        READ →
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );

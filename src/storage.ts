@@ -3,6 +3,45 @@ import { Manga, ReadingHistoryItem } from './types';
 const BOOKMARKS_KEY = 'ciaran_bookmarks_v1';
 const HISTORY_KEY = 'ciaran_history_v1';
 const READ_CHAPTERS_KEY = 'ciaran_read_chapters_v1';
+const THEME_KEY = 'ciaran_theme_v1';
+const READER_MODE_KEY = 'ciaran_reader_mode_v1';
+
+export type ThemeMode = 'dark' | 'light';
+export type ReaderViewMode = 'scroll' | 'tap';
+
+export function getTheme(): ThemeMode {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === 'light' || saved === 'dark') return saved;
+  } catch {}
+  return 'dark';
+}
+
+export function setTheme(mode: ThemeMode) {
+  try {
+    localStorage.setItem(THEME_KEY, mode);
+    const root = document.documentElement;
+    if (mode === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+  } catch {}
+}
+
+export function getSavedReaderMode(): ReaderViewMode {
+  try {
+    const saved = localStorage.getItem(READER_MODE_KEY);
+    if (saved === 'scroll' || saved === 'tap') return saved;
+  } catch {}
+  return 'tap';
+}
+
+export function setSavedReaderMode(mode: ReaderViewMode) {
+  try {
+    localStorage.setItem(READER_MODE_KEY, mode);
+  } catch {}
+}
 
 export function getBookmarks(): Manga[] {
   try {
@@ -27,6 +66,7 @@ export function toggleBookmark(manga: Manga): boolean {
     updated = [manga, ...list];
   }
   localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(updated));
+  window.dispatchEvent(new Event('ciaran-storage-update'));
   return !exists;
 }
 
@@ -45,6 +85,7 @@ export function addReadingHistory(item: ReadingHistoryItem) {
     const updated = [item, ...list].slice(0, 50);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
     markChapterAsRead(item.chapterId);
+    window.dispatchEvent(new Event('ciaran-storage-update'));
   } catch {
     // ignore storage errors
   }
@@ -52,6 +93,7 @@ export function addReadingHistory(item: ReadingHistoryItem) {
 
 export function clearReadingHistory() {
   localStorage.removeItem(HISTORY_KEY);
+  window.dispatchEvent(new Event('ciaran-storage-update'));
 }
 
 export function getReadChapters(): string[] {
@@ -100,6 +142,7 @@ export function importLibraryData(jsonStr: string): boolean {
     if (Array.isArray(parsed.readChapters)) {
       localStorage.setItem(READ_CHAPTERS_KEY, JSON.stringify(parsed.readChapters));
     }
+    window.dispatchEvent(new Event('ciaran-storage-update'));
     return true;
   } catch {
     return false;

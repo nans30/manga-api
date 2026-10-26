@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -7,20 +8,15 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand: {
-          50: '#fff7ed',
-          100: '#ffedd5',
-          200: '#fed7aa',
-          300: '#fdba74',
-          400: '#fb923c',
-          500: '#f97316',
-          600: '#ea580c',
-          700: '#c2410c',
-        }
+        cDark: '#121212',
+        cGold: '#f9cb55',
+        cGray: '#c1c1c1',
+        cLight: '#f8f8f8',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-      }
+        poppins: ['Poppins', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['"Gang of Three"', 'Poppins', 'sans-serif'],
+      },
     },
   },
   plugins: [],

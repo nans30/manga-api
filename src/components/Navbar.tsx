@@ -1,166 +1,232 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Flame, Home, Compass, Bookmark, Search, X } from 'lucide-react';
+import {
+  NavHomeIcon,
+  NavCompassIcon,
+  NavBookmarkIcon,
+  NavUserIcon,
+  HeaderBagIcon,
+} from './Icons';
+import { getTheme, setTheme, ThemeMode, getBookmarks } from '../storage';
+import { Sun, Moon, Search, X } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [theme, setThemeState] = useState<ThemeMode>(() => getTheme());
+  const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [bookmarkCount, setBookmarkCount] = useState(0);
 
-  // Hide navigation bar inside fullscreen reader mode if needed, or keep compact
-  const isReader = location.pathname.startsWith('/read/');
-  if (isReader) return null;
+  useEffect(() => {
+    setTheme(theme);
+  }, [theme]);
+
+  useEffect(() => {
+    const updateCounts = () => setBookmarkCount(getBookmarks().length);
+    updateCounts();
+    window.addEventListener('ciaran-storage-update', updateCounts);
+    return () => window.removeEventListener('ciaran-storage-update', updateCounts);
+  }, []);
+
+  const toggleTheme = () => {
+    const next: ThemeMode = theme === 'dark' ? 'light' : 'dark';
+    setThemeState(next);
+    setTheme(next);
+  };
+
+  // Hide global navbar inside chapter reader view (Reader has its own exact top/bottom HUD)
+  if (location.pathname.startsWith('/read/')) {
+    return null;
+  }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/?q=${encodeURIComponent(searchQuery.trim())}`);
-      setMobileSearchOpen(false);
+      navigate(`/books?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchOpen(false);
     } else {
-      navigate('/');
+      navigate('/books');
     }
   };
 
+  const isHome = location.pathname === '/';
+  const isBooks = location.pathname.startsWith('/books');
+  const isLibrary =
+    location.pathname.startsWith('/library') && !location.search.includes('tab=profile');
+  const isProfile =
+    location.pathname.startsWith('/library') && location.search.includes('tab=profile');
+
   return (
     <>
-      {/* Top Navbar */}
-      <header className="sticky top-0 z-40 w-full backdrop-blur-xl bg-zinc-950/85 border-b border-zinc-800/80">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 group shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center shadow-lg shadow-orange-500/25 group-hover:scale-105 transition-transform">
-              <Flame className="w-5 h-5 text-white fill-white" />
+      {/* Desktop Top Header (Visible on md+ screens, matches reference aesthetic) */}
+      <header className="hidden md:block sticky top-0 z-40 backdrop-blur-xl bg-[#f8f8f8]/90 dark:bg-[#121212]/90 border-b border-[#c1c1c1]/30 dark:border-[#262626] transition-colors">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between gap-6">
+          {/* Brand Logo */}
+          <Link to="/" className="flex items-center gap-3 group shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-[#f9cb55] flex items-center justify-center text-[#121212] font-manga text-2xl shadow-md group-hover:scale-105 transition-transform">
+              C
             </div>
-            <div>
-              <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-white via-zinc-100 to-orange-400 bg-clip-text text-transparent">
+            <div className="flex flex-col">
+              <span className="font-manga text-2xl tracking-wider text-[#121212] dark:text-[#f8f8f8] leading-none">
                 CIARAN
               </span>
-              <span className="hidden sm:inline-block ml-2 text-[10px] font-semibold uppercase tracking-widest px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-400 border border-orange-500/30">
-                MangaDex Live
+              <span className="text-[10px] font-medium tracking-widest uppercase text-[#6e6e6e] dark:text-[#c1c1c1] mt-0.5">
+                MangaDex Reader
               </span>
             </div>
           </Link>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-1">
+          {/* Desktop Center Nav Pills */}
+          <nav className="flex items-center gap-2 bg-[#ececec] dark:bg-[#1b1b1b] p-1.5 rounded-2xl border border-[#c1c1c1]/30 dark:border-[#2a2a2a]">
             <Link
               to="/"
-              className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                location.pathname === '/' && !location.search.includes('sort=popular')
-                  ? 'bg-zinc-800/90 text-orange-400'
-                  : 'text-zinc-300 hover:text-white hover:bg-zinc-900'
+              className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${
+                isHome
+                  ? 'bg-[#f9cb55] text-[#121212] shadow-sm'
+                  : 'text-[#6e6e6e] dark:text-[#c1c1c1] hover:text-[#121212] dark:hover:text-[#f8f8f8]'
               }`}
             >
-              <Home className="w-4 h-4" />
-              Beranda & Update
+              <NavHomeIcon active={isHome} className="w-4 h-4" />
+              <span className="font-manga text-sm">NOW</span>
             </Link>
+
             <Link
-              to="/?sort=popular"
-              className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                location.search.includes('sort=popular')
-                  ? 'bg-zinc-800/90 text-orange-400'
-                  : 'text-zinc-300 hover:text-white hover:bg-zinc-900'
+              to="/books"
+              className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${
+                isBooks
+                  ? 'bg-[#f9cb55] text-[#121212] shadow-sm'
+                  : 'text-[#6e6e6e] dark:text-[#c1c1c1] hover:text-[#121212] dark:hover:text-[#f8f8f8]'
               }`}
             >
-              <Compass className="w-4 h-4" />
-              Populer
+              <NavCompassIcon active={isBooks} className="w-4 h-4" />
+              <span className="font-manga text-sm">ALL BOOKS</span>
             </Link>
+
             <Link
               to="/library"
-              className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                location.pathname === '/library'
-                  ? 'bg-zinc-800/90 text-orange-400'
-                  : 'text-zinc-300 hover:text-white hover:bg-zinc-900'
+              className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${
+                isLibrary
+                  ? 'bg-[#f9cb55] text-[#121212] shadow-sm'
+                  : 'text-[#6e6e6e] dark:text-[#c1c1c1] hover:text-[#121212] dark:hover:text-[#f8f8f8]'
               }`}
             >
-              <Bookmark className="w-4 h-4" />
-              Koleksi & Riwayat
+              <NavBookmarkIcon active={isLibrary} className="w-4 h-4" />
+              <span className="font-manga text-sm">SAVED</span>
             </Link>
           </nav>
 
-          {/* Desktop Search Bar */}
-          <form onSubmit={handleSearch} className="hidden sm:flex items-center flex-1 max-w-md relative">
-            <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari judul manga, manhwa, manhua..."
-              className="w-full bg-zinc-900/90 border border-zinc-800 focus:border-orange-500 rounded-xl pl-10 pr-9 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none transition-colors"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchQuery('');
-                  navigate('/');
-                }}
-                className="absolute right-2.5 text-zinc-400 hover:text-zinc-200"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </form>
-
-          {/* Mobile Search Toggle */}
-          <button
-            onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
-            className="sm:hidden p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-orange-400"
-            aria-label="Cari Manga"
-          >
-            {mobileSearchOpen ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
-          </button>
-        </div>
-
-        {/* Mobile Search Drawer */}
-        {mobileSearchOpen && (
-          <form onSubmit={handleSearch} className="sm:hidden px-4 pb-3 bg-zinc-950 border-b border-zinc-800">
-            <div className="relative flex items-center">
-              <Search className="w-4 h-4 text-zinc-400 absolute left-3.5" />
+          {/* Desktop Right Search + Theme + Bag */}
+          <div className="flex items-center gap-3">
+            <form onSubmit={handleSearch} className="relative w-64 lg:w-72">
+              <Search className="w-4 h-4 text-[#6e6e6e] dark:text-[#c1c1c1] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
-                autoFocus
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari komik di MangaDex..."
-                className="w-full bg-zinc-900 border border-zinc-700 focus:border-orange-500 rounded-xl pl-10 pr-4 py-2.5 text-sm text-zinc-100"
+                placeholder="Search manga, author..."
+                className="w-full bg-[#ececec] dark:bg-[#1b1b1b] border border-[#c1c1c1]/40 dark:border-[#2b2b2b] focus:border-[#f9cb55] rounded-xl pl-10 pr-8 py-2 text-xs text-[#121212] dark:text-[#f8f8f8] placeholder:text-[#6e6e6e] dark:placeholder:text-[#c1c1c1] focus:outline-none transition-colors"
               />
-            </div>
-          </form>
-        )}
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#c1c1c1] hover:text-[#f9cb55]"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </form>
+
+            {/* Light / Dark Mode Button */}
+            <button
+              onClick={toggleTheme}
+              className="p-2.5 rounded-xl bg-[#ececec] dark:bg-[#1b1b1b] border border-[#c1c1c1]/40 dark:border-[#2b2b2b] text-[#121212] dark:text-[#f8f8f8] hover:border-[#f9cb55] transition-colors"
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-5 h-5 text-[#f9cb55]" />
+              ) : (
+                <Moon className="w-5 h-5 text-[#121212]" />
+              )}
+            </button>
+
+            {/* Bag / Saved Library Shortcut */}
+            <Link
+              to="/library"
+              className="relative p-2.5 rounded-xl bg-[#ececec] dark:bg-[#1b1b1b] border border-[#c1c1c1]/40 dark:border-[#2b2b2b] text-[#121212] dark:text-[#f8f8f8] hover:border-[#f9cb55] transition-colors"
+              title="Koleksi Komik"
+            >
+              <HeaderBagIcon className="w-5 h-5" />
+              {bookmarkCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#f9cb55] text-[#121212] text-[10px] font-bold flex items-center justify-center">
+                  {bookmarkCount > 9 ? '9+' : bookmarkCount}
+                </span>
+              )}
+            </Link>
+          </div>
+        </div>
       </header>
 
-      {/* Bottom Floating Navigation for Mobile (HP) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/95 backdrop-blur-xl border-t border-zinc-800/80 px-6 py-2 flex items-center justify-around">
+      {/* Mobile Search Modal when triggered from NOW header */}
+      {searchOpen && (
+        <div className="md:hidden fixed inset-0 z-50 bg-[#121212]/80 backdrop-blur-md flex flex-col p-4">
+          <form
+            onSubmit={handleSearch}
+            className="bg-[#f8f8f8] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#2b2b2b] rounded-2xl p-3 flex items-center gap-3 shadow-2xl"
+          >
+            <Search className="w-5 h-5 text-[#f9cb55] shrink-0" />
+            <input
+              type="text"
+              autoFocus
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari judul komik..."
+              className="flex-1 bg-transparent text-sm text-[#121212] dark:text-[#f8f8f8] placeholder:text-[#c1c1c1] focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => setSearchOpen(false)}
+              className="p-1.5 rounded-lg text-[#c1c1c1]"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* Mobile Floating Bottom Navigation Bar (Matches Reference Image 100%) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#f8f8f8]/95 dark:bg-[#121212]/95 backdrop-blur-xl border-t border-[#c1c1c1]/30 dark:border-[#222222] px-6 pt-3 pb-5 flex items-center justify-between">
         <Link
           to="/"
-          className={`flex flex-col items-center gap-1 py-1 text-xs font-medium ${
-            location.pathname === '/' && !location.search.includes('sort=popular')
-              ? 'text-orange-400'
-              : 'text-zinc-400'
-          }`}
+          className="p-2 text-[#6e6e6e] dark:text-[#c1c1c1] transition-transform active:scale-90"
+          aria-label="Home"
         >
-          <Home className="w-5 h-5" />
-          <span>Update</span>
+          <NavHomeIcon active={isHome} className="w-6 h-6" />
         </Link>
+
         <Link
-          to="/?sort=popular"
-          className={`flex flex-col items-center gap-1 py-1 text-xs font-medium ${
-            location.search.includes('sort=popular') ? 'text-orange-400' : 'text-zinc-400'
-          }`}
+          to="/books"
+          className="p-2 text-[#6e6e6e] dark:text-[#c1c1c1] transition-transform active:scale-90"
+          aria-label="All Books"
         >
-          <Compass className="w-5 h-5" />
-          <span>Populer</span>
+          <NavCompassIcon active={isBooks} className="w-6 h-6" />
         </Link>
+
         <Link
           to="/library"
-          className={`flex flex-col items-center gap-1 py-1 text-xs font-medium ${
-            location.pathname === '/library' ? 'text-orange-400' : 'text-zinc-400'
-          }`}
+          className="p-2 text-[#6e6e6e] dark:text-[#c1c1c1] transition-transform active:scale-90"
+          aria-label="Saved Books"
         >
-          <Bookmark className="w-5 h-5" />
-          <span>Koleksi</span>
+          <NavBookmarkIcon active={isLibrary} className="w-6 h-6" />
+        </Link>
+
+        <Link
+          to="/library?tab=profile"
+          className="p-2 text-[#6e6e6e] dark:text-[#c1c1c1] transition-transform active:scale-90"
+          aria-label="Profile & Theme"
+        >
+          <NavUserIcon active={isProfile} className="w-6 h-6" />
         </Link>
       </nav>
     </>

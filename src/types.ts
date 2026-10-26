@@ -44,10 +44,14 @@ export interface ChapterPage {
 export interface ReadingHistoryItem {
   mangaId: string;
   mangaTitle: string;
+  author?: string;
   coverUrl: string;
   chapterId: string;
   chapterNumber: string;
   chapterTitle: string;
   language: string;
+  currentPage?: number;
+  totalPages?: number;
+  progressPercent?: number;
   readAt: string;
 }

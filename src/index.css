@@ -2,6 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg-main: #f8f8f8;
+  --bg-card: #ffffff;
+  --bg-subtle: #ececec;
+  --text-main: #121212;
+  --text-muted: #6e6e6e;
+  --border-color: #dcdcdc;
+  --accent: #f9cb55;
+  --accent-text: #121212;
+}
+
+html.dark {
+  --bg-main: #121212;
+  --bg-card: #1b1b1b;
+  --bg-subtle: #252525;
+  --text-main: #f8f8f8;
+  --text-muted: #c1c1c1;
+  --border-color: #2b2b2b;
+  --accent: #f9cb55;
+  --accent-text: #121212;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: 'Poppins', sans-serif;
+}
+
+.font-manga {
+  font-family: 'Gang of Three', 'Poppins', sans-serif;
+  letter-spacing: 0.04em;
+}
+
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar {
     display: none;
@@ -13,19 +46,23 @@
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #09090b;
+  background: var(--bg-main);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #27272a;
-  border-radius: 4px;
+  background: #c1c1c1;
+  border-radius: 9999px;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #2e2e2e;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #f97316;
+  background: #f9cb55;
 }
