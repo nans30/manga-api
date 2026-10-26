@@ -12,6 +12,7 @@ export const Home: React.FC = () => {
 
   const [latestManga, setLatestManga] = useState<Manga[]>(() => cache.latest || []);
   const [popularManga, setPopularManga] = useState<Manga[]>(() => cache.popular || []);
+  const [homeLang, setHomeLang] = useState<'' | 'id' | 'en'>('');
   const [history, setHistory] = useState<ReadingHistoryItem[]>(() => getReadingHistory());
   const [refreshing, setRefreshing] = useState(false);
   const [theme, setThemeState] = useState<ThemeMode>(() => getTheme());
@@ -28,9 +29,10 @@ export const Home: React.FC = () => {
   const fetchLiveHomeData = useCallback(async () => {
     setRefreshing(true);
     try {
+      const langParam = homeLang ? `&lang=${homeLang}` : '';
       const [latestRes, popRes] = await Promise.all([
-        fetch('/api/manga?sort=latest&limit=18').then((r) => r.json()),
-        fetch('/api/manga?sort=popular&limit=12').then((r) => r.json()),
+        fetch(`/api/manga?sort=latest&limit=18${langParam}`).then((r) => r.json()),
+        fetch(`/api/manga?sort=popular&limit=12${langParam}`).then((r) => r.json()),
       ]);
       if (latestRes.data?.length) setLatestManga(latestRes.data);
       if (popRes.data?.length) setPopularManga(popRes.data);
@@ -39,7 +41,7 @@ export const Home: React.FC = () => {
     } finally {
       setRefreshing(false);
     }
-  }, []);
+  }, [homeLang]);
 
   useEffect(() => {
     fetchLiveHomeData();
@@ -72,7 +74,7 @@ export const Home: React.FC = () => {
         id: lastRead.mangaId,
         title: lastRead.mangaTitle,
         chapterText: `Chapter ${lastRead.chapterNumber}`,
-        author: lastRead.author || 'MangaDex Creator',
+        author: lastRead.author || 'Unknown Author',
         coverUrl: lastRead.coverUrl,
         progress: lastRead.progressPercent || 78,
         timeLeft: '20 min left',
@@ -110,7 +112,7 @@ export const Home: React.FC = () => {
               onClick={fetchLiveHomeData}
               disabled={refreshing}
               className="p-1.5 rounded-full text-[#6e6e6e] dark:text-[#c1c1c1] hover:text-[#f9cb55] transition-colors"
-              title="Sinkronisasi Real-Time MangaDex"
+              title="Sinkronisasi Real-Time"
             >
               <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-[#f9cb55]' : ''}`} />
             </button>
@@ -163,7 +165,7 @@ export const Home: React.FC = () => {
               autoFocus
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Cari komik di MangaDex..."
+              placeholder="Cari judul komik atau nama pembuat..."
               className="flex-1 bg-transparent text-sm text-[#121212] dark:text-[#f8f8f8] placeholder:text-[#c1c1c1] focus:outline-none"
             />
             {searchInput && (
@@ -323,15 +325,54 @@ export const Home: React.FC = () => {
 
       {/* ==================== SECTION 3: ALL BOOKS ==================== */}
       <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="font-manga text-2xl sm:text-3xl tracking-wider text-[#121212] dark:text-[#f8f8f8]">
-            ALL BOOKS
-          </h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h2 className="font-manga text-2xl sm:text-3xl tracking-wider text-[#121212] dark:text-[#f8f8f8]">
+              ALL BOOKS
+            </h2>
+            {/* Quick Bahasa Indonesia Filter on Home */}
+            <div className="inline-flex items-center bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#2a2a2a] rounded-xl p-1">
+              <button
+                type="button"
+                onClick={() => setHomeLang('')}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors ${
+                  homeLang === ''
+                    ? 'bg-[#f9cb55] text-[#121212]'
+                    : 'text-[#6e6e6e] dark:text-[#c1c1c1]'
+                }`}
+              >
+                Semua
+              </button>
+              <button
+                type="button"
+                onClick={() => setHomeLang('id')}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors ${
+                  homeLang === 'id'
+                    ? 'bg-[#f9cb55] text-[#121212]'
+                    : 'text-[#6e6e6e] dark:text-[#c1c1c1]'
+                }`}
+              >
+                🇮🇩 Indonesia
+              </button>
+              <button
+                type="button"
+                onClick={() => setHomeLang('en')}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors ${
+                  homeLang === 'en'
+                    ? 'bg-[#f9cb55] text-[#121212]'
+                    : 'text-[#6e6e6e] dark:text-[#c1c1c1]'
+                }`}
+              >
+                🇬🇧 Inggris
+              </button>
+            </div>
+          </div>
+
           <Link
-            to="/books"
+            to={homeLang ? `/books?lang=${homeLang}` : '/books'}
             className="p-1.5 text-[#121212] dark:text-[#f8f8f8] hover:text-[#f9cb55] transition-colors flex items-center gap-1.5 text-xs font-semibold"
           >
-            <span className="hidden sm:inline">Explore Catalog</span>
+            <span className="hidden sm:inline">Lihat Semua Komik</span>
             <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
@@ -341,7 +382,7 @@ export const Home: React.FC = () => {
           {allBooksPreview.map((manga) => (
             <Link
               key={manga.id}
-              to={`/manga/${manga.id}`}
+              to={`/manga/${manga.id}${homeLang ? `?lang=${homeLang}` : ''}`}
               className="group flex flex-col gap-2"
             >
               <div className="relative aspect-[3/3.8] w-full rounded-2xl overflow-hidden bg-[#ececec] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#262626] shadow-md">

@@ -309,7 +309,9 @@ function formatManga(item: any) {
     coverUrl,
     coverUrlFull,
     author: authorRel?.attributes?.name || artistRel?.attributes?.name || 'Unknown Author',
+    authorId: authorRel?.id || artistRel?.id || '',
     artist: artistRel?.attributes?.name || authorRel?.attributes?.name || 'Unknown Artist',
+    artistId: artistRel?.id || authorRel?.id || '',
     tags,
   };
 }
@@ -397,6 +399,8 @@ app.get('/api/manga', async (req: Request, res: Response) => {
       tag = '',
       status = '',
       demographic = '',
+      authorId = '',
+      lang = '',
     } = req.query as Record<string, string>;
 
     const safeLimit = Math.min(100, Math.max(1, Number(limit) || 24));
@@ -414,6 +418,14 @@ app.get('/api/manga', async (req: Request, res: Response) => {
 
     if (q.trim()) {
       params.append('title', q.trim().slice(0, 100));
+    }
+
+    if (authorId.trim() && isValidUuid(authorId.trim())) {
+      params.append('authorOrArtist', authorId.trim());
+    }
+
+    if (lang === 'id' || lang === 'en') {
+      params.append('availableTranslatedLanguage[]', lang);
     }
 
     if (tag.trim() && isValidUuid(tag.trim())) {
@@ -437,17 +449,56 @@ app.get('/api/manga', async (req: Request, res: Response) => {
     }
 
     const url = `${MANGADEX_API}/manga?${params.toString()}`;
-    const response = await dohGet(url);
+    const [response, authorSearchRes] = await Promise.all([
+      dohGet(url),
+      q.trim() && !authorId.trim() && safeOffset === 0
+        ? dohGet(
+            `${MANGADEX_API}/author?name=${encodeURIComponent(
+              q.trim().slice(0, 60)
+            )}&limit=2`
+          ).catch(() => null)
+        : Promise.resolve(null),
+    ]);
 
     if (!response.ok) {
       throw new Error(`MangaDex responded with ${response.status}`);
     }
 
     const json: any = response.json();
-    const list = (json.data || []).map(formatManga);
+    let list: any[] = (json.data || []).map(formatManga);
+
+    // If user searched a creator/author name, include manga by that author as well
+    if (authorSearchRes && authorSearchRes.ok) {
+      const authorJson: any = authorSearchRes.json();
+      const firstAuthorId = authorJson?.data?.[0]?.id;
+      if (firstAuthorId && isValidUuid(firstAuthorId)) {
+        const byAuthorRes = await dohGet(
+          `${MANGADEX_API}/manga?authorOrArtist=${firstAuthorId}&limit=12&includes[]=cover_art&includes[]=author&includes[]=artist&contentRating[]=safe&contentRating[]=suggestive`
+        ).catch(() => null);
+        if (byAuthorRes && byAuthorRes.ok) {
+          const byAuthorJson: any = byAuthorRes.json();
+          const authorManga = (byAuthorJson.data || []).map(formatManga);
+          const existingIds = new Set(list.map((m) => m.id));
+          for (const m of authorManga) {
+            if (!existingIds.has(m.id)) {
+              list.push(m);
+              existingIds.add(m.id);
+            }
+          }
+        }
+      }
+    }
 
     // If default first page fetch, keep local cache JSON fresh automatically
-    if (!q.trim() && !tag.trim() && !status.trim() && safeOffset === 0 && list.length >= 12) {
+    if (
+      !q.trim() &&
+      !authorId.trim() &&
+      !lang.trim() &&
+      !tag.trim() &&
+      !status.trim() &&
+      safeOffset === 0 &&
+      list.length >= 12
+    ) {
       updateLocalCacheBackground(sort, list);
     }
 

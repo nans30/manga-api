@@ -345,7 +345,7 @@ export const Reader: React.FC = () => {
           <div className="flex flex-col items-center justify-center py-32 gap-3">
             <Loader2 className="w-10 h-10 text-[#f9cb55] animate-spin" />
             <p className="text-xs font-medium text-[#6e6e6e] dark:text-[#c1c1c1]">
-              Memuat halaman komik dari MangaDex...
+              Memuat halaman komik...
             </p>
           </div>
         ) : error ? (

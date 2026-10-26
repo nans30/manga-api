@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { Manga, Chapter } from '../types';
 import { isBookmarked, toggleBookmark, getReadChapters } from '../storage';
 import { ComicStarburstButton, NavBookmarkIcon } from '../components/Icons';
@@ -12,10 +12,16 @@ import {
   ArrowUpDown,
   CheckCircle2,
   Calendar,
+  User,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  ArrowRight,
 } from 'lucide-react';
 
 export const MangaDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const cache: any = scrapedCache;
 
@@ -25,12 +31,18 @@ export const MangaDetail: React.FC = () => {
     return all.find((m: Manga) => m.id === mangaId) || null;
   };
 
+  const initialLang = searchParams.get('lang');
   const [manga, setManga] = useState<Manga | null>(() => findCachedManga(id));
   const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [authorManga, setAuthorManga] = useState<Manga[]>([]);
+  const [authorWorksOpen, setAuthorWorksOpen] = useState(false);
+  const [loadingAuthorWorks, setLoadingAuthorWorks] = useState(false);
   const [loading, setLoading] = useState(!manga);
   const [chaptersLoading, setChaptersLoading] = useState(true);
   const [bookmarked, setBookmarked] = useState(() => (id ? isBookmarked(id) : false));
-  const [langFilter, setLangFilter] = useState<'all' | 'id' | 'en'>('all');
+  const [langFilter, setLangFilter] = useState<'all' | 'id' | 'en'>(
+    initialLang === 'id' || initialLang === 'en' ? initialLang : 'all'
+  );
   const [sortAsc, setSortAsc] = useState(false);
   const [readIds, setReadIds] = useState<string[]>([]);
   const [expandedDesc, setExpandedDesc] = useState(false);
@@ -39,6 +51,9 @@ export const MangaDetail: React.FC = () => {
     if (!id) return;
     setReadIds(getReadChapters());
     setBookmarked(isBookmarked(id));
+    setAuthorWorksOpen(false);
+    setAuthorManga([]);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
     fetch(`/api/manga/${id}`)
       .then((r) => r.json())
@@ -51,6 +66,30 @@ export const MangaDetail: React.FC = () => {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [id]);
+
+  // Fetch other manga by the same creator/author when manga loads
+  useEffect(() => {
+    if (!manga) return;
+    const creatorId = manga.authorId || manga.artistId;
+    const creatorName = manga.author;
+    if (!creatorId && (!creatorName || creatorName === 'Unknown Author')) return;
+
+    setLoadingAuthorWorks(true);
+    const queryUrl = creatorId
+      ? `/api/manga?authorId=${encodeURIComponent(creatorId)}&limit=12`
+      : `/api/manga?q=${encodeURIComponent(creatorName)}&limit=12`;
+
+    fetch(queryUrl)
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.data) {
+          const others = (json.data as Manga[]).filter((m) => m.id !== manga.id);
+          setAuthorManga(others);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingAuthorWorks(false));
+  }, [manga?.id, manga?.authorId, manga?.artistId, manga?.author]);
 
   useEffect(() => {
     if (!id) return;
@@ -76,6 +115,10 @@ export const MangaDetail: React.FC = () => {
   const scrollToChapters = () => {
     const el = document.getElementById('chapters-section');
     if (el) el.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleAuthorClick = () => {
+    setAuthorWorksOpen((prev) => !prev);
   };
 
   if (loading && !manga) {
@@ -114,7 +157,7 @@ export const MangaDetail: React.FC = () => {
 
   return (
     <div className="relative min-h-screen pb-28 md:pb-16 overflow-hidden">
-      {/* Subtle Background Blur Artwork (Matches Screen 3 header backdrop) */}
+      {/* Subtle Background Blur Artwork */}
       <div className="pointer-events-none absolute top-0 left-0 right-0 h-96 overflow-hidden opacity-20 dark:opacity-25">
         <img
           src={manga.coverUrl}
@@ -125,7 +168,7 @@ export const MangaDetail: React.FC = () => {
       </div>
 
       <div className="relative z-10 max-w-5xl mx-auto px-5 sm:px-6 pt-5 space-y-10">
-        {/* Top Bar (Matches Screen 3: Close X on left, CHAPTER / Page in center, Menu ☰ on right) */}
+        {/* Top Bar */}
         <div className="flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
@@ -162,9 +205,9 @@ export const MangaDetail: React.FC = () => {
           </div>
         </div>
 
-        {/* Main Screen 3 Layout (Responsive: Single column on Mobile, 2-column on Desktop) */}
+        {/* Main Screen 3 Layout */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-10 items-center">
-          {/* Framed Manga Artwork Card (Exact double-border frame from Screen 3) */}
+          {/* Framed Manga Artwork Card */}
           <div className="md:col-span-5 flex justify-center">
             <div className="w-full max-w-sm p-2.5 rounded-[28px] border border-[#c1c1c1]/60 dark:border-[#c1c1c1]/35 bg-[#ffffff]/50 dark:bg-[#181818]/60 shadow-2xl">
               <div className="aspect-[3/3.6] w-full rounded-[20px] overflow-hidden bg-[#ececec] dark:bg-[#1e1e1e]">
@@ -178,11 +221,11 @@ export const MangaDetail: React.FC = () => {
           </div>
 
           {/* Right / Bottom Metadata & Starburst "READ NOW ->" Button */}
-          <div className="md:col-span-7 flex flex-col justify-between space-y-5">
-            {/* Author / Japanese Alt Title Row + 5.0 TOP Badge */}
+          <div className="md:col-span-7 flex flex-col justify-between space-y-4">
+            {/* Alt Title + 5.0 TOP Badge */}
             <div className="flex items-center justify-between gap-4">
-              <span className="text-sm sm:text-base font-medium text-[#6e6e6e] dark:text-[#c1c1c1] truncate">
-                {manga.altTitle || manga.author}
+              <span className="text-xs sm:text-sm font-medium text-[#6e6e6e] dark:text-[#c1c1c1] truncate">
+                {manga.altTitle || manga.originalLanguage.toUpperCase()}
               </span>
 
               <div className="flex items-center gap-2.5 shrink-0">
@@ -196,10 +239,92 @@ export const MangaDetail: React.FC = () => {
               </div>
             </div>
 
-            {/* Big Stylized Manga Title ("VAST OCEAN" style) */}
+            {/* Big Stylized Manga Title */}
             <h1 className="font-manga text-3xl sm:text-4xl md:text-5xl text-[#121212] dark:text-[#f8f8f8] tracking-wide leading-tight uppercase">
               {manga.title}
             </h1>
+
+            {/* Clickable Creator / Author Badge (Click to see other works by this author!) */}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleAuthorClick}
+                className="group inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#ffffff] dark:bg-[#1e1e1e] border border-[#f9cb55]/60 hover:bg-[#f9cb55] hover:text-[#121212] text-xs sm:text-sm font-semibold text-[#121212] dark:text-[#f8f8f8] transition-all shadow-sm"
+              >
+                <User className="w-4 h-4 text-[#f9cb55] group-hover:text-[#121212]" />
+                <span>
+                  Pembuat: <strong>{manga.author}</strong>
+                  {manga.artist && manga.artist !== manga.author
+                    ? ` & ${manga.artist}`
+                    : ''}
+                </span>
+                <span className="text-[11px] px-2 py-0.5 rounded-md bg-[#f9cb55]/20 group-hover:bg-[#121212]/15 text-[#121212] dark:text-[#f9cb55] group-hover:text-[#121212] font-bold flex items-center gap-1">
+                  {authorManga.length > 0 ? `${authorManga.length} Karya Lain` : 'Lihat Karya'}
+                  {authorWorksOpen ? (
+                    <ChevronUp className="w-3.5 h-3.5" />
+                  ) : (
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  )}
+                </span>
+              </button>
+            </div>
+
+            {/* Expandable Drawer: Other Manga by This Creator (when author name is clicked) */}
+            {authorWorksOpen && (
+              <div className="p-4 rounded-2xl bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#f9cb55]/50 space-y-3 shadow-xl animate-fadeIn">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-manga text-sm sm:text-base tracking-wider text-[#121212] dark:text-[#f9cb55] flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-[#f9cb55]" />
+                    MANGA LAIN KARYA {manga.author.toUpperCase()}
+                  </h3>
+                  {manga.authorId && (
+                    <Link
+                      to={`/books?authorId=${manga.authorId}&authorName=${encodeURIComponent(
+                        manga.author
+                      )}`}
+                      className="text-xs font-bold text-[#f9cb55] hover:underline flex items-center gap-1"
+                    >
+                      Semua ({authorManga.length})
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  )}
+                </div>
+
+                {loadingAuthorWorks ? (
+                  <p className="text-xs text-[#6e6e6e] dark:text-[#c1c1c1] py-3">
+                    Memuat karya lain dari {manga.author}...
+                  </p>
+                ) : authorManga.length === 0 ? (
+                  <p className="text-xs text-[#6e6e6e] dark:text-[#c1c1c1] py-2">
+                    Tidak ada manga lain dari {manga.author} selain judul ini.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1 max-h-72 overflow-y-auto pr-1">
+                    {authorManga.map((other) => (
+                      <Link
+                        key={other.id}
+                        to={`/manga/${other.id}`}
+                        className="group flex items-center gap-2.5 p-2 rounded-xl bg-[#ececec]/60 dark:bg-[#242424] hover:border-[#f9cb55] border border-transparent transition-all"
+                      >
+                        <img
+                          src={other.coverUrl}
+                          alt={other.title}
+                          className="w-11 h-16 object-cover rounded-lg shrink-0"
+                        />
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-[#121212] dark:text-[#f8f8f8] group-hover:text-[#f9cb55] line-clamp-2 leading-snug">
+                            {other.title}
+                          </p>
+                          <p className="text-[10px] text-[#6e6e6e] dark:text-[#c1c1c1] mt-0.5">
+                            {other.year || other.status.toUpperCase()}
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Genre Pills */}
             <div className="flex flex-wrap gap-2">

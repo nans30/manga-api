@@ -1,5 +1,5 @@
 {
-  "scrapedAt": "2026-10-26T09:52:59.054Z",
+  "scrapedAt": "2026-10-26T10:09:45.290Z",
   "source": "https://mangadex.org",
   "latest": [
     {
@@ -16,7 +16,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fdc07afaa-643a-4bf4-a9d0-b21ecc101736%2F9a73fd90-5e32-4284-b2ed-170119adbb8f.png.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fdc07afaa-643a-4bf4-a9d0-b21ecc101736%2F9a73fd90-5e32-4284-b2ed-170119adbb8f.png",
       "author": "Moon Sihyun (문시현)",
+      "authorId": "714cd71e-85ad-497b-94f9-3c5c375f2bd4",
       "artist": "Hyeseong (혜성)",
+      "artistId": "ee9b6a35-c679-4c04-8182-3a135808f0e9",
       "tags": [
         {
           "id": "0bc90acb-ccc1-44ca-a34a-b9f3a73259d0",
@@ -74,7 +76,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fe900135b-8eba-4d29-85c9-db3d5ae885c7%2F9a9fa7b3-df9a-4b74-970e-9853a40e2977.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fe900135b-8eba-4d29-85c9-db3d5ae885c7%2F9a9fa7b3-df9a-4b74-970e-9853a40e2977.jpg",
       "author": "Feng Jiong",
+      "authorId": "d73c407f-9ff4-427e-92f6-4c13b6662b3c",
       "artist": "Yuan Man Dongman (缘漫动漫)",
+      "artistId": "c2e96a59-417d-4969-a464-880662bb88cb",
       "tags": [
         {
           "id": "391b0423-d847-456f-aff0-8b0cfc03066b",
@@ -132,7 +136,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Ff5e61c1d-80fe-4356-bee6-6b5452f2127a%2F1f8c08ad-5e99-4464-a9e7-9612e612c400.png.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Ff5e61c1d-80fe-4356-bee6-6b5452f2127a%2F1f8c08ad-5e99-4464-a9e7-9612e612c400.png",
       "author": "Park Gwi-ri",
+      "authorId": "42ab2c25-ea23-42fd-956f-746579d52480",
       "artist": "CHOVA",
+      "artistId": "bbd8e469-b683-4fe9-88b3-5786b17ae205",
       "tags": [
         {
           "id": "3e2b8dae-350e-4ab8-a8ce-016e844b9f0d",
@@ -162,6 +168,261 @@
       ]
     },
     {
+      "id": "e6909948-0a4a-4577-9e64-125837045dec",
+      "title": "Hiroin-kun",
+      "altTitle": "ヒロインくん",
+      "description": "The story of a boy, Hiroin Akira, whose mother always wanted a daughter. His father, a scientist, makes him unknowingly take a remedy that turns him from a hero into a heroine.",
+      "status": "completed",
+      "year": 1979,
+      "contentRating": "suggestive",
+      "originalLanguage": "ja",
+      "lastChapter": "25",
+      "updatedAt": "2026-09-25T16:31:18+00:00",
+      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fe6909948-0a4a-4577-9e64-125837045dec%2Fb0f494a8-5b00-4595-9c7f-4cba11d64400.jpg.512.jpg",
+      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fe6909948-0a4a-4577-9e64-125837045dec%2Fb0f494a8-5b00-4595-9c7f-4cba11d64400.jpg",
+      "author": "Yoshikawa Susumu",
+      "authorId": "2142bfd8-214d-4e7c-91e9-66e16b586b31",
+      "artist": "Yoshikawa Susumu",
+      "artistId": "2142bfd8-214d-4e7c-91e9-66e16b586b31",
+      "tags": [
+        {
+          "id": "2bd2e8d0-f146-434a-9b51-fc9ff2c5fe6a",
+          "name": "Genderswap",
+          "group": "theme"
+        },
+        {
+          "id": "391b0423-d847-456f-aff0-8b0cfc03066b",
+          "name": "Action",
+          "group": "genre"
+        },
+        {
+          "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
+          "name": "Romance",
+          "group": "genre"
+        },
+        {
+          "id": "4d32cc48-9f00-4cca-9b5a-a839f0764984",
+          "name": "Comedy",
+          "group": "genre"
+        },
+        {
+          "id": "97893a4c-12af-4dac-b6be-0dffb353568e",
+          "name": "Sexual Violence",
+          "group": "content"
+        },
+        {
+          "id": "b9af3a63-f058-46de-a9a0-e0c13906197a",
+          "name": "Drama",
+          "group": "genre"
+        },
+        {
+          "id": "caaa44eb-cd40-4177-b930-79d3ef2afe87",
+          "name": "School Life",
+          "group": "theme"
+        },
+        {
+          "id": "da2d50ca-3018-4cc0-ac7a-6b7d472a29ea",
+          "name": "Delinquents",
+          "group": "theme"
+        }
+      ]
+    },
+    {
+      "id": "a1fe0826-e93b-4fb8-a19e-f1ca95362588",
+      "title": "Potion-danomi de Ikinobimasu! Zoku",
+      "altTitle": "ポーション頼みで生き延びます！",
+      "description": "Kaoru Nagase got caught up in a mysterious phenomenon and died on her way home from work. She skillfully convinced the higher-being that caused the distortional accident into giving her \"the ability to create any potion with any effect I can think of\", and to be revived in the other world with her younger self's body! Kaoru, who's now a rather sharp-eyed 15-year-old girl, will work hard for a peaceful life in another world!\n___ \n**Note:** This is the continuation of \"Potion-donami de Ikinobimasu!\" after the artist was changed.\n\n* **Alternative official raw:** [Niconico](https://seiga.nicovideo.jp/comic/59171)",
+      "status": "ongoing",
+      "year": 2022,
+      "contentRating": "safe",
+      "originalLanguage": "ja",
+      "lastChapter": null,
+      "updatedAt": "2026-07-12T11:49:59+00:00",
+      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fa1fe0826-e93b-4fb8-a19e-f1ca95362588%2F92676750-ab73-4d9d-94ab-e65cbe5b221f.jpg.512.jpg",
+      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fa1fe0826-e93b-4fb8-a19e-f1ca95362588%2F92676750-ab73-4d9d-94ab-e65cbe5b221f.jpg",
+      "author": "FUNA",
+      "authorId": "ab5ac8c3-0a5c-49af-b7d9-f2fe108f1d4a",
+      "artist": "Onshin Futsuu",
+      "artistId": "95ffdb5c-a89f-45a2-81fa-e161e320a15a",
+      "tags": [
+        {
+          "id": "0bc90acb-ccc1-44ca-a34a-b9f3a73259d0",
+          "name": "Reincarnation",
+          "group": "theme"
+        },
+        {
+          "id": "36fd93ea-e8b8-445e-b836-358f02b3d33d",
+          "name": "Monsters",
+          "group": "theme"
+        },
+        {
+          "id": "4d32cc48-9f00-4cca-9b5a-a839f0764984",
+          "name": "Comedy",
+          "group": "genre"
+        },
+        {
+          "id": "5fff9cde-849c-4d78-aab0-0d52b2ee1d25",
+          "name": "Survival",
+          "group": "theme"
+        },
+        {
+          "id": "87cc87cd-a395-47af-b27a-93258283bbc6",
+          "name": "Adventure",
+          "group": "genre"
+        },
+        {
+          "id": "a1f53773-c69a-4ce5-8cab-fffcd90b1565",
+          "name": "Magic",
+          "group": "theme"
+        },
+        {
+          "id": "ace04997-f6bd-436e-b261-779182193d3d",
+          "name": "Isekai",
+          "group": "genre"
+        },
+        {
+          "id": "cdc58593-87dd-415e-bbc0-2ec27bf404cc",
+          "name": "Fantasy",
+          "group": "genre"
+        }
+      ]
+    },
+    {
+      "id": "50a46dd4-53d9-45f0-82de-676221ea379f",
+      "title": "Moshi Tsuyoku Nareru Riyuu wo Shiri Sugitara",
+      "altTitle": "もし強くなれる理由を知りすぎたら",
+      "description": "What if Tanjiro had witnessed his family's massacre from the start? After Muzan's attack costs him an eye and an arm, Tanjiro takes a darker path to becoming strong. \n\nA dark-comedy fan-comic crossing Demon Slayer with Berserk.",
+      "status": "completed",
+      "year": 2020,
+      "contentRating": "safe",
+      "originalLanguage": "ja",
+      "lastChapter": "25",
+      "updatedAt": "2026-10-25T00:16:29+00:00",
+      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F50a46dd4-53d9-45f0-82de-676221ea379f%2F6b89b426-4d1c-4aff-a0de-8f63ae62d47c.jpg.512.jpg",
+      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F50a46dd4-53d9-45f0-82de-676221ea379f%2F6b89b426-4d1c-4aff-a0de-8f63ae62d47c.jpg",
+      "author": "osker0190",
+      "authorId": "53feaee7-b82e-433f-be0b-cb4111e08f6c",
+      "artist": "osker0190",
+      "artistId": "53feaee7-b82e-433f-be0b-cb4111e08f6c",
+      "tags": [
+        {
+          "id": "36fd93ea-e8b8-445e-b836-358f02b3d33d",
+          "name": "Monsters",
+          "group": "theme"
+        },
+        {
+          "id": "391b0423-d847-456f-aff0-8b0cfc03066b",
+          "name": "Action",
+          "group": "genre"
+        },
+        {
+          "id": "39730448-9a5f-48a2-85b0-a70db87b1233",
+          "name": "Demons",
+          "group": "theme"
+        },
+        {
+          "id": "4d32cc48-9f00-4cca-9b5a-a839f0764984",
+          "name": "Comedy",
+          "group": "genre"
+        },
+        {
+          "id": "799c202e-7daa-44eb-9cf7-8a3c0441531e",
+          "name": "Martial Arts",
+          "group": "theme"
+        },
+        {
+          "id": "b13b2a48-c720-44a9-9c77-39c9979373fb",
+          "name": "Doujinshi",
+          "group": "format"
+        },
+        {
+          "id": "e197df38-d0e7-43b5-9b09-2842d0c326dd",
+          "name": "Web Comic",
+          "group": "format"
+        }
+      ]
+    },
+    {
+      "id": "439a50ea-40f1-4e90-9a50-e1aa36f110f2",
+      "title": "Donna Kakkou demo Shite Kureru Kanojo",
+      "altTitle": "どんな格好でもしてくれる彼女",
+      "description": "Tidak ada sinopsis untuk manga ini.",
+      "status": "ongoing",
+      "year": 2026,
+      "contentRating": "suggestive",
+      "originalLanguage": "ja",
+      "lastChapter": null,
+      "updatedAt": "2026-07-19T05:11:45+00:00",
+      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F439a50ea-40f1-4e90-9a50-e1aa36f110f2%2F129f2510-1962-4694-9fbd-e4f5a60764be.jpg.512.jpg",
+      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F439a50ea-40f1-4e90-9a50-e1aa36f110f2%2F129f2510-1962-4694-9fbd-e4f5a60764be.jpg",
+      "author": "Hitotose Hirune",
+      "authorId": "84b9e12e-360a-401e-a4b1-6749264afd5c",
+      "artist": "Hitotose Hirune",
+      "artistId": "84b9e12e-360a-401e-a4b1-6749264afd5c",
+      "tags": [
+        {
+          "id": "e197df38-d0e7-43b5-9b09-2842d0c326dd",
+          "name": "Web Comic",
+          "group": "format"
+        }
+      ]
+    },
+    {
+      "id": "ef97c4a5-035e-4726-8ddc-cbec21f991a7",
+      "title": "Gyaru to Otaku wa Wakari Aenai.",
+      "altTitle": "ギャルとオタクはわかりあえない。",
+      "description": "Saotome is the top Gyaru in class - she's loud, known by everyone, and stylish. Otonashi, on the other hand, is the complete opposite. These two carry their own baggage that would ruin their built up identities… but what happens if they were to discover each other's secret?  \n  \nRead now to see the humorous life of how they do their best to avoid spilling the other's secret!",
+      "status": "completed",
+      "year": 2015,
+      "contentRating": "safe",
+      "originalLanguage": "ja",
+      "lastChapter": "50",
+      "updatedAt": "2026-02-14T11:00:50+00:00",
+      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fef97c4a5-035e-4726-8ddc-cbec21f991a7%2Fdc8a290e-f43e-430c-9109-4250b91e89c0.jpg.512.jpg",
+      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fef97c4a5-035e-4726-8ddc-cbec21f991a7%2Fdc8a290e-f43e-430c-9109-4250b91e89c0.jpg",
+      "author": "Kawai Rou",
+      "authorId": "fdf0421e-c5c1-41fd-be01-cc651c2a9c36",
+      "artist": "Kawai Rou",
+      "artistId": "fdf0421e-c5c1-41fd-be01-cc651c2a9c36",
+      "tags": [
+        {
+          "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
+          "name": "Romance",
+          "group": "genre"
+        },
+        {
+          "id": "4d32cc48-9f00-4cca-9b5a-a839f0764984",
+          "name": "Comedy",
+          "group": "genre"
+        },
+        {
+          "id": "a3c67850-4684-404e-9b7f-c69850ee5da6",
+          "name": "Girls' Love",
+          "group": "genre"
+        },
+        {
+          "id": "b11fda93-8f1d-4bef-b2ed-8803d3733170",
+          "name": "4-Koma",
+          "group": "format"
+        },
+        {
+          "id": "caaa44eb-cd40-4177-b930-79d3ef2afe87",
+          "name": "School Life",
+          "group": "theme"
+        },
+        {
+          "id": "e5301a23-ebd9-49dd-a0cb-2add944c7fe9",
+          "name": "Slice of Life",
+          "group": "genre"
+        },
+        {
+          "id": "fad12b5e-68ba-460e-b933-9ae8318f5b65",
+          "name": "Gyaru",
+          "group": "theme"
+        }
+      ]
+    },
+    {
       "id": "e279d973-e1dd-4cfc-b643-fda857b6f4a0",
       "title": "Otome Game no Mob Desura Naindaga",
       "altTitle": "乙女ゲーのモブですらないんだが",
@@ -175,7 +436,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fe279d973-e1dd-4cfc-b643-fda857b6f4a0%2F5f2f4133-0e39-485f-a698-34adf0d3b285.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fe279d973-e1dd-4cfc-b643-fda857b6f4a0%2F5f2f4133-0e39-485f-a698-34adf0d3b285.jpg",
       "author": "Gyokuro",
+      "authorId": "465939eb-cda6-4757-b2ac-3fa62a09c544",
       "artist": "Himeno Meno",
+      "artistId": "17981190-5cb1-410d-a9f5-828508c786d5",
       "tags": [
         {
           "id": "0bc90acb-ccc1-44ca-a34a-b9f3a73259d0",
@@ -233,7 +496,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Ffc7e628c-6c26-497a-b17d-dfea90b44652%2F0ee3a6f2-e443-45b5-acaf-a3a28317b32b.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Ffc7e628c-6c26-497a-b17d-dfea90b44652%2F0ee3a6f2-e443-45b5-acaf-a3a28317b32b.jpg",
       "author": "Nonoka Kuri",
+      "authorId": "2ab86811-6901-4622-9ac9-59d1b6582c3d",
       "artist": "Nonoka Kuri",
+      "artistId": "2ab86811-6901-4622-9ac9-59d1b6582c3d",
       "tags": [
         {
           "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
@@ -276,7 +541,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F1897e7a8-202c-44ec-b389-b09a4424760e%2F05a760ab-6d33-4b36-850e-305463bb15e2.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F1897e7a8-202c-44ec-b389-b09a4424760e%2F05a760ab-6d33-4b36-850e-305463bb15e2.jpg",
       "author": "Maki Sakura",
+      "authorId": "9a324913-0bab-416a-99bb-807ba833c5e8",
       "artist": "Kanba Yuki",
+      "artistId": "b8abb90e-1623-4015-b1f7-5ca212fab948",
       "tags": [
         {
           "id": "36fd93ea-e8b8-445e-b836-358f02b3d33d",
@@ -319,7 +586,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fac8b964c-7952-431c-8f9c-905aae4de704%2Fb8bceb08-5f10-49fd-b07c-132213e727fe.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fac8b964c-7952-431c-8f9c-905aae4de704%2Fb8bceb08-5f10-49fd-b07c-132213e727fe.jpg",
       "author": "Cho-U (초우)",
+      "authorId": "7feeb392-f234-49ec-8ef4-fda48539a419",
       "artist": "Daejin Kim (김대진)",
+      "artistId": "bf3ee68f-112d-4c8d-a91a-565146e1fbc4",
       "tags": [
         {
           "id": "391b0423-d847-456f-aff0-8b0cfc03066b",
@@ -364,64 +633,6 @@
       ]
     },
     {
-      "id": "e6909948-0a4a-4577-9e64-125837045dec",
-      "title": "Hiroin-kun",
-      "altTitle": "ヒロインくん",
-      "description": "The story of a boy, Hiroin Akira, whose mother always wanted a daughter. His father, a scientist, makes him unknowingly take a remedy that turns him from a hero into a heroine.",
-      "status": "completed",
-      "year": 1979,
-      "contentRating": "suggestive",
-      "originalLanguage": "ja",
-      "lastChapter": "25",
-      "updatedAt": "2026-09-25T16:31:18+00:00",
-      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fe6909948-0a4a-4577-9e64-125837045dec%2Fb0f494a8-5b00-4595-9c7f-4cba11d64400.jpg.512.jpg",
-      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fe6909948-0a4a-4577-9e64-125837045dec%2Fb0f494a8-5b00-4595-9c7f-4cba11d64400.jpg",
-      "author": "Yoshikawa Susumu",
-      "artist": "Yoshikawa Susumu",
-      "tags": [
-        {
-          "id": "2bd2e8d0-f146-434a-9b51-fc9ff2c5fe6a",
-          "name": "Genderswap",
-          "group": "theme"
-        },
-        {
-          "id": "391b0423-d847-456f-aff0-8b0cfc03066b",
-          "name": "Action",
-          "group": "genre"
-        },
-        {
-          "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
-          "name": "Romance",
-          "group": "genre"
-        },
-        {
-          "id": "4d32cc48-9f00-4cca-9b5a-a839f0764984",
-          "name": "Comedy",
-          "group": "genre"
-        },
-        {
-          "id": "97893a4c-12af-4dac-b6be-0dffb353568e",
-          "name": "Sexual Violence",
-          "group": "content"
-        },
-        {
-          "id": "b9af3a63-f058-46de-a9a0-e0c13906197a",
-          "name": "Drama",
-          "group": "genre"
-        },
-        {
-          "id": "caaa44eb-cd40-4177-b930-79d3ef2afe87",
-          "name": "School Life",
-          "group": "theme"
-        },
-        {
-          "id": "da2d50ca-3018-4cc0-ac7a-6b7d472a29ea",
-          "name": "Delinquents",
-          "group": "theme"
-        }
-      ]
-    },
-    {
       "id": "89ed3ec2-ebe6-4d6b-92eb-d753a8bb365e",
       "title": "Rougo ni Sonaete Isekai de 8-manmai no Kinka wo Tamemasu",
       "altTitle": "老後に備えて異世界で8万枚の金貨を貯めます",
@@ -435,7 +646,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F89ed3ec2-ebe6-4d6b-92eb-d753a8bb365e%2F2059af58-313f-4115-af64-49f4855ef9e6.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F89ed3ec2-ebe6-4d6b-92eb-d753a8bb365e%2F2059af58-313f-4115-af64-49f4855ef9e6.jpg",
       "author": "FUNA",
+      "authorId": "ab5ac8c3-0a5c-49af-b7d9-f2fe108f1d4a",
       "artist": "Keisuke Motoe",
+      "artistId": "ec5938d8-3262-495c-ac4f-2c97ec91ddcb",
       "tags": [
         {
           "id": "36fd93ea-e8b8-445e-b836-358f02b3d33d",
@@ -493,7 +706,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F0f5ab57b-bc85-423b-b2d2-19a97dfc46f1%2Fbe914b05-310a-4338-8779-2315848955f5.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F0f5ab57b-bc85-423b-b2d2-19a97dfc46f1%2Fbe914b05-310a-4338-8779-2315848955f5.jpg",
       "author": "Kishiyama Todoroki",
+      "authorId": "7bdace77-8dc6-488b-87fa-a4a0eaf991bb",
       "artist": "Kagura Sora",
+      "artistId": "d2d2c8cd-a0b0-49e9-8216-f5a65eb0bf43",
       "tags": [
         {
           "id": "36fd93ea-e8b8-445e-b836-358f02b3d33d",
@@ -551,7 +766,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fe06e6024-9688-4a38-a8b4-6facd3fe1d80%2Fbd8a30ee-1981-4920-874c-340565050469.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fe06e6024-9688-4a38-a8b4-6facd3fe1d80%2Fbd8a30ee-1981-4920-874c-340565050469.jpg",
       "author": "Shinmi Rin",
+      "authorId": "7e21f607-c3b3-4c7b-8d74-ac9ecc4e779a",
       "artist": "Shinmi Rin",
+      "artistId": "7e21f607-c3b3-4c7b-8d74-ac9ecc4e779a",
       "tags": [
         {
           "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
@@ -584,7 +801,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fe6ced9c5-ba94-4a99-b335-e878ae74170b%2Fdd6e8f74-dca1-4ae8-877b-0d740e33827d.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fe6ced9c5-ba94-4a99-b335-e878ae74170b%2Fdd6e8f74-dca1-4ae8-877b-0d740e33827d.jpg",
       "author": "Kōda",
+      "authorId": "01c2573f-679a-4375-b356-a1c00bb930f8",
       "artist": "Chikarikomori",
+      "artistId": "d301b830-ffb8-4777-ac78-bc101b796933",
       "tags": [
         {
           "id": "0bc90acb-ccc1-44ca-a34a-b9f3a73259d0",
@@ -632,7 +851,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F77bee52c-d2d6-44ad-a33a-1734c1fe696a%2F6079dd31-838b-4d61-87c4-121f3ad19158.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F77bee52c-d2d6-44ad-a33a-1734c1fe696a%2F6079dd31-838b-4d61-87c4-121f3ad19158.jpg",
       "author": "Sakano Anri",
+      "authorId": "a1746c35-50ed-4e6f-94c1-092b07440d59",
       "artist": "Sakano Anri",
+      "artistId": "a1746c35-50ed-4e6f-94c1-092b07440d59",
       "tags": [
         {
           "id": "0bc90acb-ccc1-44ca-a34a-b9f3a73259d0",
@@ -690,7 +911,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Faf857779-a400-46ef-917a-3b3a248e2221%2F0aa81729-b90d-4ff7-ac6a-c8b2551d5b64.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Faf857779-a400-46ef-917a-3b3a248e2221%2F0aa81729-b90d-4ff7-ac6a-c8b2551d5b64.jpg",
       "author": "Yudetamago",
+      "authorId": "4e62170a-0726-431d-aa35-3310cb081c25",
       "artist": "Yudetamago",
+      "artistId": "4e62170a-0726-431d-aa35-3310cb081c25",
       "tags": [
         {
           "id": "292e862b-2d17-4062-90a2-0356caa4ae27",
@@ -733,178 +956,6 @@
           "group": "genre"
         }
       ]
-    },
-    {
-      "id": "b3583a62-1184-4a61-b18e-9497a81b1673",
-      "title": "Onna no Sono no Hoshi",
-      "altTitle": "女の園の星",
-      "description": "The story starts when Kagawa, a student, delivers the class journal to Hoshi-sensei. As the students play word chain game \"Shiritori\" in the form of drawings in the remarks column of the journal, Hoshi-sensei becomes troubled...\n\n---\n- **Won the 25th Japan Media Arts Festival Social Impact Award for Manga in 2022**",
-      "status": "ongoing",
-      "year": 2020,
-      "contentRating": "safe",
-      "originalLanguage": "ja",
-      "lastChapter": null,
-      "updatedAt": "2026-09-01T12:10:38+00:00",
-      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fb3583a62-1184-4a61-b18e-9497a81b1673%2F9558a7d0-cc26-44d3-8d5b-2d4d47c80f27.jpg.512.jpg",
-      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fb3583a62-1184-4a61-b18e-9497a81b1673%2F9558a7d0-cc26-44d3-8d5b-2d4d47c80f27.jpg",
-      "author": "Wayama Yama",
-      "artist": "Wayama Yama",
-      "tags": [
-        {
-          "id": "0a39b5a1-b235-4886-a747-1d05d216532d",
-          "name": "Award Winning",
-          "group": "format"
-        },
-        {
-          "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
-          "name": "Romance",
-          "group": "genre"
-        },
-        {
-          "id": "4d32cc48-9f00-4cca-9b5a-a839f0764984",
-          "name": "Comedy",
-          "group": "genre"
-        },
-        {
-          "id": "caaa44eb-cd40-4177-b930-79d3ef2afe87",
-          "name": "School Life",
-          "group": "theme"
-        },
-        {
-          "id": "e5301a23-ebd9-49dd-a0cb-2add944c7fe9",
-          "name": "Slice of Life",
-          "group": "genre"
-        }
-      ]
-    },
-    {
-      "id": "1cdb20d4-bf4d-4f16-91a8-fa90e6e130d5",
-      "title": "Hengoku no Schwester",
-      "altTitle": "辺獄のシュヴェスタ",
-      "description": "XVI century, rapid times of extreme changes in the Holy Roman Empire.  \nThe era of \"innocent\" scholars persecuted in the name of \"Witch hunts\".  \nElla, a \"daughter of a witch\" whose family was executed by the Church, is brought to a monastery along with other witch children.  \n  \nThis historic survival epic depicts Ella's harsh fate - as well as the fate of a torture device modeled after Virgin Mary, the \"Iron Maiden\"!",
-      "status": "completed",
-      "year": 2014,
-      "contentRating": "safe",
-      "originalLanguage": "ja",
-      "lastChapter": "32",
-      "updatedAt": "2026-10-25T04:00:50+00:00",
-      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F1cdb20d4-bf4d-4f16-91a8-fa90e6e130d5%2Feeb76945-9ef3-444a-811e-dbb3211869a6.jpg.512.jpg",
-      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F1cdb20d4-bf4d-4f16-91a8-fa90e6e130d5%2Feeb76945-9ef3-444a-811e-dbb3211869a6.jpg",
-      "author": "Takeyoshi Minoru",
-      "artist": "Takeyoshi Minoru",
-      "tags": [
-        {
-          "id": "33771934-028e-4cb3-8744-691e866a923e",
-          "name": "Historical",
-          "group": "genre"
-        },
-        {
-          "id": "b29d6a3d-1569-4e7a-8caf-7557bc92cd5d",
-          "name": "Gore",
-          "group": "content"
-        },
-        {
-          "id": "b9af3a63-f058-46de-a9a0-e0c13906197a",
-          "name": "Drama",
-          "group": "genre"
-        },
-        {
-          "id": "f8f62932-27da-4fe4-8ee1-6779a8c5edba",
-          "name": "Tragedy",
-          "group": "genre"
-        }
-      ]
-    },
-    {
-      "id": "b9edc7a0-4c09-4c53-888a-204a042dda24",
-      "title": "Lycanthropia",
-      "altTitle": "リカントロピア",
-      "description": "In his youth, Masud (Zakariyyāʾ) al-Qazwini was a travelling scholar, always in search of wonders and marvels in his quest for knowledge. On one occasion, he stops by a certain land, and there hears a most curious rumor - a werewolf is lurking about! Though he has his doubts about the truth, he is nonetheless eager to investigate it. However, a few days later, he is summoned by the vizier, who needs a certain favor from him... A tale of history, werewolves, and scholarship from an unparalleled master of historical manga.",
-      "status": "completed",
-      "year": 2022,
-      "contentRating": "safe",
-      "originalLanguage": "ja",
-      "lastChapter": "1",
-      "updatedAt": "2026-10-13T19:44:43+00:00",
-      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fb9edc7a0-4c09-4c53-888a-204a042dda24%2Fa98af07c-e008-4acb-bb1e-650132100ac9.png.512.jpg",
-      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fb9edc7a0-4c09-4c53-888a-204a042dda24%2Fa98af07c-e008-4acb-bb1e-650132100ac9.png",
-      "author": "Tomato Soup",
-      "artist": "Tomato Soup",
-      "tags": [
-        {
-          "id": "0234a31e-a729-4e28-9d6a-3f87c4966b9e",
-          "name": "Oneshot",
-          "group": "format"
-        },
-        {
-          "id": "33771934-028e-4cb3-8744-691e866a923e",
-          "name": "Historical",
-          "group": "genre"
-        },
-        {
-          "id": "3de8c75d-8ee3-48ff-98ee-e20a65c86451",
-          "name": "Animals",
-          "group": "theme"
-        },
-        {
-          "id": "b9af3a63-f058-46de-a9a0-e0c13906197a",
-          "name": "Drama",
-          "group": "genre"
-        },
-        {
-          "id": "c8cbe35b-1b2b-4a3f-9c37-db84c4514856",
-          "name": "Medical",
-          "group": "genre"
-        },
-        {
-          "id": "eabc5b4c-6aff-42f3-b657-3e90cbd00b75",
-          "name": "Supernatural",
-          "group": "theme"
-        },
-        {
-          "id": "ee968100-4191-4968-93d3-f82d72be7e46",
-          "name": "Mystery",
-          "group": "genre"
-        }
-      ]
-    },
-    {
-      "id": "b155dd4b-4db3-4dfd-80b9-d7690ee0c053",
-      "title": "Baka ni Kokuhaku",
-      "altTitle": "バカに告白",
-      "description": "Ayumu Otsuki is a space lover with an ambitious dream—to meet an alien. Despite lacking friends or romantic experience, she started the Astronomy Association by herself, which is the only place where she feels she belongs. One day after school, she dropped an association poster, but an upperclassman picked it up for her. The upperclassman introduced herself as Hayami, and Ayumu completely fell in love at first sight when Hayami recognized her passion! Ayumu's mind is now filled with love, and she goes all out to share her feelings. However, Senpai seems to already adore something else. She fell for a fitness junkie?! A peculiar girl's straightforward romcom!!",
-      "status": "completed",
-      "year": 2025,
-      "contentRating": "safe",
-      "originalLanguage": "ja",
-      "lastChapter": "15",
-      "updatedAt": "2026-10-08T03:16:04+00:00",
-      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fb155dd4b-4db3-4dfd-80b9-d7690ee0c053%2F21507e2d-3936-4e25-8448-5d9816687db6.jpg.512.jpg",
-      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fb155dd4b-4db3-4dfd-80b9-d7690ee0c053%2F21507e2d-3936-4e25-8448-5d9816687db6.jpg",
-      "author": "Yasaka Shuu",
-      "artist": "Yasaka Shuu",
-      "tags": [
-        {
-          "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
-          "name": "Romance",
-          "group": "genre"
-        },
-        {
-          "id": "4d32cc48-9f00-4cca-9b5a-a839f0764984",
-          "name": "Comedy",
-          "group": "genre"
-        },
-        {
-          "id": "a3c67850-4684-404e-9b7f-c69850ee5da6",
-          "name": "Girls' Love",
-          "group": "genre"
-        },
-        {
-          "id": "caaa44eb-cd40-4177-b930-79d3ef2afe87",
-          "name": "School Life",
-          "group": "theme"
-        }
-      ]
     }
   ],
   "popular": [
@@ -922,7 +973,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F32d76d19-8a05-4db0-9fc2-e0b0648fe9d0%2Fe90bdc47-c8b9-4df7-b2c0-17641b645ee1.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F32d76d19-8a05-4db0-9fc2-e0b0648fe9d0%2Fe90bdc47-c8b9-4df7-b2c0-17641b645ee1.jpg",
       "author": "h-goon (현군)",
+      "authorId": "5671fb47-ebdd-450f-9d7d-347353a926ae",
       "artist": "REDICE Studio (레드아이스 스튜디오)",
+      "artistId": "50200613-ef62-4ec8-b879-6d9ecd022e66",
       "tags": [
         {
           "id": "0a39b5a1-b235-4886-a747-1d05d216532d",
@@ -980,7 +1033,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Faa6c76f7-5f5f-46b6-a800-911145f81b9b%2Fd3e909b9-c667-48a5-beec-ac96f23fa228.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Faa6c76f7-5f5f-46b6-a800-911145f81b9b%2Fd3e909b9-c667-48a5-beec-ac96f23fa228.jpg",
       "author": "Fukuda Shinichi",
+      "authorId": "4bba09c3-40c4-4cd6-9089-c47f73d5e1eb",
       "artist": "Fukuda Shinichi",
+      "artistId": "4bba09c3-40c4-4cd6-9089-c47f73d5e1eb",
       "tags": [
         {
           "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
@@ -1028,7 +1083,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F77bee52c-d2d6-44ad-a33a-1734c1fe696a%2F6079dd31-838b-4d61-87c4-121f3ad19158.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F77bee52c-d2d6-44ad-a33a-1734c1fe696a%2F6079dd31-838b-4d61-87c4-121f3ad19158.jpg",
       "author": "Sakano Anri",
+      "authorId": "a1746c35-50ed-4e6f-94c1-092b07440d59",
       "artist": "Sakano Anri",
+      "artistId": "a1746c35-50ed-4e6f-94c1-092b07440d59",
       "tags": [
         {
           "id": "0bc90acb-ccc1-44ca-a34a-b9f3a73259d0",
@@ -1086,7 +1143,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fe78a489b-6632-4d61-b00b-5206f5b8b22b%2F420ec3c0-2dab-47f2-8f9e-a9e0c3faf16d.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fe78a489b-6632-4d61-b00b-5206f5b8b22b%2F420ec3c0-2dab-47f2-8f9e-a9e0c3faf16d.jpg",
       "author": "Fuse",
+      "authorId": "dbf8af05-7173-49f3-bf60-f4ea3f586486",
       "artist": "Kawakami Taiki",
+      "artistId": "560748c6-fbe7-49f5-8258-7b3292942101",
       "tags": [
         {
           "id": "0bc90acb-ccc1-44ca-a34a-b9f3a73259d0",
@@ -1144,7 +1203,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fa77742b1-befd-49a4-bff5-1ad4e6b0ef7b%2F6e518bd1-5f60-446b-8832-bfe6bf74834b.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fa77742b1-befd-49a4-bff5-1ad4e6b0ef7b%2F6e518bd1-5f60-446b-8832-bfe6bf74834b.jpg",
       "author": "Fujimoto Tatsuki",
+      "authorId": "f85a5b93-3c87-4c61-9032-07ceacbb9e64",
       "artist": "Fujimoto Tatsuki",
+      "artistId": "f85a5b93-3c87-4c61-9032-07ceacbb9e64",
       "tags": [
         {
           "id": "0a39b5a1-b235-4886-a747-1d05d216532d",
@@ -1202,7 +1263,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fb0b721ff-c388-4486-aa0f-c2b0bb321512%2Fb9a049b0-186b-4714-a83e-bb965458914a.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fb0b721ff-c388-4486-aa0f-c2b0bb321512%2Fb9a049b0-186b-4714-a83e-bb965458914a.jpg",
       "author": "Yamada Kanehito",
+      "authorId": "b3136811-9761-4606-93cf-583a00dde5e9",
       "artist": "Abe Tsukasa",
+      "artistId": "ff98c5c0-daca-4c97-8c3d-1e2b98d04d9b",
       "tags": [
         {
           "id": "0a39b5a1-b235-4886-a747-1d05d216532d",
@@ -1260,7 +1323,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F28c77530-dfa1-4b05-8ec3-998960ba24d4%2F59acf82f-745f-4192-bffb-47d75bb1113a.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F28c77530-dfa1-4b05-8ec3-998960ba24d4%2F59acf82f-745f-4192-bffb-47d75bb1113a.jpg",
       "author": "Mishima Yomu",
+      "authorId": "5a37f84f-9cb9-46bc-bd16-eddb4bec5264",
       "artist": "Shiosato Jun",
+      "artistId": "41919cea-1bd4-4ad4-8ee6-98ce3d0c7387",
       "tags": [
         {
           "id": "0bc90acb-ccc1-44ca-a34a-b9f3a73259d0",
@@ -1318,7 +1383,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fd8a959f7-648e-4c8d-8f23-f1f3f8e129f3%2Fd22cfde3-268a-48a3-b5ed-73772834764d.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fd8a959f7-648e-4c8d-8f23-f1f3f8e129f3%2Fd22cfde3-268a-48a3-b5ed-73772834764d.jpg",
       "author": "ONE",
+      "authorId": "16b98239-6452-4859-b6df-fdb1c7f12b52",
       "artist": "Murata Yuusuke",
+      "artistId": "47cd4e57-3fc4-4d76-97e4-b3933a5b05ef",
       "tags": [
         {
           "id": "0a39b5a1-b235-4886-a747-1d05d216532d",
@@ -1376,7 +1443,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fbd6d0982-0091-4945-ad70-c028ed3c0917%2F6a9f3d32-b7bb-478a-9c76-54868276c26f.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fbd6d0982-0091-4945-ad70-c028ed3c0917%2F6a9f3d32-b7bb-478a-9c76-54868276c26f.jpg",
       "author": "Rifujin na Magonote",
+      "authorId": "d7f4dd59-4ffc-44df-b938-173a6140ac55",
       "artist": "Fujikawa Yuka",
+      "artistId": "e1a759e3-8287-4f66-b99e-74dd25f79f42",
       "tags": [
         {
           "id": "0bc90acb-ccc1-44ca-a34a-b9f3a73259d0",
@@ -1434,7 +1503,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fa96676e5-8ae2-425e-b549-7f15dd34a6d8%2Ff8f44329-1dd7-4301-9ec7-a4a76182e8eb.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fa96676e5-8ae2-425e-b549-7f15dd34a6d8%2Ff8f44329-1dd7-4301-9ec7-a4a76182e8eb.jpg",
       "author": "Oda Tomohito",
+      "authorId": "4218b1ee-cde4-44dc-84c7-d9a794a7e56d",
       "artist": "Oda Tomohito",
+      "artistId": "4218b1ee-cde4-44dc-84c7-d9a794a7e56d",
       "tags": [
         {
           "id": "0a39b5a1-b235-4886-a747-1d05d216532d",
@@ -1477,7 +1548,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F58bc83a0-1808-484e-88b9-17e167469e23%2F0d6b4727-2a84-43a7-85ec-0f7d307033e3.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F58bc83a0-1808-484e-88b9-17e167469e23%2F0d6b4727-2a84-43a7-85ec-0f7d307033e3.jpg",
       "author": "Kinojo Miya",
+      "authorId": "98a37e5d-1ffb-4a29-a4c2-87ff07e8a940",
       "artist": "Itomachi Akine",
+      "artistId": "468357b3-e0c0-45ab-b1b6-d07c3b7a1a9e",
       "tags": [
         {
           "id": "36fd93ea-e8b8-445e-b836-358f02b3d33d",
@@ -1535,7 +1608,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fd86cf65b-5f6c-437d-a0af-19a31f94ec55%2F5e4a4e0e-b2a6-4e7e-8e6e-169a8d26c7a8.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fd86cf65b-5f6c-437d-a0af-19a31f94ec55%2F5e4a4e0e-b2a6-4e7e-8e6e-169a8d26c7a8.jpg",
       "author": "774 (Nanashi)",
+      "authorId": "7e552c08-f7cf-4e0e-9723-409d749dd77c",
       "artist": "774 (Nanashi)",
+      "artistId": "7e552c08-f7cf-4e0e-9723-409d749dd77c",
       "tags": [
         {
           "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
@@ -1585,7 +1660,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F1044287a-73df-48d0-b0b2-5327f32dd651%2F92e82cbb-de1e-47f0-a3ae-22f480a59994.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F1044287a-73df-48d0-b0b2-5327f32dd651%2F92e82cbb-de1e-47f0-a3ae-22f480a59994.jpg",
       "author": "Araki Hirohiko",
+      "authorId": "03e4afc4-cd94-45a0-bb36-dfd34fa370b3",
       "artist": "Araki Hirohiko",
+      "artistId": "03e4afc4-cd94-45a0-bb36-dfd34fa370b3",
       "tags": [
         {
           "id": "0a39b5a1-b235-4886-a747-1d05d216532d",
@@ -1643,7 +1720,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fa9dd451c-3c45-4d66-a818-4e1b78855838%2Ffe86e765-9b89-4191-a9f1-62c00b6d8ffb.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fa9dd451c-3c45-4d66-a818-4e1b78855838%2Ffe86e765-9b89-4191-a9f1-62c00b6d8ffb.jpg",
       "author": "Sugiura Masafumi",
+      "authorId": "2efffa8c-2006-4db1-bc0f-c7ad427d5a4b",
       "artist": "Kuzumi Taiyou",
+      "artistId": "8d32f3ca-ed14-4220-a2a7-a29cc64aa391",
       "tags": [
         {
           "id": "69964a64-2f90-4d33-beeb-f3ed2875eb4c",
@@ -1681,7 +1760,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F0d4b349e-b7a2-4d63-9ce0-f864e790c4a2%2F8299ead2-5d96-4f41-8ce5-b00c95505449.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F0d4b349e-b7a2-4d63-9ce0-f864e790c4a2%2F8299ead2-5d96-4f41-8ce5-b00c95505449.jpg",
       "author": "Fukuda Ikumi",
+      "authorId": "43c7a4d9-c608-43e8-ad3e-6f721133cf96",
       "artist": "Fukuda Ikumi",
+      "artistId": "43c7a4d9-c608-43e8-ad3e-6f721133cf96",
       "tags": [
         {
           "id": "33771934-028e-4cb3-8744-691e866a923e",
@@ -1729,7 +1810,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F8b8102da-c875-4dae-a79c-c62e817ff3f5%2Fc59932dc-ec0b-4ba0-9cd7-1a45398e38fa.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F8b8102da-c875-4dae-a79c-c62e817ff3f5%2Fc59932dc-ec0b-4ba0-9cd7-1a45398e38fa.jpg",
       "author": "Gomyang",
+      "authorId": "8733efae-b103-44ee-9c36-ddc36c16bfeb",
       "artist": "Gomyang",
+      "artistId": "8733efae-b103-44ee-9c36-ddc36c16bfeb",
       "tags": [
         {
           "id": "391b0423-d847-456f-aff0-8b0cfc03066b",
@@ -1787,7 +1870,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fd104c1c3-5d20-484d-9f36-24f149a6c889%2Fba17c39a-452d-41c9-ba6a-c3fcd0d3a38f.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fd104c1c3-5d20-484d-9f36-24f149a6c889%2Fba17c39a-452d-41c9-ba6a-c3fcd0d3a38f.jpg",
       "author": "Nagano",
+      "authorId": "cc3e41ba-88c8-4c1f-bc5c-1982f85ccead",
       "artist": "Nagano",
+      "artistId": "cc3e41ba-88c8-4c1f-bc5c-1982f85ccead",
       "tags": [
         {
           "id": "3de8c75d-8ee3-48ff-98ee-e20a65c86451",
@@ -1835,7 +1920,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fd7f56ace-cd30-48b9-8b64-afeca0077fca%2Fc2613a1e-426f-4ee3-a6f7-caf003324dc7.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fd7f56ace-cd30-48b9-8b64-afeca0077fca%2Fc2613a1e-426f-4ee3-a6f7-caf003324dc7.jpg",
       "author": "Lee Hyunmin (이현민)",
+      "authorId": "45b9fad4-8bde-41bd-893f-5b4bf5a652b5",
       "artist": "Kim Hyeon-Soo (김현수)",
+      "artistId": "60fb4030-9872-4cf3-a013-2fb22dee9e53",
       "tags": [
         {
           "id": "0bc90acb-ccc1-44ca-a34a-b9f3a73259d0",
@@ -1893,7 +1980,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F6ecc62e4-25ad-4102-b0d8-580a8023d2fb%2F571d1d00-9ab1-44ce-b6ab-aa72584ee2f9.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F6ecc62e4-25ad-4102-b0d8-580a8023d2fb%2F571d1d00-9ab1-44ce-b6ab-aa72584ee2f9.jpg",
       "author": "Yuama",
+      "authorId": "dda1bf5a-2d91-4cba-bfe8-6bae603a5091",
       "artist": "Yuama",
+      "artistId": "dda1bf5a-2d91-4cba-bfe8-6bae603a5091",
       "tags": [
         {
           "id": "0a39b5a1-b235-4886-a747-1d05d216532d",
@@ -1951,7 +2040,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F984df7d5-ae4c-43c6-aa65-737b9f37e5ef%2F290cb06d-6f0f-402d-b88c-9da893ec9b07.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F984df7d5-ae4c-43c6-aa65-737b9f37e5ef%2F290cb06d-6f0f-402d-b88c-9da893ec9b07.jpg",
       "author": "JIXKSEE (직씨)",
+      "authorId": "299ca291-357a-4cc4-aa4d-1175da4c50a0",
       "artist": "JIXKSEE (직씨)",
+      "artistId": "299ca291-357a-4cc4-aa4d-1175da4c50a0",
       "tags": [
         {
           "id": "3e2b8dae-350e-4ab8-a8ce-016e844b9f0d",
@@ -1999,7 +2090,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F418791c0-35cf-4f87-936b-acd9cddf0989%2F6e823d0e-103a-4cf9-a312-a3a292ccb12d.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F418791c0-35cf-4f87-936b-acd9cddf0989%2F6e823d0e-103a-4cf9-a312-a3a292ccb12d.jpg",
       "author": "Mikami Saka",
+      "authorId": "3d3ec54f-2eb7-4fb7-b2eb-0372c9f1b92e",
       "artist": "Mikami Saka",
+      "artistId": "3d3ec54f-2eb7-4fb7-b2eb-0372c9f1b92e",
       "tags": [
         {
           "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
@@ -2042,7 +2135,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F2c4b353f-d968-461b-be49-4f2599189a79%2F531cd3f0-6ace-4812-a74a-25dcc2271529.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F2c4b353f-d968-461b-be49-4f2599189a79%2F531cd3f0-6ace-4812-a74a-25dcc2271529.jpg",
       "author": "Seijun Tombo",
+      "authorId": "87436933-ca0d-4682-b180-a476ea460b01",
       "artist": "Seijun Tombo",
+      "artistId": "87436933-ca0d-4682-b180-a476ea460b01",
       "tags": [
         {
           "id": "391b0423-d847-456f-aff0-8b0cfc03066b",
@@ -2090,7 +2185,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F58be6aa6-06cb-4ca5-bd20-f1392ce451fb%2Fff8d4f70-1797-4036-8241-c63b2237254e.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F58be6aa6-06cb-4ca5-bd20-f1392ce451fb%2Fff8d4f70-1797-4036-8241-c63b2237254e.jpg",
       "author": "Azuma Kiyohiko",
+      "authorId": "e3d5ec0e-9ecb-4ac6-86b2-59ddad281b5b",
       "artist": "Azuma Kiyohiko",
+      "artistId": "e3d5ec0e-9ecb-4ac6-86b2-59ddad281b5b",
       "tags": [
         {
           "id": "0a39b5a1-b235-4886-a747-1d05d216532d",
@@ -2128,7 +2225,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fd90ea6cb-7bc3-4d80-8af0-28557e6c4e17%2Fd3430039-ea47-48c3-9b8b-cf80200d7f0b.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fd90ea6cb-7bc3-4d80-8af0-28557e6c4e17%2Fd3430039-ea47-48c3-9b8b-cf80200d7f0b.jpg",
       "author": "Kui Ryouko",
+      "authorId": "22470bea-8c6c-40ff-943c-d1da388a8eac",
       "artist": "Kui Ryouko",
+      "artistId": "22470bea-8c6c-40ff-943c-d1da388a8eac",
       "tags": [
         {
           "id": "0a39b5a1-b235-4886-a747-1d05d216532d",
@@ -2186,7 +2285,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fb30dfee3-9d1d-4e8d-bfbe-8fcabc3c96f6%2Fee149ab2-df5f-41af-97ea-82598bce1c71.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fb30dfee3-9d1d-4e8d-bfbe-8fcabc3c96f6%2Fee149ab2-df5f-41af-97ea-82598bce1c71.jpg",
       "author": "Araki Hirohiko",
+      "authorId": "03e4afc4-cd94-45a0-bb36-dfd34fa370b3",
       "artist": "Araki Hirohiko",
+      "artistId": "03e4afc4-cd94-45a0-bb36-dfd34fa370b3",
       "tags": [
         {
           "id": "0a39b5a1-b235-4886-a747-1d05d216532d",
@@ -2244,7 +2345,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F151bca3e-db98-4ad2-8d8d-239943b91437%2F8adee174-8d08-45d7-ae3c-eea089f4d19e.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F151bca3e-db98-4ad2-8d8d-239943b91437%2F8adee174-8d08-45d7-ae3c-eea089f4d19e.jpg",
       "author": "靴下猫腰子",
+      "authorId": "8b7cab93-5c2e-4b35-96b4-78aa3613a84c",
       "artist": "靴下猫腰子",
+      "artistId": "8b7cab93-5c2e-4b35-96b4-78aa3613a84c",
       "tags": [
         {
           "id": "3de8c75d-8ee3-48ff-98ee-e20a65c86451",
@@ -2297,7 +2400,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fc8a0426d-539b-4f6a-9537-fbccf4962529%2F91044c8e-cb3c-45ed-871c-9993aaf134b6.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fc8a0426d-539b-4f6a-9537-fbccf4962529%2F91044c8e-cb3c-45ed-871c-9993aaf134b6.jpg",
       "author": "Kuzushiro",
+      "authorId": "21e59462-49ff-46e1-ba4f-73bc9ea0e77c",
       "artist": "Kuzushiro",
+      "artistId": "21e59462-49ff-46e1-ba4f-73bc9ea0e77c",
       "tags": [
         {
           "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
@@ -2335,7 +2440,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F3fba42cf-2ad6-4c30-a7ab-46cb8149208a%2F4494d4fb-8772-47c0-831f-f49203819297.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F3fba42cf-2ad6-4c30-a7ab-46cb8149208a%2F4494d4fb-8772-47c0-831f-f49203819297.jpg",
       "author": "Asagiri Kafka",
+      "authorId": "3380a3aa-0e08-4ff8-8f0b-c3e63b371837",
       "artist": "Harukawa 35",
+      "artistId": "c5fa2d71-3098-441e-afbd-57af62794b55",
       "tags": [
         {
           "id": "391b0423-d847-456f-aff0-8b0cfc03066b",
@@ -2393,7 +2500,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fea47525d-99df-45b5-9103-dd853f49f8c3%2F36bf283d-531f-4937-a3a7-2a8a05ccae2e.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fea47525d-99df-45b5-9103-dd853f49f8c3%2F36bf283d-531f-4937-a3a7-2a8a05ccae2e.jpg",
       "author": "Hiroja",
+      "authorId": "1219257e-9850-4abe-8e37-db9ef91ec45e",
       "artist": "Hiroja",
+      "artistId": "1219257e-9850-4abe-8e37-db9ef91ec45e",
       "tags": [
         {
           "id": "391b0423-d847-456f-aff0-8b0cfc03066b",
@@ -2451,7 +2560,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fa1c7c817-4e59-43b7-9365-09675a149a6f%2F2f4aca53-64c7-46ac-ae85-3bc9b3169890.png.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fa1c7c817-4e59-43b7-9365-09675a149a6f%2F2f4aca53-64c7-46ac-ae85-3bc9b3169890.png",
       "author": "Oda Eiichirou (尾田栄一郎)",
+      "authorId": "b6045e2c-28f4-4ce0-b4dd-b14070f2f5ae",
       "artist": "Oda Eiichirou (尾田栄一郎)",
+      "artistId": "b6045e2c-28f4-4ce0-b4dd-b14070f2f5ae",
       "tags": [
         {
           "id": "0a39b5a1-b235-4886-a747-1d05d216532d",
@@ -2509,7 +2620,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fb603c211-d1f9-4145-a2ac-04dcd5f06329%2Fe73462f5-466a-47e3-9c1e-48dea8ddbab4.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fb603c211-d1f9-4145-a2ac-04dcd5f06329%2Fe73462f5-466a-47e3-9c1e-48dea8ddbab4.jpg",
       "author": "Harusono Shou",
+      "authorId": "d952cf89-f852-4883-94e7-a1bfa68d090f",
       "artist": "Harusono Shou",
+      "artistId": "d952cf89-f852-4883-94e7-a1bfa68d090f",
       "tags": [
         {
           "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
@@ -2552,7 +2665,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fbb8310e4-6050-4a43-984e-f7bbdfce23b1%2F54b58da7-7172-4548-a3fb-20b71c1882c0.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fbb8310e4-6050-4a43-984e-f7bbdfce23b1%2F54b58da7-7172-4548-a3fb-20b71c1882c0.jpg",
       "author": "Sakamoto Shinichi",
+      "authorId": "b5404016-ed55-429d-ab61-1ebbccf53815",
       "artist": "Sakamoto Shinichi",
+      "artistId": "b5404016-ed55-429d-ab61-1ebbccf53815",
       "tags": [
         {
           "id": "0a39b5a1-b235-4886-a747-1d05d216532d",
@@ -2600,7 +2715,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F8516915a-51a2-44e0-a915-aff325216a26%2F03d27fbc-73aa-4d30-8cbb-22c27c50c739.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F8516915a-51a2-44e0-a915-aff325216a26%2F03d27fbc-73aa-4d30-8cbb-22c27c50c739.jpg",
       "author": "Saeki-san",
+      "authorId": "0edd2663-49bc-48d6-a05c-c92a655b9c13",
       "artist": "Puyo",
+      "artistId": "c3748421-5c52-4dfe-87a1-0d2f82a8c90b",
       "tags": [
         {
           "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
@@ -2643,7 +2760,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fdf9be021-ff37-419e-ba6e-dda3e28eb763%2F128fe354-b955-473a-b620-a1da2e7a715c.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fdf9be021-ff37-419e-ba6e-dda3e28eb763%2F128fe354-b955-473a-b620-a1da2e7a715c.jpg",
       "author": "Sakura Amyuu",
+      "authorId": "5888fd80-4d88-4e1a-a002-969568b83d79",
       "artist": "Sakura Amyuu",
+      "artistId": "5888fd80-4d88-4e1a-a002-969568b83d79",
       "tags": [
         {
           "id": "b9af3a63-f058-46de-a9a0-e0c13906197a",
@@ -2681,7 +2800,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fb0b721ff-c388-4486-aa0f-c2b0bb321512%2Fb9a049b0-186b-4714-a83e-bb965458914a.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fb0b721ff-c388-4486-aa0f-c2b0bb321512%2Fb9a049b0-186b-4714-a83e-bb965458914a.jpg",
       "author": "Yamada Kanehito",
+      "authorId": "b3136811-9761-4606-93cf-583a00dde5e9",
       "artist": "Abe Tsukasa",
+      "artistId": "ff98c5c0-daca-4c97-8c3d-1e2b98d04d9b",
       "tags": [
         {
           "id": "0a39b5a1-b235-4886-a747-1d05d216532d",
@@ -2739,7 +2860,9 @@
       "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F1693697a-783c-4d3c-a2d3-dc069e137a23%2Fbc55de2a-47dd-41cb-9338-75b3f0650a69.jpg.512.jpg",
       "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F1693697a-783c-4d3c-a2d3-dc069e137a23%2Fbc55de2a-47dd-41cb-9338-75b3f0650a69.jpg",
       "author": "Wanan",
+      "authorId": "d16dfec4-5289-4c0c-b15b-78b292bcef48",
       "artist": "Wanan",
+      "artistId": "d16dfec4-5289-4c0c-b15b-78b292bcef48",
       "tags": [
         {
           "id": "0a39b5a1-b235-4886-a747-1d05d216532d",

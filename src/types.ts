@@ -18,7 +18,9 @@ export interface Manga {
   coverUrl: string;
   coverUrlFull?: string;
   author: string;
+  authorId?: string;
   artist: string;
+  artistId?: string;
   tags: MangaTag[];
   rating?: string | null;
   follows?: number | null;
