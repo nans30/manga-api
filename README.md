@@ -30,6 +30,6 @@ Dirancang khusus agar nyaman dibaca di **PC (Desktop)** maupun **HP (Mobile)** d
    ```
 3. Buka di browser: **`http://localhost:5173`**
 
-*(Catatan: Anda **tidak perlu** menyalakan MySQL, PostgreSQL, atau Nginx di FlyEnv!)*
+
 
 ---
