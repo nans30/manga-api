@@ -6,8 +6,17 @@ import {
   NavBookmarkIcon,
   NavUserIcon,
   HeaderBagIcon,
+  FlagIdIcon,
+  FlagEnIcon,
 } from './Icons';
-import { getTheme, setTheme, ThemeMode, getBookmarks } from '../storage';
+import {
+  getTheme,
+  setTheme,
+  ThemeMode,
+  getBookmarks,
+  useSysLang,
+  cacheMangaObjects,
+} from '../storage';
 import { Manga } from '../types';
 import { Sun, Moon, Search, X, User, Loader2 } from 'lucide-react';
 
@@ -15,6 +24,7 @@ export const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [theme, setThemeState] = useState<ThemeMode>(() => getTheme());
+  const [sysLang, setSysLang] = useSysLang();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<Manga[]>([]);
@@ -34,7 +44,6 @@ export const Navbar: React.FC = () => {
     return () => window.removeEventListener('ciaran-storage-update', updateCounts);
   }, []);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -48,7 +57,6 @@ export const Navbar: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Live search suggestions showing Title + Author Name (for disambiguating same-titled manga)
   useEffect(() => {
     const q = searchQuery.trim();
     if (q.length < 2) {
@@ -63,6 +71,7 @@ export const Navbar: React.FC = () => {
         .then((r) => r.json())
         .then((json) => {
           if (json.data) {
+            cacheMangaObjects(json.data);
             setSuggestions(json.data);
           }
         })
@@ -77,6 +86,10 @@ export const Navbar: React.FC = () => {
     const next: ThemeMode = theme === 'dark' ? 'light' : 'dark';
     setThemeState(next);
     setTheme(next);
+  };
+
+  const toggleSysLang = () => {
+    setSysLang(sysLang === 'id' ? 'en' : 'id');
   };
 
   if (location.pathname.startsWith('/read/')) {
@@ -106,7 +119,7 @@ export const Navbar: React.FC = () => {
       {/* Desktop Top Header */}
       <header className="hidden md:block sticky top-0 z-40 backdrop-blur-xl bg-[#f8f8f8]/90 dark:bg-[#121212]/90 border-b border-[#c1c1c1]/30 dark:border-[#262626] transition-colors">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between gap-6">
-          {/* Brand Logo (Pure CIARAN without "MangaDex Reader") */}
+          {/* Brand Logo */}
           <Link to="/" className="flex items-center gap-3 group shrink-0">
             <div className="w-10 h-10 rounded-xl bg-[#f9cb55] flex items-center justify-center text-[#121212] font-manga text-2xl shadow-md group-hover:scale-105 transition-transform">
               C
@@ -139,7 +152,9 @@ export const Navbar: React.FC = () => {
               }`}
             >
               <NavCompassIcon active={isBooks} className="w-4 h-4" />
-              <span className="font-manga text-sm">ALL BOOKS</span>
+              <span className="font-manga text-sm">
+                {sysLang === 'id' ? 'SEMUA KOMIK' : 'ALL BOOKS'}
+              </span>
             </Link>
 
             <Link
@@ -151,13 +166,15 @@ export const Navbar: React.FC = () => {
               }`}
             >
               <NavBookmarkIcon active={isLibrary} className="w-4 h-4" />
-              <span className="font-manga text-sm">SAVED</span>
+              <span className="font-manga text-sm">
+                {sysLang === 'id' ? 'KOLEKSI' : 'SAVED'}
+              </span>
             </Link>
           </nav>
 
-          {/* Desktop Right Search + Live Author Disambiguation Dropdown + Theme + Bag */}
-          <div className="flex items-center gap-3">
-            <div ref={searchContainerRef} className="relative w-72 lg:w-80">
+          {/* Desktop Right: Search + System Language Icon + Theme Switch Icon + Bag Icon */}
+          <div className="flex items-center gap-2.5">
+            <div ref={searchContainerRef} className="relative w-64 lg:w-72">
               <form onSubmit={handleSearch}>
                 <Search className="w-4 h-4 text-[#6e6e6e] dark:text-[#c1c1c1] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
@@ -168,7 +185,11 @@ export const Navbar: React.FC = () => {
                     setSearchQuery(e.target.value);
                     setDropdownOpen(true);
                   }}
-                  placeholder="Cari judul manga atau nama pembuat..."
+                  placeholder={
+                    sysLang === 'id'
+                      ? 'Cari judul atau pembuat...'
+                      : 'Search title or author...'
+                  }
                   className="w-full bg-[#ececec] dark:bg-[#1b1b1b] border border-[#c1c1c1]/40 dark:border-[#2b2b2b] focus:border-[#f9cb55] rounded-xl pl-10 pr-8 py-2 text-xs text-[#121212] dark:text-[#f8f8f8] placeholder:text-[#6e6e6e] dark:placeholder:text-[#c1c1c1] focus:outline-none transition-colors"
                 />
                 {searchQuery && (
@@ -191,11 +212,13 @@ export const Navbar: React.FC = () => {
                   {searching ? (
                     <div className="p-4 flex items-center justify-center gap-2 text-xs text-[#6e6e6e] dark:text-[#c1c1c1]">
                       <Loader2 className="w-4 h-4 animate-spin text-[#f9cb55]" />
-                      Mencari manga & pembuat...
+                      {sysLang === 'id' ? 'Mencari...' : 'Searching...'}
                     </div>
                   ) : suggestions.length === 0 ? (
                     <div className="p-4 text-center text-xs text-[#6e6e6e] dark:text-[#c1c1c1]">
-                      Tidak ditemukan hasil untuk "{searchQuery}"
+                      {sysLang === 'id'
+                        ? `Tidak ada hasil untuk "${searchQuery}"`
+                        : `No results for "${searchQuery}"`}
                     </div>
                   ) : (
                     <div className="divide-y divide-[#c1c1c1]/20 dark:divide-[#262626] max-h-96 overflow-y-auto">
@@ -203,6 +226,7 @@ export const Navbar: React.FC = () => {
                         <Link
                           key={m.id}
                           to={`/manga/${m.id}`}
+                          state={{ manga: m }}
                           onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-3 p-2.5 hover:bg-[#ececec]/70 dark:hover:bg-[#242424] transition-colors"
                         >
@@ -232,7 +256,9 @@ export const Navbar: React.FC = () => {
                         onClick={handleSearch}
                         className="w-full py-2.5 text-center text-xs font-bold text-[#121212] dark:text-[#f9cb55] bg-[#f9cb55]/15 hover:bg-[#f9cb55]/25 transition-colors"
                       >
-                        Lihat semua hasil "{searchQuery}" →
+                        {sysLang === 'id'
+                          ? `Lihat semua hasil "${searchQuery}" →`
+                          : `See all results for "${searchQuery}" →`}
                       </button>
                     </div>
                   )}
@@ -240,7 +266,24 @@ export const Navbar: React.FC = () => {
               )}
             </div>
 
-            {/* Light / Dark Mode Button */}
+            {/* System Language Icon Switcher (ID <-> EN) right next to Light/Dark Mode */}
+            <button
+              onClick={toggleSysLang}
+              className="p-2.5 rounded-xl bg-[#ececec] dark:bg-[#1b1b1b] border border-[#c1c1c1]/40 dark:border-[#2b2b2b] hover:border-[#f9cb55] transition-colors flex items-center justify-center"
+              title={
+                sysLang === 'id'
+                  ? 'Bahasa Sistem: Indonesia (Klik ganti ke Inggris)'
+                  : 'System Language: English (Click to switch to Indonesian)'
+              }
+            >
+              {sysLang === 'id' ? (
+                <FlagIdIcon className="w-5 h-5" />
+              ) : (
+                <FlagEnIcon className="w-5 h-5" />
+              )}
+            </button>
+
+            {/* Light / Dark Mode Icon Button */}
             <button
               onClick={toggleTheme}
               className="p-2.5 rounded-xl bg-[#ececec] dark:bg-[#1b1b1b] border border-[#c1c1c1]/40 dark:border-[#2b2b2b] text-[#121212] dark:text-[#f8f8f8] hover:border-[#f9cb55] transition-colors"
@@ -257,7 +300,7 @@ export const Navbar: React.FC = () => {
             <Link
               to="/library"
               className="relative p-2.5 rounded-xl bg-[#ececec] dark:bg-[#1b1b1b] border border-[#c1c1c1]/40 dark:border-[#2b2b2b] text-[#121212] dark:text-[#f8f8f8] hover:border-[#f9cb55] transition-colors"
-              title="Koleksi Komik"
+              title={sysLang === 'id' ? 'Koleksi Komik' : 'Saved Library'}
             >
               <HeaderBagIcon className="w-5 h-5" />
               {bookmarkCount > 0 && (
@@ -283,7 +326,11 @@ export const Navbar: React.FC = () => {
               autoFocus
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari judul komik atau pembuat..."
+              placeholder={
+                sysLang === 'id'
+                  ? 'Cari judul komik atau pembuat...'
+                  : 'Search manga or author...'
+              }
               className="flex-1 bg-transparent text-sm text-[#121212] dark:text-[#f8f8f8] placeholder:text-[#c1c1c1] focus:outline-none"
             />
             <button

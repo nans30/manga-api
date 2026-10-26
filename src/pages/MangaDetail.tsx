@@ -1,9 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom';
+import {
+  useParams,
+  useSearchParams,
+  useLocation,
+  Link,
+  useNavigate,
+} from 'react-router-dom';
 import { Manga, Chapter } from '../types';
-import { isBookmarked, toggleBookmark, getReadChapters } from '../storage';
-import { ComicStarburstButton, NavBookmarkIcon } from '../components/Icons';
-import scrapedCache from '../data/mangadex-cache.json';
+import {
+  isBookmarked,
+  toggleBookmark,
+  getReadChapters,
+  getCachedMangaById,
+  cacheMangaObjects,
+  useSysLang,
+} from '../storage';
+import {
+  ComicStarburstButton,
+  NavBookmarkIcon,
+  FlagIdIcon,
+  FlagEnIcon,
+} from '../components/Icons';
 import {
   X,
   Menu,
@@ -13,31 +30,26 @@ import {
   CheckCircle2,
   Calendar,
   User,
-  Sparkles,
-  ChevronDown,
-  ChevronUp,
   ArrowRight,
 } from 'lucide-react';
 
 export const MangaDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const navigate = useNavigate();
-  const cache: any = scrapedCache;
+  const [sysLang] = useSysLang();
 
-  const findCachedManga = (mangaId?: string): Manga | null => {
-    if (!mangaId) return null;
-    const all = [...(cache.latest || []), ...(cache.popular || []), ...(cache.rating || [])];
-    return all.find((m: Manga) => m.id === mangaId) || null;
-  };
-
+  const stateManga = (location.state as { manga?: Manga } | null)?.manga || null;
   const initialLang = searchParams.get('lang');
-  const [manga, setManga] = useState<Manga | null>(() => findCachedManga(id));
+
+  const [manga, setManga] = useState<Manga | null>(
+    () => stateManga || getCachedMangaById(id)
+  );
   const [chapters, setChapters] = useState<Chapter[]>([]);
-  const [authorManga, setAuthorManga] = useState<Manga[]>([]);
-  const [authorWorksOpen, setAuthorWorksOpen] = useState(false);
-  const [loadingAuthorWorks, setLoadingAuthorWorks] = useState(false);
-  const [loading, setLoading] = useState(!manga);
+  const [loading, setLoading] = useState<boolean>(
+    () => !(stateManga || getCachedMangaById(id))
+  );
   const [chaptersLoading, setChaptersLoading] = useState(true);
   const [bookmarked, setBookmarked] = useState(() => (id ? isBookmarked(id) : false));
   const [langFilter, setLangFilter] = useState<'all' | 'id' | 'en'>(
@@ -51,45 +63,36 @@ export const MangaDetail: React.FC = () => {
     if (!id) return;
     setReadIds(getReadChapters());
     setBookmarked(isBookmarked(id));
-    setAuthorWorksOpen(false);
-    setAuthorManga([]);
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
+    const immediate =
+      (location.state as { manga?: Manga } | null)?.manga || getCachedMangaById(id);
+    if (immediate && immediate.id === id) {
+      setManga(immediate);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+
+    let cancelled = false;
     fetch(`/api/manga/${id}`)
       .then((r) => r.json())
       .then((json) => {
-        if (json.data) {
+        if (!cancelled && json.data) {
+          cacheMangaObjects([json.data]);
           setManga(json.data);
           setBookmarked(isBookmarked(json.data.id));
         }
       })
       .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [id]);
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
-  // Fetch other manga by the same creator/author when manga loads
-  useEffect(() => {
-    if (!manga) return;
-    const creatorId = manga.authorId || manga.artistId;
-    const creatorName = manga.author;
-    if (!creatorId && (!creatorName || creatorName === 'Unknown Author')) return;
-
-    setLoadingAuthorWorks(true);
-    const queryUrl = creatorId
-      ? `/api/manga?authorId=${encodeURIComponent(creatorId)}&limit=12`
-      : `/api/manga?q=${encodeURIComponent(creatorName)}&limit=12`;
-
-    fetch(queryUrl)
-      .then((r) => r.json())
-      .then((json) => {
-        if (json.data) {
-          const others = (json.data as Manga[]).filter((m) => m.id !== manga.id);
-          setAuthorManga(others);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoadingAuthorWorks(false));
-  }, [manga?.id, manga?.authorId, manga?.artistId, manga?.author]);
+    return () => {
+      cancelled = true;
+    };
+  }, [id, location.state]);
 
   useEffect(() => {
     if (!id) return;
@@ -117,10 +120,6 @@ export const MangaDetail: React.FC = () => {
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleAuthorClick = () => {
-    setAuthorWorksOpen((prev) => !prev);
-  };
-
   if (loading && !manga) {
     return (
       <div className="max-w-4xl mx-auto px-5 py-10 space-y-6 animate-pulse">
@@ -133,12 +132,14 @@ export const MangaDetail: React.FC = () => {
   if (!manga) {
     return (
       <div className="max-w-xl mx-auto px-5 py-24 text-center space-y-4">
-        <p className="font-manga text-2xl">MANGA NOT FOUND</p>
+        <p className="font-manga text-2xl">
+          {sysLang === 'id' ? 'KOMIK TIDAK DITEMUKAN' : 'MANGA NOT FOUND'}
+        </p>
         <Link
           to="/books"
           className="inline-block px-6 py-3 rounded-xl bg-[#f9cb55] text-[#121212] font-manga"
         >
-          BACK TO ALL BOOKS
+          {sysLang === 'id' ? 'KEMBALI KE KATALOG' : 'BACK TO ALL BOOKS'}
         </Link>
       </div>
     );
@@ -154,6 +155,10 @@ export const MangaDetail: React.FC = () => {
     manga.description.length > 140 && !expandedDesc
       ? manga.description.slice(0, 140).trim() + '... '
       : manga.description;
+
+  const authorPageUrl = `/author/${manga.authorId || 'search'}?name=${encodeURIComponent(
+    manga.author
+  )}&exclude=${manga.id}`;
 
   return (
     <div className="relative min-h-screen pb-28 md:pb-16 overflow-hidden">
@@ -180,10 +185,12 @@ export const MangaDetail: React.FC = () => {
 
           <div className="text-center">
             <h2 className="font-manga text-xl sm:text-2xl tracking-wider text-[#121212] dark:text-[#f8f8f8] uppercase">
-              {latestChapter ? `CHAPTER ${latestChapter.chapter}` : 'MANGA PREVIEW'}
+              {latestChapter ? `CHAPTER ${latestChapter.chapter}` : 'PREVIEW'}
             </h2>
             <p className="text-xs text-[#6e6e6e] dark:text-[#c1c1c1]">
-              {latestChapter ? `${latestChapter.pages || 32} Pages` : manga.status.toUpperCase()}
+              {latestChapter
+                ? `${latestChapter.pages || 32} ${sysLang === 'id' ? 'Halaman' : 'Pages'}`
+                : manga.status.toUpperCase()}
             </p>
           </div>
 
@@ -244,87 +251,26 @@ export const MangaDetail: React.FC = () => {
               {manga.title}
             </h1>
 
-            {/* Clickable Creator / Author Badge (Click to see other works by this author!) */}
+            {/* Clickable Creator / Author Button -> Opens Dedicated Author Works Page! */}
             <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={handleAuthorClick}
-                className="group inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#ffffff] dark:bg-[#1e1e1e] border border-[#f9cb55]/60 hover:bg-[#f9cb55] hover:text-[#121212] text-xs sm:text-sm font-semibold text-[#121212] dark:text-[#f8f8f8] transition-all shadow-sm"
+              <Link
+                to={authorPageUrl}
+                className="group inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-[#ffffff] dark:bg-[#1e1e1e] border border-[#f9cb55]/60 hover:bg-[#f9cb55] hover:text-[#121212] text-xs sm:text-sm font-semibold text-[#121212] dark:text-[#f8f8f8] transition-all shadow-sm"
               >
                 <User className="w-4 h-4 text-[#f9cb55] group-hover:text-[#121212]" />
                 <span>
-                  Pembuat: <strong>{manga.author}</strong>
+                  {sysLang === 'id' ? 'Pembuat:' : 'Creator:'}{' '}
+                  <strong>{manga.author}</strong>
                   {manga.artist && manga.artist !== manga.author
                     ? ` & ${manga.artist}`
                     : ''}
                 </span>
-                <span className="text-[11px] px-2 py-0.5 rounded-md bg-[#f9cb55]/20 group-hover:bg-[#121212]/15 text-[#121212] dark:text-[#f9cb55] group-hover:text-[#121212] font-bold flex items-center gap-1">
-                  {authorManga.length > 0 ? `${authorManga.length} Karya Lain` : 'Lihat Karya'}
-                  {authorWorksOpen ? (
-                    <ChevronUp className="w-3.5 h-3.5" />
-                  ) : (
-                    <ChevronDown className="w-3.5 h-3.5" />
-                  )}
+                <span className="text-[11px] px-2 py-0.5 rounded-md bg-[#f9cb55]/20 group-hover:bg-[#121212]/15 text-[#121212] dark:text-[#f9cb55] group-hover:text-[#121212] font-bold inline-flex items-center gap-1">
+                  {sysLang === 'id' ? 'Lihat Karya Lain' : 'More Works'}
+                  <ArrowRight className="w-3 h-3" />
                 </span>
-              </button>
+              </Link>
             </div>
-
-            {/* Expandable Drawer: Other Manga by This Creator (when author name is clicked) */}
-            {authorWorksOpen && (
-              <div className="p-4 rounded-2xl bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#f9cb55]/50 space-y-3 shadow-xl animate-fadeIn">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-manga text-sm sm:text-base tracking-wider text-[#121212] dark:text-[#f9cb55] flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-[#f9cb55]" />
-                    MANGA LAIN KARYA {manga.author.toUpperCase()}
-                  </h3>
-                  {manga.authorId && (
-                    <Link
-                      to={`/books?authorId=${manga.authorId}&authorName=${encodeURIComponent(
-                        manga.author
-                      )}`}
-                      className="text-xs font-bold text-[#f9cb55] hover:underline flex items-center gap-1"
-                    >
-                      Semua ({authorManga.length})
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                  )}
-                </div>
-
-                {loadingAuthorWorks ? (
-                  <p className="text-xs text-[#6e6e6e] dark:text-[#c1c1c1] py-3">
-                    Memuat karya lain dari {manga.author}...
-                  </p>
-                ) : authorManga.length === 0 ? (
-                  <p className="text-xs text-[#6e6e6e] dark:text-[#c1c1c1] py-2">
-                    Tidak ada manga lain dari {manga.author} selain judul ini.
-                  </p>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1 max-h-72 overflow-y-auto pr-1">
-                    {authorManga.map((other) => (
-                      <Link
-                        key={other.id}
-                        to={`/manga/${other.id}`}
-                        className="group flex items-center gap-2.5 p-2 rounded-xl bg-[#ececec]/60 dark:bg-[#242424] hover:border-[#f9cb55] border border-transparent transition-all"
-                      >
-                        <img
-                          src={other.coverUrl}
-                          alt={other.title}
-                          className="w-11 h-16 object-cover rounded-lg shrink-0"
-                        />
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold text-[#121212] dark:text-[#f8f8f8] group-hover:text-[#f9cb55] line-clamp-2 leading-snug">
-                            {other.title}
-                          </p>
-                          <p className="text-[10px] text-[#6e6e6e] dark:text-[#c1c1c1] mt-0.5">
-                            {other.year || other.status.toUpperCase()}
-                          </p>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
 
             {/* Genre Pills */}
             <div className="flex flex-wrap gap-2">
@@ -339,7 +285,7 @@ export const MangaDetail: React.FC = () => {
               ))}
             </div>
 
-            {/* Synopsis with yellow "read more" */}
+            {/* Synopsis */}
             <p className="text-xs sm:text-sm text-[#6e6e6e] dark:text-[#c1c1c1] leading-relaxed">
               {shortDesc}
               {manga.description.length > 140 && (
@@ -347,15 +293,21 @@ export const MangaDetail: React.FC = () => {
                   onClick={() => setExpandedDesc(!expandedDesc)}
                   className="text-[#f9cb55] font-semibold hover:underline ml-1"
                 >
-                  {expandedDesc ? 'show less' : 'read more'}
+                  {expandedDesc
+                    ? sysLang === 'id'
+                      ? 'tutup'
+                      : 'show less'
+                    : sysLang === 'id'
+                    ? 'selengkapnya'
+                    : 'read more'}
                 </button>
               )}
             </p>
 
-            {/* Iconic Yellow Starburst Button: READ NOW -> */}
+            {/* Iconic Yellow Starburst Button */}
             <div className="pt-3 flex flex-col sm:flex-row items-center gap-4">
               <ComicStarburstButton
-                label="READ NOW"
+                label={sysLang === 'id' ? 'BACA SEKARANG' : 'READ NOW'}
                 onClick={() => {
                   if (targetChapter) {
                     navigate(`/read/${targetChapter.id}?mangaId=${manga.id}&lang=${langFilter}`);
@@ -370,7 +322,9 @@ export const MangaDetail: React.FC = () => {
                   to={`/read/${latestChapter.id}?mangaId=${manga.id}&lang=${langFilter}`}
                   className="px-5 py-3 rounded-2xl bg-[#ffffff] dark:bg-[#1c1c1c] border border-[#c1c1c1]/40 dark:border-[#2b2b2b] hover:border-[#f9cb55] text-xs font-bold uppercase tracking-wider text-[#121212] dark:text-[#f8f8f8] transition-all"
                 >
-                  Read Latest (Ch. {latestChapter.chapter})
+                  {sysLang === 'id'
+                    ? `Ch. Terbaru (${latestChapter.chapter})`
+                    : `Read Latest (Ch. ${latestChapter.chapter})`}
                 </Link>
               )}
             </div>
@@ -382,46 +336,52 @@ export const MangaDetail: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 className="font-manga text-2xl tracking-wider text-[#121212] dark:text-[#f8f8f8]">
-                ALL CHAPTERS ({chapters.length})
+                {sysLang === 'id'
+                  ? `DAFTAR CHAPTER (${chapters.length})`
+                  : `ALL CHAPTERS (${chapters.length})`}
               </h2>
               <p className="text-xs text-[#6e6e6e] dark:text-[#c1c1c1]">
-                Pilih chapter untuk mulai membaca (Mode Scroll atau Tap Kanan-Kiri)
+                {sysLang === 'id'
+                  ? 'Pilih chapter untuk mulai membaca (Mode Scroll atau Tap Kanan-Kiri)'
+                  : 'Select a chapter to start reading (Scroll or Tap Left-Right mode)'}
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              {/* Language Switcher */}
-              <div className="flex items-center bg-[#ececec] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#2a2a2a] rounded-xl p-1">
+              {/* Icon-Only Language Switcher (Globe / ID / EN) */}
+              <div className="inline-flex items-center gap-1 bg-[#ececec] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#2a2a2a] rounded-xl p-1">
                 <button
                   onClick={() => setLangFilter('all')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                  title={sysLang === 'id' ? 'Semua Bahasa' : 'All Languages'}
+                  className={`p-1.5 rounded-lg transition-all ${
                     langFilter === 'all'
-                      ? 'bg-[#f9cb55] text-[#121212]'
+                      ? 'bg-[#f9cb55] text-[#121212] shadow-sm'
                       : 'text-[#6e6e6e] dark:text-[#c1c1c1]'
                   }`}
                 >
-                  <Globe className="w-3.5 h-3.5" />
-                  ID + EN
+                  <Globe className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setLangFilter('id')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  title="Bahasa Indonesia"
+                  className={`p-1.5 rounded-lg transition-all ${
                     langFilter === 'id'
-                      ? 'bg-[#f9cb55] text-[#121212]'
-                      : 'text-[#6e6e6e] dark:text-[#c1c1c1]'
+                      ? 'bg-[#f9cb55] ring-2 ring-[#f9cb55]/50 shadow-sm'
+                      : 'opacity-60 hover:opacity-100'
                   }`}
                 >
-                  🇮🇩 ID
+                  <FlagIdIcon className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setLangFilter('en')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  title="English"
+                  className={`p-1.5 rounded-lg transition-all ${
                     langFilter === 'en'
-                      ? 'bg-[#f9cb55] text-[#121212]'
-                      : 'text-[#6e6e6e] dark:text-[#c1c1c1]'
+                      ? 'bg-[#f9cb55] ring-2 ring-[#f9cb55]/50 shadow-sm'
+                      : 'opacity-60 hover:opacity-100'
                   }`}
                 >
-                  🇬🇧 EN
+                  <FlagEnIcon className="w-4 h-4" />
                 </button>
               </div>
 
@@ -431,7 +391,13 @@ export const MangaDetail: React.FC = () => {
                 className="px-3.5 py-2 rounded-xl bg-[#ececec] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#2a2a2a] text-xs font-semibold text-[#121212] dark:text-[#f8f8f8] flex items-center gap-1.5 hover:border-[#f9cb55]"
               >
                 <ArrowUpDown className="w-3.5 h-3.5 text-[#f9cb55]" />
-                {sortAsc ? 'Oldest First' : 'Newest First'}
+                {sortAsc
+                  ? sysLang === 'id'
+                    ? 'Terlama'
+                    : 'Oldest First'
+                  : sysLang === 'id'
+                  ? 'Terbaru'
+                  : 'Newest First'}
               </button>
             </div>
           </div>
@@ -447,13 +413,19 @@ export const MangaDetail: React.FC = () => {
             </div>
           ) : displayedChapters.length === 0 ? (
             <div className="text-center py-14 rounded-3xl bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#262626] space-y-2">
-              <p className="text-sm font-semibold">Belum ada chapter untuk bahasa ini.</p>
+              <p className="text-sm font-semibold">
+                {sysLang === 'id'
+                  ? 'Belum ada chapter untuk bahasa ini.'
+                  : 'No chapters available for this language.'}
+              </p>
               {langFilter !== 'all' && (
                 <button
                   onClick={() => setLangFilter('all')}
                   className="text-xs text-[#f9cb55] font-semibold underline"
                 >
-                  Tampilkan Semua Bahasa (ID + EN)
+                  {sysLang === 'id'
+                    ? 'Tampilkan Semua Bahasa'
+                    : 'Show All Languages'}
                 </button>
               )}
             </div>
@@ -473,9 +445,11 @@ export const MangaDetail: React.FC = () => {
                   >
                     <div className="min-w-0 pr-3">
                       <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 rounded bg-[#f9cb55]/20 text-[#121212] dark:text-[#f9cb55] text-[10px] font-bold uppercase">
-                          {ch.translatedLanguage === 'id' ? '🇮🇩 ID' : '🇬🇧 EN'}
-                        </span>
+                        {ch.translatedLanguage === 'id' ? (
+                          <FlagIdIcon className="w-4 h-4 shrink-0" />
+                        ) : (
+                          <FlagEnIcon className="w-4 h-4 shrink-0" />
+                        )}
                         <span className="font-manga text-base tracking-wide text-[#121212] dark:text-[#f8f8f8] group-hover:text-[#f9cb55] transition-colors">
                           CHAPTER {ch.chapter}
                         </span>
@@ -487,7 +461,7 @@ export const MangaDetail: React.FC = () => {
                         </p>
                       )}
                       <p className="text-[11px] text-[#6e6e6e] dark:text-[#c1c1c1] mt-1">
-                        {ch.groupName} • {ch.pages} Pages
+                        {ch.groupName} • {ch.pages} {sysLang === 'id' ? 'Hal' : 'Pages'}
                       </p>
                     </div>
 
@@ -500,7 +474,7 @@ export const MangaDetail: React.FC = () => {
                         })}
                       </span>
                       <span className="text-[11px] font-bold text-[#f9cb55] group-hover:translate-x-0.5 transition-transform">
-                        READ →
+                        {sysLang === 'id' ? 'BACA →' : 'READ →'}
                       </span>
                     </div>
                   </Link>

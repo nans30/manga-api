@@ -4,6 +4,7 @@ import { Navbar } from './components/Navbar';
 import { Home } from './pages/Home';
 import { AllBooks } from './pages/AllBooks';
 import { MangaDetail } from './pages/MangaDetail';
+import { AuthorWorks } from './pages/AuthorWorks';
 import { Reader } from './pages/Reader';
 import { Library } from './pages/Library';
 import { getTheme, setTheme } from './storage';
@@ -22,6 +23,7 @@ export function App() {
             <Route path="/" element={<Home />} />
             <Route path="/books" element={<AllBooks />} />
             <Route path="/manga/:id" element={<MangaDetail />} />
+            <Route path="/author/:authorId" element={<AuthorWorks />} />
             <Route path="/read/:chapterId" element={<Reader />} />
             <Route path="/library" element={<Library />} />
           </Routes>

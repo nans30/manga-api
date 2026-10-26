@@ -1,14 +1,32 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Manga, ReadingHistoryItem } from '../types';
-import { getReadingHistory, getTheme, setTheme, ThemeMode, getBookmarks } from '../storage';
-import { HeaderBagIcon } from '../components/Icons';
+import {
+  getReadingHistory,
+  getTheme,
+  setTheme,
+  ThemeMode,
+  getBookmarks,
+  cacheMangaObjects,
+  useSysLang,
+} from '../storage';
+import { HeaderBagIcon, FlagIdIcon, FlagEnIcon } from '../components/Icons';
 import scrapedCache from '../data/mangadex-cache.json';
-import { Search, Sun, Moon, ArrowRight, RefreshCw, Star, X } from 'lucide-react';
+import {
+  Search,
+  Sun,
+  Moon,
+  ArrowRight,
+  RefreshCw,
+  Star,
+  X,
+  Globe,
+} from 'lucide-react';
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
   const cache: any = scrapedCache;
+  const [sysLang, setSysLang] = useSysLang();
 
   const [latestManga, setLatestManga] = useState<Manga[]>(() => cache.latest || []);
   const [popularManga, setPopularManga] = useState<Manga[]>(() => cache.popular || []);
@@ -26,6 +44,10 @@ export const Home: React.FC = () => {
     setTheme(next);
   };
 
+  const toggleSysLang = () => {
+    setSysLang(sysLang === 'id' ? 'en' : 'id');
+  };
+
   const fetchLiveHomeData = useCallback(async () => {
     setRefreshing(true);
     try {
@@ -34,8 +56,14 @@ export const Home: React.FC = () => {
         fetch(`/api/manga?sort=latest&limit=18${langParam}`).then((r) => r.json()),
         fetch(`/api/manga?sort=popular&limit=12${langParam}`).then((r) => r.json()),
       ]);
-      if (latestRes.data?.length) setLatestManga(latestRes.data);
-      if (popRes.data?.length) setPopularManga(popRes.data);
+      if (latestRes.data?.length) {
+        cacheMangaObjects(latestRes.data);
+        setLatestManga(latestRes.data);
+      }
+      if (popRes.data?.length) {
+        cacheMangaObjects(popRes.data);
+        setPopularManga(popRes.data);
+      }
     } catch {
       // fallback to scraped cache seamlessly
     } finally {
@@ -50,7 +78,6 @@ export const Home: React.FC = () => {
       setBookmarkCount(getBookmarks().length);
     };
     window.addEventListener('ciaran-storage-update', syncStorage);
-    // Auto refresh every 60 seconds
     const timer = setInterval(fetchLiveHomeData, 60000);
     return () => {
       window.removeEventListener('ciaran-storage-update', syncStorage);
@@ -65,7 +92,6 @@ export const Home: React.FC = () => {
     }
   };
 
-  // Determine the "NOW" card data (either latest read history or #1 popular manga)
   const lastRead = history[0];
   const fallbackHero = popularManga[0] || latestManga[0];
 
@@ -77,8 +103,9 @@ export const Home: React.FC = () => {
         author: lastRead.author || 'Unknown Author',
         coverUrl: lastRead.coverUrl,
         progress: lastRead.progressPercent || 78,
-        timeLeft: '20 min left',
+        timeLeft: sysLang === 'id' ? '20 mnt tersisa' : '20 min left',
         link: `/read/${lastRead.chapterId}?mangaId=${lastRead.mangaId}&lang=${lastRead.language}`,
+        mangaObj: undefined as Manga | undefined,
       }
     : fallbackHero
     ? {
@@ -90,8 +117,9 @@ export const Home: React.FC = () => {
         author: fallbackHero.author,
         coverUrl: fallbackHero.coverUrl,
         progress: 78,
-        timeLeft: '20 min left',
+        timeLeft: sysLang === 'id' ? '20 mnt tersisa' : '20 min left',
         link: `/manga/${fallbackHero.id}`,
+        mangaObj: fallbackHero,
       }
     : null;
 
@@ -112,20 +140,33 @@ export const Home: React.FC = () => {
               onClick={fetchLiveHomeData}
               disabled={refreshing}
               className="p-1.5 rounded-full text-[#6e6e6e] dark:text-[#c1c1c1] hover:text-[#f9cb55] transition-colors"
-              title="Sinkronisasi Real-Time"
+              title="Refresh"
             >
               <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-[#f9cb55]' : ''}`} />
             </button>
           </div>
 
-          {/* Mobile Top Action Icons (Search, Light/Dark, Bag) matching Screen 1 */}
-          <div className="flex md:hidden items-center gap-3">
+          {/* Mobile Top Action Icons (Search, System Language Flag Icon, Light/Dark, Bag) */}
+          <div className="flex md:hidden items-center gap-2.5">
             <button
               onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
               className="p-2 text-[#121212] dark:text-[#f8f8f8] hover:text-[#f9cb55] transition-colors"
               aria-label="Search"
             >
               <Search className="w-5 h-5 stroke-[2]" />
+            </button>
+
+            {/* System Language Icon (ID / EN) right next to Light/Dark Mode */}
+            <button
+              onClick={toggleSysLang}
+              className="p-2 text-[#121212] dark:text-[#f8f8f8] hover:text-[#f9cb55] transition-colors"
+              aria-label="Toggle System Language"
+            >
+              {sysLang === 'id' ? (
+                <FlagIdIcon className="w-5 h-5" />
+              ) : (
+                <FlagEnIcon className="w-5 h-5" />
+              )}
             </button>
 
             <button
@@ -165,7 +206,11 @@ export const Home: React.FC = () => {
               autoFocus
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Cari judul komik atau nama pembuat..."
+              placeholder={
+                sysLang === 'id'
+                  ? 'Cari judul komik atau nama pembuat...'
+                  : 'Search manga title or author...'
+              }
               className="flex-1 bg-transparent text-sm text-[#121212] dark:text-[#f8f8f8] placeholder:text-[#c1c1c1] focus:outline-none"
             />
             {searchInput && (
@@ -179,10 +224,10 @@ export const Home: React.FC = () => {
         {/* NOW Main Card + Desktop Secondary Card */}
         {nowItem && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-            {/* Primary NOW Card (Matches Solo Leveling Vol. 5 layout in Reference Image 1) */}
             <div className="lg:col-span-7 flex flex-row items-center gap-5 sm:gap-7 bg-[#ffffff] dark:bg-[#181818] border border-[#c1c1c1]/30 dark:border-[#262626] rounded-3xl p-4 sm:p-6 shadow-xl">
               <Link
                 to={`/manga/${nowItem.id}`}
+                state={nowItem.mangaObj ? { manga: nowItem.mangaObj } : undefined}
                 className="w-32 sm:w-44 aspect-[3/4.2] rounded-2xl overflow-hidden shrink-0 shadow-2xl border border-[#c1c1c1]/20 dark:border-[#2b2b2b] group"
               >
                 <img
@@ -196,6 +241,7 @@ export const Home: React.FC = () => {
                 <div>
                   <Link
                     to={`/manga/${nowItem.id}`}
+                    state={nowItem.mangaObj ? { manga: nowItem.mangaObj } : undefined}
                     className="font-semibold text-base sm:text-xl text-[#121212] dark:text-[#f8f8f8] hover:text-[#f9cb55] transition-colors line-clamp-2 leading-snug"
                   >
                     {nowItem.title}
@@ -208,7 +254,7 @@ export const Home: React.FC = () => {
                   </p>
                 </div>
 
-                {/* Progress Bar: "78% • 20 min left" */}
+                {/* Progress Bar */}
                 <div className="space-y-1.5 pt-1">
                   <div className="flex items-center gap-1.5 text-xs font-medium">
                     <span className="text-[#f9cb55] font-semibold">{nowItem.progress}%</span>
@@ -223,22 +269,24 @@ export const Home: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Tilted Golden Button: CONTINUE READING */}
+                {/* Tilted Golden Button */}
                 <div className="pt-2">
                   <Link
                     to={nowItem.link}
+                    state={nowItem.mangaObj ? { manga: nowItem.mangaObj } : undefined}
                     className="inline-flex items-center justify-center w-full sm:w-auto px-6 py-3 rounded-xl bg-[#f9cb55] text-[#121212] font-manga text-sm sm:text-base tracking-wider shadow-lg shadow-[#f9cb55]/20 -rotate-1 hover:rotate-0 hover:scale-[1.02] active:scale-95 transition-all"
                   >
-                    CONTINUE READING
+                    {sysLang === 'id' ? 'LANJUT BACA' : 'CONTINUE READING'}
                   </Link>
                 </div>
               </div>
             </div>
 
-            {/* Desktop Spotlight Card (Visible on Large Screens) */}
+            {/* Desktop Spotlight Card */}
             {popularManga[1] && (
               <Link
                 to={`/manga/${popularManga[1].id}`}
+                state={{ manga: popularManga[1] }}
                 className="hidden lg:flex lg:col-span-5 relative rounded-3xl overflow-hidden border border-[#c1c1c1]/30 dark:border-[#262626] bg-[#1b1b1b] p-6 flex-col justify-end group shadow-xl"
               >
                 <img
@@ -274,7 +322,7 @@ export const Home: React.FC = () => {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="font-manga text-2xl sm:text-3xl tracking-wider text-[#121212] dark:text-[#f8f8f8]">
-            FOR YOU
+            {sysLang === 'id' ? 'UNTUK KAMU' : 'FOR YOU'}
           </h2>
           <Link
             to="/books?sort=popular"
@@ -285,12 +333,12 @@ export const Home: React.FC = () => {
           </Link>
         </div>
 
-        {/* Horizontal Carousel of Wide Cards (Matches "Ranked Adventurer" in Screen 1) */}
         <div className="flex gap-4 sm:gap-5 overflow-x-auto no-scrollbar pb-2 -mx-5 px-5 sm:mx-0 sm:px-0">
           {forYouList.map((manga) => (
             <Link
               key={manga.id}
               to={`/manga/${manga.id}`}
+              state={{ manga }}
               className="group shrink-0 w-64 sm:w-80 flex flex-col gap-2.5"
             >
               <div className="relative aspect-[16/10] w-full rounded-2xl overflow-hidden bg-[#ececec] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#262626] shadow-md">
@@ -314,7 +362,7 @@ export const Home: React.FC = () => {
                 <h3 className="font-semibold text-sm sm:text-base text-[#121212] dark:text-[#f8f8f8] group-hover:text-[#f9cb55] transition-colors truncate">
                   {manga.title}
                 </h3>
-                <p className="text-xs text-[#6e6e6e] dark:text-[#c1c1c1] mt-0.5">
+                <p className="text-xs text-[#6e6e6e] dark:text-[#c1c1c1] mt-0.5 truncate">
                   {manga.lastChapter ? `Chapter ${manga.lastChapter}` : manga.author}
                 </p>
               </div>
@@ -326,44 +374,48 @@ export const Home: React.FC = () => {
       {/* ==================== SECTION 3: ALL BOOKS ==================== */}
       <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
             <h2 className="font-manga text-2xl sm:text-3xl tracking-wider text-[#121212] dark:text-[#f8f8f8]">
-              ALL BOOKS
+              {sysLang === 'id' ? 'SEMUA KOMIK' : 'ALL BOOKS'}
             </h2>
-            {/* Quick Bahasa Indonesia Filter on Home */}
-            <div className="inline-flex items-center bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#2a2a2a] rounded-xl p-1">
+
+            {/* Icon-Only Language Filter (Globe / ID / EN) */}
+            <div className="inline-flex items-center gap-1 bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#2a2a2a] rounded-xl p-1">
               <button
                 type="button"
                 onClick={() => setHomeLang('')}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors ${
+                title={sysLang === 'id' ? 'Semua Bahasa' : 'All Languages'}
+                className={`p-1.5 rounded-lg transition-all ${
                   homeLang === ''
-                    ? 'bg-[#f9cb55] text-[#121212]'
-                    : 'text-[#6e6e6e] dark:text-[#c1c1c1]'
+                    ? 'bg-[#f9cb55] text-[#121212] shadow-sm'
+                    : 'text-[#6e6e6e] dark:text-[#c1c1c1] hover:text-[#121212] dark:hover:text-[#f8f8f8]'
                 }`}
               >
-                Semua
+                <Globe className="w-4 h-4" />
               </button>
               <button
                 type="button"
                 onClick={() => setHomeLang('id')}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors ${
+                title="Bahasa Indonesia"
+                className={`p-1.5 rounded-lg transition-all ${
                   homeLang === 'id'
-                    ? 'bg-[#f9cb55] text-[#121212]'
-                    : 'text-[#6e6e6e] dark:text-[#c1c1c1]'
+                    ? 'bg-[#f9cb55] ring-2 ring-[#f9cb55]/50 shadow-sm'
+                    : 'opacity-60 hover:opacity-100'
                 }`}
               >
-                🇮🇩 Indonesia
+                <FlagIdIcon className="w-4 h-4" />
               </button>
               <button
                 type="button"
                 onClick={() => setHomeLang('en')}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors ${
+                title="English"
+                className={`p-1.5 rounded-lg transition-all ${
                   homeLang === 'en'
-                    ? 'bg-[#f9cb55] text-[#121212]'
-                    : 'text-[#6e6e6e] dark:text-[#c1c1c1]'
+                    ? 'bg-[#f9cb55] ring-2 ring-[#f9cb55]/50 shadow-sm'
+                    : 'opacity-60 hover:opacity-100'
                 }`}
               >
-                🇬🇧 Inggris
+                <FlagEnIcon className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -372,17 +424,19 @@ export const Home: React.FC = () => {
             to={homeLang ? `/books?lang=${homeLang}` : '/books'}
             className="p-1.5 text-[#121212] dark:text-[#f8f8f8] hover:text-[#f9cb55] transition-colors flex items-center gap-1.5 text-xs font-semibold"
           >
-            <span className="hidden sm:inline">Lihat Semua Komik</span>
+            <span className="hidden sm:inline">
+              {sysLang === 'id' ? 'Lihat Katalog' : 'Explore Catalog'}
+            </span>
             <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
 
-        {/* Grid of Cards (2 columns on mobile like Screen 1 bottom, 4-6 columns on Desktop) */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-5">
           {allBooksPreview.map((manga) => (
             <Link
               key={manga.id}
               to={`/manga/${manga.id}${homeLang ? `?lang=${homeLang}` : ''}`}
+              state={{ manga }}
               className="group flex flex-col gap-2"
             >
               <div className="relative aspect-[3/3.8] w-full rounded-2xl overflow-hidden bg-[#ececec] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#262626] shadow-md">
@@ -413,10 +467,10 @@ export const Home: React.FC = () => {
 
         <div className="pt-4 flex justify-center">
           <Link
-            to="/books"
+            to={homeLang ? `/books?lang=${homeLang}` : '/books'}
             className="px-8 py-3.5 rounded-2xl bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/40 dark:border-[#2b2b2b] hover:border-[#f9cb55] text-xs font-bold uppercase tracking-widest text-[#121212] dark:text-[#f8f8f8] transition-all shadow-sm"
           >
-            BROWSE ALL BOOKS →
+            {sysLang === 'id' ? 'JELAJAHI SEMUA KOMIK →' : 'BROWSE ALL BOOKS →'}
           </Link>
         </div>
       </section>

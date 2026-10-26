@@ -1,5 +1,5 @@
 {
-  "scrapedAt": "2026-10-26T10:09:45.290Z",
+  "scrapedAt": "2026-10-26T10:20:06.369Z",
   "source": "https://mangadex.org",
   "latest": [
     {
@@ -1641,6 +1641,696 @@
           "id": "fad12b5e-68ba-460e-b933-9ae8318f5b65",
           "name": "Gyaru",
           "group": "theme"
+        }
+      ]
+    },
+    {
+      "id": "7643e9f6-8455-4a58-b7e8-bf6cd00f5251",
+      "title": "Tsuki ga Michibiku Isekai Douchuu",
+      "altTitle": "月が導く異世界道中",
+      "description": "High school student Misumi Makoto is called into a fantasy world by the god Tsukuyomi, in order to be a hero. However, powerful others in this world aren't as thrilled to have him there, and they kick him to the edge of the world just as Tsukuyomi declares that he must leave Makoto to find his own way. Now it's up to Makoto to find his own way!\n___\n[Official English Light Novel](https://hanashi.media/series/tsukimichi/)",
+      "status": "ongoing",
+      "year": 2015,
+      "contentRating": "suggestive",
+      "originalLanguage": "ja",
+      "lastChapter": null,
+      "updatedAt": "2026-09-18T18:34:35+00:00",
+      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F7643e9f6-8455-4a58-b7e8-bf6cd00f5251%2F3e7b9cc7-7fd9-4cbe-bc4f-cb457eac3300.jpg.512.jpg",
+      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F7643e9f6-8455-4a58-b7e8-bf6cd00f5251%2F3e7b9cc7-7fd9-4cbe-bc4f-cb457eac3300.jpg",
+      "author": "Azumi Kei",
+      "authorId": "1b983a4f-0bcc-4423-92f9-2ecc8b991ac2",
+      "artist": "Kino Kotora",
+      "artistId": "df85f03c-8da0-41b0-ad40-029e37c8657c",
+      "tags": [
+        {
+          "id": "0bc90acb-ccc1-44ca-a34a-b9f3a73259d0",
+          "name": "Reincarnation",
+          "group": "theme"
+        },
+        {
+          "id": "36fd93ea-e8b8-445e-b836-358f02b3d33d",
+          "name": "Monsters",
+          "group": "theme"
+        },
+        {
+          "id": "391b0423-d847-456f-aff0-8b0cfc03066b",
+          "name": "Action",
+          "group": "genre"
+        },
+        {
+          "id": "39730448-9a5f-48a2-85b0-a70db87b1233",
+          "name": "Demons",
+          "group": "theme"
+        },
+        {
+          "id": "4d32cc48-9f00-4cca-9b5a-a839f0764984",
+          "name": "Comedy",
+          "group": "genre"
+        },
+        {
+          "id": "87cc87cd-a395-47af-b27a-93258283bbc6",
+          "name": "Adventure",
+          "group": "genre"
+        },
+        {
+          "id": "a1f53773-c69a-4ce5-8cab-fffcd90b1565",
+          "name": "Magic",
+          "group": "theme"
+        },
+        {
+          "id": "aafb99c1-7f60-43fa-b75f-fc9502ce29c7",
+          "name": "Harem",
+          "group": "theme"
+        }
+      ]
+    },
+    {
+      "id": "eb2d1a45-d4e7-4e32-a171-b5b029c5b0cb",
+      "title": "Kumo desu ga, Nani ka?",
+      "altTitle": "蜘蛛ですが、なにか？",
+      "description": "When a mysterious explosion killed an entire class full of high school students, the souls of everyone in class were transported into a fantasy world and reincarnated. While some students were reincarnated as princes or prodigies, others were not as blessed.  \nOur heroine, who was the lowest in the class, discovered that she was reincarnated as a spider! Now at the bottom of the food chain, she needs to adapt to the current situation with willpower in order to live. Stuck in a dangerous labyrinth filled with monsters, it's eat or be eaten!  \nThis is the story of a spider doing whatever she can in order to survive!",
+      "status": "ongoing",
+      "year": 2015,
+      "contentRating": "safe",
+      "originalLanguage": "ja",
+      "lastChapter": null,
+      "updatedAt": "2026-09-27T13:21:38+00:00",
+      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Feb2d1a45-d4e7-4e32-a171-b5b029c5b0cb%2F4ac61d4b-77d6-4946-b24f-0935eafa0305.jpg.512.jpg",
+      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Feb2d1a45-d4e7-4e32-a171-b5b029c5b0cb%2F4ac61d4b-77d6-4946-b24f-0935eafa0305.jpg",
+      "author": "Baba Okina",
+      "authorId": "7be584f3-1c1a-48ce-9205-4e5c7edc3fad",
+      "artist": "Kakashi Asahiro",
+      "artistId": "d03125ac-d835-4567-a2b9-78b35ad94466",
+      "tags": [
+        {
+          "id": "0bc90acb-ccc1-44ca-a34a-b9f3a73259d0",
+          "name": "Reincarnation",
+          "group": "theme"
+        },
+        {
+          "id": "36fd93ea-e8b8-445e-b836-358f02b3d33d",
+          "name": "Monsters",
+          "group": "theme"
+        },
+        {
+          "id": "391b0423-d847-456f-aff0-8b0cfc03066b",
+          "name": "Action",
+          "group": "genre"
+        },
+        {
+          "id": "39730448-9a5f-48a2-85b0-a70db87b1233",
+          "name": "Demons",
+          "group": "theme"
+        },
+        {
+          "id": "4d32cc48-9f00-4cca-9b5a-a839f0764984",
+          "name": "Comedy",
+          "group": "genre"
+        },
+        {
+          "id": "5fff9cde-849c-4d78-aab0-0d52b2ee1d25",
+          "name": "Survival",
+          "group": "theme"
+        },
+        {
+          "id": "87cc87cd-a395-47af-b27a-93258283bbc6",
+          "name": "Adventure",
+          "group": "genre"
+        },
+        {
+          "id": "a1f53773-c69a-4ce5-8cab-fffcd90b1565",
+          "name": "Magic",
+          "group": "theme"
+        }
+      ]
+    },
+    {
+      "id": "9d3d3403-1a87-4737-9803-bc3d99db1424",
+      "title": "Ki ni Natteru Hito ga Otoko ja Nakatta",
+      "altTitle": "気になってる人が男じゃなかった",
+      "description": "Series Pendek Twitter yang menggambarkan cerita tentang Gyaru dan Teman Sekelasnya.\r\nGyaru yang suka musik rock dan sering mendatangi toko kaset jatuh cinta ke pekerja paruh waktu yang bekerja disitu, tapi sedikit dia tahu ternyata pekerjanya itu perempuan dan teman sekelasnya.",
+      "status": "ongoing",
+      "year": 2022,
+      "contentRating": "safe",
+      "originalLanguage": "ja",
+      "lastChapter": null,
+      "updatedAt": "2026-03-14T02:22:17+00:00",
+      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F9d3d3403-1a87-4737-9803-bc3d99db1424%2Ffac191d0-96c1-4ebb-bf79-b7616d7162ac.jpg.512.jpg",
+      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F9d3d3403-1a87-4737-9803-bc3d99db1424%2Ffac191d0-96c1-4ebb-bf79-b7616d7162ac.jpg",
+      "author": "Arai Sumiko",
+      "authorId": "12f9c76e-036f-4622-95aa-88aa54b3433a",
+      "artist": "Arai Sumiko",
+      "artistId": "12f9c76e-036f-4622-95aa-88aa54b3433a",
+      "tags": [
+        {
+          "id": "0a39b5a1-b235-4886-a747-1d05d216532d",
+          "name": "Award Winning",
+          "group": "format"
+        },
+        {
+          "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
+          "name": "Romance",
+          "group": "genre"
+        },
+        {
+          "id": "a3c67850-4684-404e-9b7f-c69850ee5da6",
+          "name": "Girls' Love",
+          "group": "genre"
+        },
+        {
+          "id": "caaa44eb-cd40-4177-b930-79d3ef2afe87",
+          "name": "School Life",
+          "group": "theme"
+        },
+        {
+          "id": "e197df38-d0e7-43b5-9b09-2842d0c326dd",
+          "name": "Web Comic",
+          "group": "format"
+        },
+        {
+          "id": "e5301a23-ebd9-49dd-a0cb-2add944c7fe9",
+          "name": "Slice of Life",
+          "group": "genre"
+        },
+        {
+          "id": "f42fbf9e-188a-447b-9fdc-f19dc1e4d685",
+          "name": "Music",
+          "group": "theme"
+        },
+        {
+          "id": "fad12b5e-68ba-460e-b933-9ae8318f5b65",
+          "name": "Gyaru",
+          "group": "theme"
+        }
+      ]
+    },
+    {
+      "id": "d7037b2a-874a-4360-8a7b-07f2899152fd",
+      "title": "Mairimashita! Iruma-kun",
+      "altTitle": "魔入りました！入間くん",
+      "description": "Hopeless pushover Iruma Suzuki has found himself in a devil of a predicament... His trashy parents have sold off his soul, and he now has to live and attend school in the Netherworld. But with his unique survival skills and doting demon grandfather’s support, Iruma will surely make it through this hellish experience. He'll just need to subjugate rival classmates, summon familiars, and more, all while never revealing that he's human... Easy as *aleph, bet, gimel*, right?",
+      "status": "ongoing",
+      "year": 2017,
+      "contentRating": "safe",
+      "originalLanguage": "ja",
+      "lastChapter": null,
+      "updatedAt": "2026-06-04T13:41:36+00:00",
+      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fd7037b2a-874a-4360-8a7b-07f2899152fd%2F59ab55ed-a537-426e-b755-6337740df580.jpg.512.jpg",
+      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fd7037b2a-874a-4360-8a7b-07f2899152fd%2F59ab55ed-a537-426e-b755-6337740df580.jpg",
+      "author": "Nishi Osamu ",
+      "authorId": "32a18c9c-4b1f-4485-a674-9657cf7d2b4d",
+      "artist": "Nishi Osamu ",
+      "artistId": "32a18c9c-4b1f-4485-a674-9657cf7d2b4d",
+      "tags": [
+        {
+          "id": "36fd93ea-e8b8-445e-b836-358f02b3d33d",
+          "name": "Monsters",
+          "group": "theme"
+        },
+        {
+          "id": "391b0423-d847-456f-aff0-8b0cfc03066b",
+          "name": "Action",
+          "group": "genre"
+        },
+        {
+          "id": "39730448-9a5f-48a2-85b0-a70db87b1233",
+          "name": "Demons",
+          "group": "theme"
+        },
+        {
+          "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
+          "name": "Romance",
+          "group": "genre"
+        },
+        {
+          "id": "4d32cc48-9f00-4cca-9b5a-a839f0764984",
+          "name": "Comedy",
+          "group": "genre"
+        },
+        {
+          "id": "9ab53f92-3eed-4e9b-903a-917c86035ee3",
+          "name": "Crossdressing",
+          "group": "theme"
+        },
+        {
+          "id": "a1f53773-c69a-4ce5-8cab-fffcd90b1565",
+          "name": "Magic",
+          "group": "theme"
+        },
+        {
+          "id": "ace04997-f6bd-436e-b261-779182193d3d",
+          "name": "Isekai",
+          "group": "genre"
+        }
+      ]
+    },
+    {
+      "id": "202718c6-525e-4cec-a469-c945548cacc3",
+      "title": "Anta to Osananajimi tte dake demo Iya nanoni! ~Zekkou kara Hajimaru S-kyuu Bishoujo to no Gakuen Nariagari Seikatsu~",
+      "altTitle": "アンタと幼なじみってだけでもイヤなのに！～絶交から始まるS級美少女との学園成り上がり生活～",
+      "description": "Kazuma Suzuki hanyalah siswa SMA biasa—sampai sahabat masa kecilnya, Rua Takayashiki, seorang gadis cantik berlidah tajam yang juga merupakan cucu dari kepala sekolah dan idola nasional, memutuskan semua hubungan dengannya menggunakan dialog yang diambil dari sebuah drama.\n\nDipaksa tunduk selama bertahun-tahun sebagai apa yang disebut sahabat masa kecilnya, Kazuma memutuskan bahwa inilah saatnya untuk pemberontakan pertamanya. Ia sudah selesai menjadi anjing piaraan. Kali ini, ia mengambil kembali kebebasannya—dan mengincar kehidupan sekolah yang normal.\n\nMelarikan diri dari wanita cantik yang kuat seperti dia lebih mudah diucapkan daripada dilakukan...",
+      "status": "ongoing",
+      "year": 2025,
+      "contentRating": "suggestive",
+      "originalLanguage": "ja",
+      "lastChapter": null,
+      "updatedAt": "2026-06-11T13:50:56+00:00",
+      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F202718c6-525e-4cec-a469-c945548cacc3%2F04dd5c60-a742-4f42-9de0-80759d0e0ceb.jpg.512.jpg",
+      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F202718c6-525e-4cec-a469-c945548cacc3%2F04dd5c60-a742-4f42-9de0-80759d0e0ceb.jpg",
+      "author": "Yuuji Yuuji",
+      "authorId": "9cbb48a5-f9e0-45f8-b411-10b031d24259",
+      "artist": "Touno Kiri",
+      "artistId": "5853cb9f-a242-4f81-8333-1be855a4618e",
+      "tags": [
+        {
+          "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
+          "name": "Romance",
+          "group": "genre"
+        },
+        {
+          "id": "4d32cc48-9f00-4cca-9b5a-a839f0764984",
+          "name": "Comedy",
+          "group": "genre"
+        },
+        {
+          "id": "aafb99c1-7f60-43fa-b75f-fc9502ce29c7",
+          "name": "Harem",
+          "group": "theme"
+        },
+        {
+          "id": "b9af3a63-f058-46de-a9a0-e0c13906197a",
+          "name": "Drama",
+          "group": "genre"
+        },
+        {
+          "id": "caaa44eb-cd40-4177-b930-79d3ef2afe87",
+          "name": "School Life",
+          "group": "theme"
+        },
+        {
+          "id": "f4122d1c-3b44-44d0-9936-ff7502c39ad3",
+          "name": "Adaptation",
+          "group": "format"
+        }
+      ]
+    },
+    {
+      "id": "6670ee28-f26d-4b61-b49c-d71149cd5a6e",
+      "title": "Mieruko-chan",
+      "altTitle": "見える子ちゃん",
+      "description": "All of a sudden, Miko is able to see grotesque monsters all around her; but no one else can. Rather than trying to run away or face them, she instead musters all of her courage and… ignores them. Join in on her day-to-day life as she keeps up her best poker face despite the supernatural goings-on.\n___\n**Alt Official Raw:** [niconico Manga](http://manga.nicovideo.jp/comic/37662)",
+      "status": "ongoing",
+      "year": 2018,
+      "contentRating": "safe",
+      "originalLanguage": "ja",
+      "lastChapter": null,
+      "updatedAt": "2026-08-15T16:15:25+00:00",
+      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F6670ee28-f26d-4b61-b49c-d71149cd5a6e%2F13d41432-d7ec-41cd-a265-5af700989aa6.jpg.512.jpg",
+      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F6670ee28-f26d-4b61-b49c-d71149cd5a6e%2F13d41432-d7ec-41cd-a265-5af700989aa6.jpg",
+      "author": "Izumi Tomoki",
+      "authorId": "8e3594bb-820e-4e72-a478-79c509889c7b",
+      "artist": "Izumi Tomoki",
+      "artistId": "8e3594bb-820e-4e72-a478-79c509889c7b",
+      "tags": [
+        {
+          "id": "07251805-a27e-4d59-b488-f0bfbec15168",
+          "name": "Thriller",
+          "group": "genre"
+        },
+        {
+          "id": "36fd93ea-e8b8-445e-b836-358f02b3d33d",
+          "name": "Monsters",
+          "group": "theme"
+        },
+        {
+          "id": "3b60b75c-a2d7-4860-ab56-05f391bb889c",
+          "name": "Psychological",
+          "group": "genre"
+        },
+        {
+          "id": "3bb26d85-09d5-4d2e-880c-c34b974339e9",
+          "name": "Ghosts",
+          "group": "theme"
+        },
+        {
+          "id": "4d32cc48-9f00-4cca-9b5a-a839f0764984",
+          "name": "Comedy",
+          "group": "genre"
+        },
+        {
+          "id": "b9af3a63-f058-46de-a9a0-e0c13906197a",
+          "name": "Drama",
+          "group": "genre"
+        },
+        {
+          "id": "caaa44eb-cd40-4177-b930-79d3ef2afe87",
+          "name": "School Life",
+          "group": "theme"
+        },
+        {
+          "id": "cdad7e68-1419-41dd-bdce-27753074a640",
+          "name": "Horror",
+          "group": "genre"
+        }
+      ]
+    },
+    {
+      "id": "878634d2-ea39-4001-a4bf-31458020d16a",
+      "title": "Akuyaku Reijou Level 99 ~Watashi wa Ura Boss desuga Maou de wa Arimasen~",
+      "altTitle": "悪役令嬢レベル９９～私は裏ボスですが魔王ではありません～",
+      "description": "Aku bereinkarnasi menjadi antagonis \"Dolkness Eumelia\" dari gim otome RPG. Di cerita utamanya, Eumelia hanyalah seorang karakter sampingan, tapi setelah ending, ia memasuki cerita lagi dengan menjadi bos rahasia, menjadi karakter yang mempunyai status lebih tinggi daripada pahlawan!!  \n  \nMemantik jiwa gamer-ku, lalu mengambil kesempatan karena ditinggal oleh keluargaku di wilayah mereka, aku berlatih! Berlatih! Lalu pada akhir pelatihanku saat aku baru memasuki akademi, ternyata levelku mencapai 99.  \n  \nWalaupun aku sudah membuat rencana untuk hidup tanpa mencolok dan damai, beberapa saat setelah masuk sekolah, aku disangka \"Raja Iblis\" oleh si Heroine dan Para Target Cintanya …?  \n  \nDiangkat dari Web Novel yang populer yang mencari kehidupan damai, sebuah cerita fantasi tentang antagonis terkuat!",
+      "status": "ongoing",
+      "year": 2020,
+      "contentRating": "safe",
+      "originalLanguage": "ja",
+      "lastChapter": null,
+      "updatedAt": "2026-08-01T11:45:48+00:00",
+      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F878634d2-ea39-4001-a4bf-31458020d16a%2F4d34538d-e76b-44db-ba7e-f7e7d13c9ade.jpg.512.jpg",
+      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F878634d2-ea39-4001-a4bf-31458020d16a%2F4d34538d-e76b-44db-ba7e-f7e7d13c9ade.jpg",
+      "author": "Tanabata Satori",
+      "authorId": "f91539f4-3764-44ce-916d-d5dbb73fd9cc",
+      "artist": "Nokomi (のこみ)",
+      "artistId": "09d67e7a-98f0-4330-884f-bbab4c1b25ea",
+      "tags": [
+        {
+          "id": "0bc90acb-ccc1-44ca-a34a-b9f3a73259d0",
+          "name": "Reincarnation",
+          "group": "theme"
+        },
+        {
+          "id": "36fd93ea-e8b8-445e-b836-358f02b3d33d",
+          "name": "Monsters",
+          "group": "theme"
+        },
+        {
+          "id": "391b0423-d847-456f-aff0-8b0cfc03066b",
+          "name": "Action",
+          "group": "genre"
+        },
+        {
+          "id": "39730448-9a5f-48a2-85b0-a70db87b1233",
+          "name": "Demons",
+          "group": "theme"
+        },
+        {
+          "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
+          "name": "Romance",
+          "group": "genre"
+        },
+        {
+          "id": "4d32cc48-9f00-4cca-9b5a-a839f0764984",
+          "name": "Comedy",
+          "group": "genre"
+        },
+        {
+          "id": "9438db5a-7e2a-4ac0-b39e-e0d95a34b8a8",
+          "name": "Video Games",
+          "group": "theme"
+        },
+        {
+          "id": "a1f53773-c69a-4ce5-8cab-fffcd90b1565",
+          "name": "Magic",
+          "group": "theme"
+        }
+      ]
+    },
+    {
+      "id": "c52b2ce3-7f95-469c-96b0-479524fb7a1a",
+      "title": "Jujutsu Kaisen",
+      "altTitle": "呪術廻戦",
+      "description": "For some strange reason, Itadori Yuuji, despite his insane athleticism, would rather just hang out with the Occult Club. However, he soon finds out that the occult is as real as it gets when his fellow club members are attacked!\n\nMeanwhile, the mysterious Fushiguro Megumi is tracking down a special-grade cursed object, and his search leads him to Itadori…\n___\n**Official English Volumes:** [VIZ](https://www.viz.com/shonenjump/chapters/jujutsu-kaisen)",
+      "status": "completed",
+      "year": 2018,
+      "contentRating": "suggestive",
+      "originalLanguage": "ja",
+      "lastChapter": "271",
+      "updatedAt": "2026-08-07T20:45:35+00:00",
+      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fc52b2ce3-7f95-469c-96b0-479524fb7a1a%2F6d9134b2-21ea-4d02-ac2b-7c0d1c6a2aaa.jpg.512.jpg",
+      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fc52b2ce3-7f95-469c-96b0-479524fb7a1a%2F6d9134b2-21ea-4d02-ac2b-7c0d1c6a2aaa.jpg",
+      "author": "Akutami Gege",
+      "authorId": "94be1d47-54d0-42c6-b42b-439605e3793f",
+      "artist": "Akutami Gege",
+      "artistId": "94be1d47-54d0-42c6-b42b-439605e3793f",
+      "tags": [
+        {
+          "id": "0a39b5a1-b235-4886-a747-1d05d216532d",
+          "name": "Award Winning",
+          "group": "format"
+        },
+        {
+          "id": "391b0423-d847-456f-aff0-8b0cfc03066b",
+          "name": "Action",
+          "group": "genre"
+        },
+        {
+          "id": "3bb26d85-09d5-4d2e-880c-c34b974339e9",
+          "name": "Ghosts",
+          "group": "theme"
+        },
+        {
+          "id": "87cc87cd-a395-47af-b27a-93258283bbc6",
+          "name": "Adventure",
+          "group": "genre"
+        },
+        {
+          "id": "b29d6a3d-1569-4e7a-8caf-7557bc92cd5d",
+          "name": "Gore",
+          "group": "content"
+        },
+        {
+          "id": "caaa44eb-cd40-4177-b930-79d3ef2afe87",
+          "name": "School Life",
+          "group": "theme"
+        },
+        {
+          "id": "cdad7e68-1419-41dd-bdce-27753074a640",
+          "name": "Horror",
+          "group": "genre"
+        },
+        {
+          "id": "eabc5b4c-6aff-42f3-b657-3e90cbd00b75",
+          "name": "Supernatural",
+          "group": "theme"
+        }
+      ]
+    },
+    {
+      "id": "418791c0-35cf-4f87-936b-acd9cddf0989",
+      "title": "Kaoru Hana wa Rin to Saku",
+      "altTitle": "薫る花は凛と咲く",
+      "description": "In a certain place, there are two neighboring high schools. Chidori High School, a bottom-feeder boys' school where idiots gather, and Kikyo Girls' School, a well-established girls' school. Rintaro Tsumugi, a strong and quiet second year student at Chidori High School, meets Kaoruko Waguri, a girl who comes as a customer while helping out at his family's cake shop. Rintaro feels comfortable spending time with Kaoruko, but she is a student at Kikyo Girls, a neighboring school that thoroughly dislikes Chidori High.\n___\n**Links:**\n- [Official Twitter (JP)](https://twitter.com/kaoruhana_mp)\n- Official English - [K MANGA](https://kmanga.kodansha.com/title/10023/episode/320130) (Simulpub)",
+      "status": "ongoing",
+      "year": 2021,
+      "contentRating": "safe",
+      "originalLanguage": "ja",
+      "lastChapter": null,
+      "updatedAt": "2026-09-09T23:22:12+00:00",
+      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F418791c0-35cf-4f87-936b-acd9cddf0989%2F6e823d0e-103a-4cf9-a312-a3a292ccb12d.jpg.512.jpg",
+      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F418791c0-35cf-4f87-936b-acd9cddf0989%2F6e823d0e-103a-4cf9-a312-a3a292ccb12d.jpg",
+      "author": "Mikami Saka",
+      "authorId": "3d3ec54f-2eb7-4fb7-b2eb-0372c9f1b92e",
+      "artist": "Mikami Saka",
+      "artistId": "3d3ec54f-2eb7-4fb7-b2eb-0372c9f1b92e",
+      "tags": [
+        {
+          "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
+          "name": "Romance",
+          "group": "genre"
+        },
+        {
+          "id": "4d32cc48-9f00-4cca-9b5a-a839f0764984",
+          "name": "Comedy",
+          "group": "genre"
+        },
+        {
+          "id": "b9af3a63-f058-46de-a9a0-e0c13906197a",
+          "name": "Drama",
+          "group": "genre"
+        },
+        {
+          "id": "caaa44eb-cd40-4177-b930-79d3ef2afe87",
+          "name": "School Life",
+          "group": "theme"
+        },
+        {
+          "id": "e5301a23-ebd9-49dd-a0cb-2add944c7fe9",
+          "name": "Slice of Life",
+          "group": "genre"
+        }
+      ]
+    },
+    {
+      "id": "e18fe8c6-f6dc-4f05-8462-7b2083ff9a6c",
+      "title": "Kusuriya no Hitorigoto",
+      "altTitle": "薬屋のひとりごと",
+      "description": "Diculik dan dijual ke harem, Maomao berusaha bertahan dengan kemampuannya beradaptasi. Wawasan yang luas tentang obat-obatan membuat karirnya melompat tinggi, langsung menjadi pelayan pribadi selir kesayangan kaisar!",
+      "status": "ongoing",
+      "year": 2017,
+      "contentRating": "suggestive",
+      "originalLanguage": "ja",
+      "lastChapter": null,
+      "updatedAt": "2026-07-21T16:06:22+00:00",
+      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fe18fe8c6-f6dc-4f05-8462-7b2083ff9a6c%2F530a4ffb-87cb-4156-bdeb-61670532e20f.jpg.512.jpg",
+      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fe18fe8c6-f6dc-4f05-8462-7b2083ff9a6c%2F530a4ffb-87cb-4156-bdeb-61670532e20f.jpg",
+      "author": "Hyuuga Natsu",
+      "authorId": "4250d940-37ba-45df-a449-4b0fbed2da71",
+      "artist": "Nekokurage",
+      "artistId": "96f809b7-196f-4e7f-8659-f2f1fd7b5729",
+      "tags": [
+        {
+          "id": "0a39b5a1-b235-4886-a747-1d05d216532d",
+          "name": "Award Winning",
+          "group": "format"
+        },
+        {
+          "id": "33771934-028e-4cb3-8744-691e866a923e",
+          "name": "Historical",
+          "group": "genre"
+        },
+        {
+          "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
+          "name": "Romance",
+          "group": "genre"
+        },
+        {
+          "id": "b9af3a63-f058-46de-a9a0-e0c13906197a",
+          "name": "Drama",
+          "group": "genre"
+        },
+        {
+          "id": "c8cbe35b-1b2b-4a3f-9c37-db84c4514856",
+          "name": "Medical",
+          "group": "genre"
+        },
+        {
+          "id": "ee968100-4191-4968-93d3-f82d72be7e46",
+          "name": "Mystery",
+          "group": "genre"
+        },
+        {
+          "id": "f4122d1c-3b44-44d0-9936-ff7502c39ad3",
+          "name": "Adaptation",
+          "group": "format"
+        }
+      ]
+    },
+    {
+      "id": "a1c7c817-4e59-43b7-9365-09675a149a6f",
+      "title": "One Piece",
+      "altTitle": "ワンピース",
+      "description": "From Viz:\nAs a child, Monkey D. Luffy was inspired to become a pirate by listening to the tales of \"Red-Haired\" Shanks. But his life changed when Luffy accidentally ate the Gum-Gum Devil Fruit and gained the power to stretch like rubber at the cost of never being able to swim again. Years later, still vowing to become the king of the pirates, Luffy sets out on his adventure one guy alone in a rowboat, in search of the legendary \"One Piece,\" said to be the greatest treasure in the world.\n\nThe best-selling manga in history and tied with Superman for the best-selling comics in history.\n\n---\n\n**Note:**  \n**Because a takedown notice was sent to MangaDex from the owners of this series, English fan translations of One Piece are unable to be posted at this time. The series can be read in its entirety at [the official Shonen Jump website,](https://www.viz.com/shonenjump/chapters/one-piece) with the first and latest three chapters available at any time and the rest accessible with a Shonen Jump membership (which costs about $2 a month and can be accessed via a VPN if you are outside the US). The three most recent chapters can also be read on MangaPlus for free by clicking the chapter links below.**\n\n---\n- **The Best-Selling Manga in History**\n- **Won the 41st Japan Cartoonists Association Award Grand Prize alongside Neko Darake in 2012** \n- **Received the Kumamoto Prefecture Honorary Prize in 2018**",
+      "status": "ongoing",
+      "year": 1997,
+      "contentRating": "suggestive",
+      "originalLanguage": "ja",
+      "lastChapter": null,
+      "updatedAt": "2026-08-10T03:22:44+00:00",
+      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fa1c7c817-4e59-43b7-9365-09675a149a6f%2F2f4aca53-64c7-46ac-ae85-3bc9b3169890.png.512.jpg",
+      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fa1c7c817-4e59-43b7-9365-09675a149a6f%2F2f4aca53-64c7-46ac-ae85-3bc9b3169890.png",
+      "author": "Oda Eiichirou (尾田栄一郎)",
+      "authorId": "b6045e2c-28f4-4ce0-b4dd-b14070f2f5ae",
+      "artist": "Oda Eiichirou (尾田栄一郎)",
+      "artistId": "b6045e2c-28f4-4ce0-b4dd-b14070f2f5ae",
+      "tags": [
+        {
+          "id": "0a39b5a1-b235-4886-a747-1d05d216532d",
+          "name": "Award Winning",
+          "group": "format"
+        },
+        {
+          "id": "256c8bd9-4904-4360-bf4f-508a76d67183",
+          "name": "Sci-Fi",
+          "group": "genre"
+        },
+        {
+          "id": "36fd93ea-e8b8-445e-b836-358f02b3d33d",
+          "name": "Monsters",
+          "group": "theme"
+        },
+        {
+          "id": "391b0423-d847-456f-aff0-8b0cfc03066b",
+          "name": "Action",
+          "group": "genre"
+        },
+        {
+          "id": "3de8c75d-8ee3-48ff-98ee-e20a65c86451",
+          "name": "Animals",
+          "group": "theme"
+        },
+        {
+          "id": "4d32cc48-9f00-4cca-9b5a-a839f0764984",
+          "name": "Comedy",
+          "group": "genre"
+        },
+        {
+          "id": "87cc87cd-a395-47af-b27a-93258283bbc6",
+          "name": "Adventure",
+          "group": "genre"
+        },
+        {
+          "id": "b29d6a3d-1569-4e7a-8caf-7557bc92cd5d",
+          "name": "Gore",
+          "group": "content"
+        }
+      ]
+    },
+    {
+      "id": "ea0e7020-2b2f-4f17-9251-fee3632dc135",
+      "title": "Dungeon ni Hisomu Yandere na Kanojo ni Ore wa Nandomo Korosareru",
+      "altTitle": "ダンジョンに潜むヤンデレな彼女に俺は何度も殺される",
+      "description": "Kiska, a boy who was mistreated by the villagers, was able to get by thanks to his childhood friend, Namia, who was the only one who stood by him. One day, Namia is found murdered in the village. Kiska is framed for the murder by the other villagers, and banished to an inescapable S-class dungeon…?\n___\n**Character Designer:** [Tomo](https://mangadex.org/author/645c60f7-a644-45b2-8c9e-4932a87fe187)",
+      "status": "ongoing",
+      "year": 2023,
+      "contentRating": "suggestive",
+      "originalLanguage": "ja",
+      "lastChapter": null,
+      "updatedAt": "2026-09-28T14:58:37+00:00",
+      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fea0e7020-2b2f-4f17-9251-fee3632dc135%2F4979315b-7bbd-4d17-9e61-d49f07d1245d.jpg.512.jpg",
+      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fea0e7020-2b2f-4f17-9251-fee3632dc135%2F4979315b-7bbd-4d17-9e61-d49f07d1245d.jpg",
+      "author": "Kitagawa Nikita",
+      "authorId": "d256dbeb-02cc-4de5-bad3-7082c0998ff9",
+      "artist": "Nomura Eiji",
+      "artistId": "eee4b960-e352-4584-94a9-377fa5269d5c",
+      "tags": [
+        {
+          "id": "0bc90acb-ccc1-44ca-a34a-b9f3a73259d0",
+          "name": "Reincarnation",
+          "group": "theme"
+        },
+        {
+          "id": "292e862b-2d17-4062-90a2-0356caa4ae27",
+          "name": "Time Travel",
+          "group": "theme"
+        },
+        {
+          "id": "36fd93ea-e8b8-445e-b836-358f02b3d33d",
+          "name": "Monsters",
+          "group": "theme"
+        },
+        {
+          "id": "391b0423-d847-456f-aff0-8b0cfc03066b",
+          "name": "Action",
+          "group": "genre"
+        },
+        {
+          "id": "39730448-9a5f-48a2-85b0-a70db87b1233",
+          "name": "Demons",
+          "group": "theme"
+        },
+        {
+          "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
+          "name": "Romance",
+          "group": "genre"
+        },
+        {
+          "id": "5fff9cde-849c-4d78-aab0-0d52b2ee1d25",
+          "name": "Survival",
+          "group": "theme"
+        },
+        {
+          "id": "87cc87cd-a395-47af-b27a-93258283bbc6",
+          "name": "Adventure",
+          "group": "genre"
         }
       ]
     }

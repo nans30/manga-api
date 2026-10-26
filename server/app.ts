@@ -242,6 +242,8 @@ async function dohGet(
   });
 }
 
+const serverMangaCache = new Map<string, any>();
+
 function formatManga(item: any) {
   const attr = item.attributes || {};
   const titles = attr.title || {};
@@ -295,7 +297,7 @@ function formatManga(item: any) {
     }))
     .slice(0, 8);
 
-  return {
+  const formatted = {
     id: item.id,
     title,
     altTitle: findAltTitle('ja') || findAltTitle('en') || '',
@@ -314,6 +316,10 @@ function formatManga(item: any) {
     artistId: artistRel?.id || authorRel?.id || '',
     tags,
   };
+  if (formatted.id) {
+    serverMangaCache.set(formatted.id, formatted);
+  }
+  return formatted;
 }
 
 // Helper to auto-sync local mangadex-cache.json in background when running locally
@@ -551,17 +557,22 @@ app.get('/api/manga/:id', async (req: Request, res: Response) => {
     params.append('includes[]', 'artist');
 
     const [mangaRes, statsRes] = await Promise.all([
-      dohGet(`${MANGADEX_API}/manga/${id}?${params.toString()}`),
+      dohGet(`${MANGADEX_API}/manga/${id}?${params.toString()}`).catch(() => null),
       dohGet(`${MANGADEX_API}/statistics/manga/${id}`).catch(() => null),
     ]);
 
-    if (!mangaRes.ok) {
-      res.status(mangaRes.status).json({ error: 'Manga tidak ditemukan' });
-      return;
+    let formatted = serverMangaCache.get(id) || null;
+    if (mangaRes && mangaRes.ok) {
+      const mangaJson: any = mangaRes.json();
+      if (mangaJson?.data) {
+        formatted = formatManga(mangaJson.data);
+      }
     }
 
-    const mangaJson: any = mangaRes.json();
-    const formatted = formatManga(mangaJson.data);
+    if (!formatted) {
+      res.status(404).json({ error: 'Manga tidak ditemukan' });
+      return;
+    }
 
     let rating = null;
     let follows = null;

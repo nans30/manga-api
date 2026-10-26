@@ -141,6 +141,37 @@ export const HeaderBagIcon: React.FC<{ className?: string }> = ({ className = 'w
 );
 
 /**
+ * Crisp SVG Indonesia Flag Icon (Works on Windows PC & Mobile!)
+ */
+export const FlagIdIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
+  <svg viewBox="0 0 24 24" fill="none" className={`${className} rounded-full overflow-hidden shadow-sm`}>
+    <circle cx="12" cy="12" r="11" fill="#f8f8f8" />
+    <path d="M1 12C1 5.925 5.925 1 12 1s11 4.925 11 11H1Z" fill="#E70011" />
+    <path d="M1 12c0 6.075 4.925 11 11 11s11-4.925 11-11H1Z" fill="#FFFFFF" />
+    <circle cx="12" cy="12" r="10.5" stroke="#c1c1c1" strokeOpacity="0.5" strokeWidth="1" />
+  </svg>
+);
+
+/**
+ * Crisp SVG UK / English Flag Icon (Works on Windows PC & Mobile!)
+ */
+export const FlagEnIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
+  <svg viewBox="0 0 24 24" fill="none" className={`${className} rounded-full overflow-hidden shadow-sm`}>
+    <clipPath id="ukClip">
+      <circle cx="12" cy="12" r="11" />
+    </clipPath>
+    <g clipPath="url(#ukClip)">
+      <rect width="24" height="24" fill="#012169" />
+      <path d="M0 0L24 24M24 0L0 24" stroke="#FFFFFF" strokeWidth="4" />
+      <path d="M0 0L24 24M24 0L0 24" stroke="#C8102E" strokeWidth="2" />
+      <path d="M12 0V24M0 12H24" stroke="#FFFFFF" strokeWidth="6" />
+      <path d="M12 0V24M0 12H24" stroke="#C8102E" strokeWidth="3.5" />
+    </g>
+    <circle cx="12" cy="12" r="10.5" stroke="#c1c1c1" strokeOpacity="0.5" strokeWidth="1" />
+  </svg>
+);
+
+/**
  * Comic Starburst SVG Shape for "READ NOW ->" Button (Screen 3 of reference)
  */
 export const ComicStarburstButton: React.FC<{

@@ -1,8 +1,13 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { Manga, MangaTag } from '../types';
-import { isBookmarked, toggleBookmark } from '../storage';
-import { NavBookmarkIcon } from '../components/Icons';
+import {
+  isBookmarked,
+  toggleBookmark,
+  cacheMangaObjects,
+  useSysLang,
+} from '../storage';
+import { NavBookmarkIcon, FlagIdIcon, FlagEnIcon } from '../components/Icons';
 import scrapedCache from '../data/mangadex-cache.json';
 import {
   ArrowLeft,
@@ -28,6 +33,7 @@ function getInitialCachedBooks(sortKey: string): Manga[] {
 export const AllBooks: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [sysLang] = useSysLang();
 
   const query = searchParams.get('q') || '';
   const sort = searchParams.get('sort') || 'popular';
@@ -40,7 +46,7 @@ export const AllBooks: React.FC = () => {
   const [books, setBooks] = useState<Manga[]>(() => getInitialCachedBooks(sort));
   const [tags, setTags] = useState<MangaTag[]>(() => (cacheData.tags || []).slice(0, 20));
   const [loading, setLoading] = useState(false);
-  const [total, setTotal] = useState(2400);
+  const [total, setTotal] = useState(9984);
   const [searchText, setSearchText] = useState(query);
   const [suggestions, setSuggestions] = useState<Manga[]>([]);
   const [searching, setSearching] = useState(false);
@@ -49,13 +55,14 @@ export const AllBooks: React.FC = () => {
   const [, setTick] = useState(0);
 
   const LIMIT = 24;
-  const totalPages = Math.max(1, Math.min(100, Math.ceil(total / LIMIT)));
+  // Full API limit (MangaDex allows offset + limit <= 10,000 => up to 416 pages of 24 items, or actual total pages)
+  const MAX_API_PAGES = Math.floor(10000 / LIMIT); // 416 pages
+  const totalPages = Math.max(1, Math.min(MAX_API_PAGES, Math.ceil(total / LIMIT)));
 
   useEffect(() => {
     setSearchText(query);
   }, [query]);
 
-  // Close search dropdown on outside click
   useEffect(() => {
     const onClickOutside = (e: MouseEvent) => {
       if (searchBoxRef.current && !searchBoxRef.current.contains(e.target as Node)) {
@@ -66,7 +73,6 @@ export const AllBooks: React.FC = () => {
     return () => document.removeEventListener('mousedown', onClickOutside);
   }, []);
 
-  // Live autocomplete with Author Name
   useEffect(() => {
     const q = searchText.trim();
     if (q.length < 2) {
@@ -79,7 +85,10 @@ export const AllBooks: React.FC = () => {
       fetch(`/api/manga?q=${encodeURIComponent(q)}&limit=6`)
         .then((r) => r.json())
         .then((json) => {
-          if (json.data) setSuggestions(json.data);
+          if (json.data) {
+            cacheMangaObjects(json.data);
+            setSuggestions(json.data);
+          }
         })
         .catch(() => {})
         .finally(() => setSearching(false));
@@ -104,11 +113,13 @@ export const AllBooks: React.FC = () => {
       if (authorId) params.set('authorId', authorId);
       if (lang) params.set('lang', lang);
       params.set('limit', String(LIMIT));
-      params.set('offset', String((page - 1) * LIMIT));
+      const safeOffset = Math.min(10000 - LIMIT, Math.max(0, (page - 1) * LIMIT));
+      params.set('offset', String(safeOffset));
 
       const res = await fetch(`/api/manga?${params.toString()}`);
       const json = await res.json();
       if (json.data) {
+        cacheMangaObjects(json.data);
         setBooks(json.data);
         setTotal(json.total || json.data.length);
       }
@@ -119,7 +130,6 @@ export const AllBooks: React.FC = () => {
     }
   }, [query, sort, selectedTag, authorId, lang, page]);
 
-  // Fetch books WITHOUT forcing window.scrollTo on every render/scroll
   useEffect(() => {
     fetchBooks();
   }, [fetchBooks]);
@@ -141,7 +151,6 @@ export const AllBooks: React.FC = () => {
     setSearchParams(next);
   };
 
-  // Only scroll to top when user explicitly clicks a pagination button
   const goToPage = (targetPage: number) => {
     updateParam('page', String(targetPage));
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -183,13 +192,13 @@ export const AllBooks: React.FC = () => {
         <button
           onClick={() => navigate(-1)}
           className="p-2 -ml-2 text-[#121212] dark:text-[#f8f8f8] hover:text-[#f9cb55] transition-colors"
-          aria-label="Kembali"
+          aria-label="Back"
         >
           <ArrowLeft className="w-6 h-6" />
         </button>
 
         <h1 className="font-manga text-2xl sm:text-3xl tracking-wider text-[#121212] dark:text-[#f8f8f8]">
-          SEMUA KOMIK
+          {sysLang === 'id' ? 'SEMUA KOMIK' : 'ALL BOOKS'}
         </h1>
 
         <div className="w-8" />
@@ -210,7 +219,11 @@ export const AllBooks: React.FC = () => {
               setSearchText(e.target.value);
               setDropdownOpen(true);
             }}
-            placeholder="Cari judul komik atau nama pembuat (author)..."
+            placeholder={
+              sysLang === 'id'
+                ? 'Cari judul komik atau nama pembuat (author)...'
+                : 'Search manga title or author name...'
+            }
             className="flex-1 bg-transparent text-xs sm:text-sm text-[#121212] dark:text-[#f8f8f8] placeholder:text-[#6e6e6e] dark:placeholder:text-[#c1c1c1] focus:outline-none"
           />
           {searchText && (
@@ -233,11 +246,13 @@ export const AllBooks: React.FC = () => {
             {searching ? (
               <div className="p-4 flex items-center justify-center gap-2 text-xs text-[#6e6e6e] dark:text-[#c1c1c1]">
                 <Loader2 className="w-4 h-4 animate-spin text-[#f9cb55]" />
-                Mencari judul & pembuat...
+                {sysLang === 'id' ? 'Mencari judul & pembuat...' : 'Searching title & author...'}
               </div>
             ) : suggestions.length === 0 ? (
               <div className="p-4 text-center text-xs text-[#6e6e6e] dark:text-[#c1c1c1]">
-                Tidak ada hasil untuk "{searchText}"
+                {sysLang === 'id'
+                  ? `Tidak ada hasil untuk "${searchText}"`
+                  : `No results for "${searchText}"`}
               </div>
             ) : (
               <div className="divide-y divide-[#c1c1c1]/20 dark:divide-[#262626] max-h-80 overflow-y-auto">
@@ -245,6 +260,7 @@ export const AllBooks: React.FC = () => {
                   <Link
                     key={m.id}
                     to={`/manga/${m.id}${lang ? `?lang=${lang}` : ''}`}
+                    state={{ manga: m }}
                     onClick={() => setDropdownOpen(false)}
                     className="flex items-center gap-3 p-3 hover:bg-[#ececec]/70 dark:hover:bg-[#242424] transition-colors"
                   >
@@ -259,7 +275,7 @@ export const AllBooks: React.FC = () => {
                       </p>
                       <p className="text-xs font-medium text-[#f9cb55] flex items-center gap-1 mt-0.5 truncate">
                         <User className="w-3 h-3 shrink-0" />
-                        <span>Pembuat: {m.author}</span>
+                        <span>{m.author}</span>
                         {m.artist && m.artist !== m.author ? ` (${m.artist})` : ''}
                       </p>
                     </div>
@@ -274,34 +290,6 @@ export const AllBooks: React.FC = () => {
         )}
       </div>
 
-      {/* Active Author Filter Banner */}
-      {authorId && (
-        <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-[#f9cb55]/15 border border-[#f9cb55]/50">
-          <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#121212] dark:text-[#f8f8f8]">
-            <User className="w-4 h-4 text-[#f9cb55]" />
-            <span>
-              Menampilkan semua komik karya:{' '}
-              <strong className="text-[#121212] dark:text-[#f9cb55]">
-                {authorName || 'Author'}
-              </strong>
-            </span>
-          </div>
-          <button
-            onClick={() => {
-              const next = new URLSearchParams(searchParams);
-              next.delete('authorId');
-              next.delete('authorName');
-              next.delete('page');
-              setSearchParams(next);
-            }}
-            className="text-xs font-bold text-[#121212] dark:text-[#f9cb55] hover:underline flex items-center gap-1"
-          >
-            <X className="w-3.5 h-3.5" />
-            Reset
-          </button>
-        </div>
-      )}
-
       {/* Horizontal Genre Pills */}
       <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-1 -mx-5 px-5 sm:mx-0 sm:px-0">
         <button
@@ -312,7 +300,7 @@ export const AllBooks: React.FC = () => {
               : 'bg-[#ffffff] dark:bg-[#1e1e1e] text-[#121212] dark:text-[#f8f8f8] border border-[#c1c1c1]/30 dark:border-[#2a2a2a] hover:border-[#f9cb55]'
           }`}
         >
-          SEMUA
+          {sysLang === 'id' ? 'SEMUA' : 'ALL'}
         </button>
 
         {tags.map((tag) => {
@@ -333,72 +321,72 @@ export const AllBooks: React.FC = () => {
         })}
       </div>
 
-      {/* Language Filter (Semua / Bahasa Indonesia / Inggris) + Count & Sort Row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-        {/* Language Filter Buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="inline-flex items-center bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#2a2a2a] rounded-xl p-1">
+      {/* Icon-Only Language Filter + Count & Sort Row */}
+      <div className="flex items-center justify-between gap-3 pt-1 flex-wrap">
+        <div className="flex items-center gap-3">
+          {/* Icon-Only Language Filter (Globe / ID / EN) */}
+          <div className="inline-flex items-center gap-1 bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#2a2a2a] rounded-xl p-1">
             <button
               type="button"
               onClick={() => updateParam('lang', '')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+              title={sysLang === 'id' ? 'Semua Bahasa' : 'All Languages'}
+              className={`p-1.5 rounded-lg transition-all ${
                 lang === ''
-                  ? 'bg-[#f9cb55] text-[#121212]'
+                  ? 'bg-[#f9cb55] text-[#121212] shadow-sm'
                   : 'text-[#6e6e6e] dark:text-[#c1c1c1] hover:text-[#121212] dark:hover:text-[#f8f8f8]'
               }`}
             >
-              <Globe className="w-3.5 h-3.5" />
-              Semua Bahasa
+              <Globe className="w-4 h-4" />
             </button>
             <button
               type="button"
               onClick={() => updateParam('lang', 'id')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              title="Bahasa Indonesia"
+              className={`p-1.5 rounded-lg transition-all ${
                 lang === 'id'
-                  ? 'bg-[#f9cb55] text-[#121212]'
-                  : 'text-[#6e6e6e] dark:text-[#c1c1c1] hover:text-[#121212] dark:hover:text-[#f8f8f8]'
+                  ? 'bg-[#f9cb55] ring-2 ring-[#f9cb55]/50 shadow-sm'
+                  : 'opacity-60 hover:opacity-100'
               }`}
             >
-              🇮🇩 Bahasa Indonesia
+              <FlagIdIcon className="w-4 h-4" />
             </button>
             <button
               type="button"
               onClick={() => updateParam('lang', 'en')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              title="English"
+              className={`p-1.5 rounded-lg transition-all ${
                 lang === 'en'
-                  ? 'bg-[#f9cb55] text-[#121212]'
-                  : 'text-[#6e6e6e] dark:text-[#c1c1c1] hover:text-[#121212] dark:hover:text-[#f8f8f8]'
+                  ? 'bg-[#f9cb55] ring-2 ring-[#f9cb55]/50 shadow-sm'
+                  : 'opacity-60 hover:opacity-100'
               }`}
             >
-              🇬🇧 Inggris
+              <FlagEnIcon className="w-4 h-4" />
             </button>
           </div>
+
+          <span className="text-xs sm:text-sm font-medium text-[#6e6e6e] dark:text-[#c1c1c1]">
+            {total.toLocaleString('id-ID')} {sysLang === 'id' ? 'komik' : 'books'} •{' '}
+            {sysLang === 'id' ? 'Hal' : 'Page'} {page}/{totalPages}
+          </span>
         </div>
 
-        {/* Count & Sort Dropdown */}
-        <div className="flex items-center justify-between sm:justify-end gap-4">
-          <span className="text-xs sm:text-sm font-medium text-[#6e6e6e] dark:text-[#c1c1c1]">
-            {total.toLocaleString('id-ID')} komik • Hal {page}/{totalPages}
-          </span>
-
-          <div className="relative inline-flex items-center">
-            <select
-              value={sort}
-              onChange={(e) => updateParam('sort', e.target.value)}
-              className="appearance-none bg-transparent pr-6 py-1 text-xs sm:text-sm font-semibold text-[#121212] dark:text-[#f8f8f8] focus:outline-none cursor-pointer"
-            >
-              <option value="popular" className="bg-[#ffffff] dark:bg-[#1b1b1b]">
-                Urutkan: Terpopuler
-              </option>
-              <option value="latest" className="bg-[#ffffff] dark:bg-[#1b1b1b]">
-                Urutkan: Terbaru
-              </option>
-              <option value="rating" className="bg-[#ffffff] dark:bg-[#1b1b1b]">
-                Urutkan: Rating Tertinggi
-              </option>
-            </select>
-            <ChevronDown className="w-4 h-4 text-[#121212] dark:text-[#f8f8f8] pointer-events-none absolute right-0" />
-          </div>
+        <div className="relative inline-flex items-center">
+          <select
+            value={sort}
+            onChange={(e) => updateParam('sort', e.target.value)}
+            className="appearance-none bg-transparent pr-6 py-1 text-xs sm:text-sm font-semibold text-[#121212] dark:text-[#f8f8f8] focus:outline-none cursor-pointer"
+          >
+            <option value="popular" className="bg-[#ffffff] dark:bg-[#1b1b1b]">
+              {sysLang === 'id' ? 'Urutkan: Terpopuler' : 'by Popularity'}
+            </option>
+            <option value="latest" className="bg-[#ffffff] dark:bg-[#1b1b1b]">
+              {sysLang === 'id' ? 'Urutkan: Terbaru' : 'by Latest Update'}
+            </option>
+            <option value="rating" className="bg-[#ffffff] dark:bg-[#1b1b1b]">
+              {sysLang === 'id' ? 'Urutkan: Rating Tertinggi' : 'by Top Rating'}
+            </option>
+          </select>
+          <ChevronDown className="w-4 h-4 text-[#121212] dark:text-[#f8f8f8] pointer-events-none absolute right-0" />
         </div>
       </div>
 
@@ -414,8 +402,14 @@ export const AllBooks: React.FC = () => {
         </div>
       ) : books.length === 0 ? (
         <div className="text-center py-20 rounded-3xl bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#262626]">
-          <p className="text-base font-semibold">Tidak ada komik yang ditemukan</p>
-          <p className="text-xs text-[#c1c1c1] mt-1">Coba kata kunci atau kategori lain.</p>
+          <p className="text-base font-semibold">
+            {sysLang === 'id' ? 'Tidak ada komik yang ditemukan' : 'No books found'}
+          </p>
+          <p className="text-xs text-[#c1c1c1] mt-1">
+            {sysLang === 'id'
+              ? 'Coba kata kunci atau kategori lain.'
+              : 'Try another keyword or category.'}
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
@@ -439,6 +433,7 @@ export const AllBooks: React.FC = () => {
                 {/* Left Cover */}
                 <Link
                   to={detailLink}
+                  state={{ manga }}
                   className="w-24 sm:w-28 aspect-[3/4] rounded-xl overflow-hidden shrink-0 bg-[#ececec] dark:bg-[#1e1e1e] shadow-md"
                 >
                   <img
@@ -454,6 +449,7 @@ export const AllBooks: React.FC = () => {
                   <div className="flex items-start justify-between gap-2">
                     <Link
                       to={detailLink}
+                      state={{ manga }}
                       className="font-semibold text-sm sm:text-base text-[#121212] dark:text-[#f8f8f8] group-hover:text-[#f9cb55] transition-colors line-clamp-1 leading-snug"
                     >
                       {manga.title}
@@ -471,31 +467,23 @@ export const AllBooks: React.FC = () => {
                     </button>
                   </div>
 
-                  {/* Clickable Author / Creator Name */}
-                  {manga.authorId ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const next = new URLSearchParams(searchParams);
-                        next.set('authorId', manga.authorId!);
-                        next.set('authorName', manga.author);
-                        next.delete('page');
-                        setSearchParams(next);
-                      }}
-                      className="text-xs text-[#6e6e6e] dark:text-[#c1c1c1] hover:text-[#f9cb55] dark:hover:text-[#f9cb55] mt-0.5 truncate flex items-center gap-1 transition-colors text-left"
-                      title={`Lihat karya lain dari ${manga.author}`}
-                    >
-                      <User className="w-3 h-3 text-[#f9cb55] shrink-0" />
-                      <span className="truncate underline decoration-dotted underline-offset-2">
-                        {manga.author}
-                      </span>
-                    </button>
-                  ) : (
-                    <p className="text-xs text-[#6e6e6e] dark:text-[#c1c1c1] mt-0.5 truncate flex items-center gap-1">
-                      <User className="w-3 h-3 text-[#f9cb55] shrink-0" />
-                      <span className="truncate">{manga.author}</span>
-                    </p>
-                  )}
+                  {/* Clickable Author / Creator Name -> Navigates to Dedicated Author Page */}
+                  <Link
+                    to={`/author/${manga.authorId || 'search'}?name=${encodeURIComponent(
+                      manga.author
+                    )}&exclude=${manga.id}`}
+                    className="text-xs text-[#6e6e6e] dark:text-[#c1c1c1] hover:text-[#f9cb55] dark:hover:text-[#f9cb55] mt-0.5 truncate flex items-center gap-1 transition-colors"
+                    title={
+                      sysLang === 'id'
+                        ? `Lihat semua karya ${manga.author}`
+                        : `View all works by ${manga.author}`
+                    }
+                  >
+                    <User className="w-3 h-3 text-[#f9cb55] shrink-0" />
+                    <span className="truncate underline decoration-dotted underline-offset-2">
+                      {manga.author}
+                    </span>
+                  </Link>
 
                   {/* Rating + TOP Badge */}
                   <div className="flex items-center gap-2.5 mt-2">
@@ -509,16 +497,10 @@ export const AllBooks: React.FC = () => {
                         TOP
                       </span>
                     )}
-
-                    {lang === 'id' && (
-                      <span className="px-1.5 py-0.5 rounded bg-[#ececec] dark:bg-[#252525] text-[10px] font-bold">
-                        🇮🇩 ID
-                      </span>
-                    )}
                   </div>
 
                   {/* 2-line Description */}
-                  <Link to={detailLink}>
+                  <Link to={detailLink} state={{ manga }}>
                     <p className="text-xs text-[#6e6e6e] dark:text-[#c1c1c1] line-clamp-2 mt-2 leading-relaxed">
                       {manga.description}
                     </p>
@@ -530,7 +512,7 @@ export const AllBooks: React.FC = () => {
         </div>
       )}
 
-      {/* ==================== NUMBERED PAGINATION (1, 2, 3 ... 100) ==================== */}
+      {/* ==================== NUMBERED PAGINATION UP TO FULL LIMIT (e.g. 416) ==================== */}
       {!loading && books.length > 0 && (
         <div className="flex flex-wrap items-center justify-center gap-2 pt-8">
           <button
