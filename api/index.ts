@@ -1,8 +1,13 @@
-import express, { Request, Response, NextFunction } from 'express';
-import cors from 'cors';
+import type { Request, Response, NextFunction } from 'express';
+import * as expressPkg from 'express';
+import * as corsPkg from 'cors';
 import https from 'node:https';
 import { URL } from 'node:url';
 import { z } from 'zod';
+
+const express: typeof import('express') =
+  (expressPkg as any).default || expressPkg;
+const cors: typeof import('cors') = (corsPkg as any).default || corsPkg;
 
 // ============================================================================
 // SELF-CONTAINED ZOD VALIDATION SCHEMAS (Zero relative imports for Vercel ESM)
