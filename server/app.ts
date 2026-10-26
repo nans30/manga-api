@@ -1,11 +1,78 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import https from 'node:https';
+import fs from 'node:fs';
+import path from 'node:path';
 import { URL } from 'node:url';
 
 export const app = express();
+app.disable('x-powered-by');
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '100kb' }));
+
+// ============================================================================
+// SECURITY LAYER 1: Global HTTP Security Headers & Rate Limiting
+// ============================================================================
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const MAX_REQUESTS_PER_MINUTE = 180; // generous for reading pages, blocks abuse
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+
+  if (req.path.startsWith('/api/')) {
+    const ip =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+      req.socket.remoteAddress ||
+      'unknown';
+    const now = Date.now();
+    const record = rateLimitMap.get(ip);
+
+    if (!record || record.resetAt < now) {
+      rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    } else {
+      record.count += 1;
+      if (record.count > MAX_REQUESTS_PER_MINUTE) {
+        res.status(429).json({ error: 'Terlalu banyak permintaan. Coba lagi sebentar.' });
+        return;
+      }
+    }
+  }
+  next();
+});
+
+// Strict UUID v4 validator to prevent Path Traversal / SSRF on :id parameters
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isValidUuid(id: string): boolean {
+  return UUID_REGEX.test(id);
+}
+
+// Strict Domain Allowlist for Image Proxy (Prevents Open Proxy / SSRF attacks)
+function isAllowedImageHost(hostname: string): boolean {
+  const host = hostname.toLowerCase();
+  return (
+    host === 'uploads.mangadex.org' ||
+    host.endsWith('.mangadex.org') ||
+    host.endsWith('.mangadex.network')
+  );
+}
+
+// Prevent private/loopback IP resolution (SSRF DNS Rebinding protection)
+function isPrivateOrLoopbackIp(ip: string): boolean {
+  return (
+    ip.startsWith('127.') ||
+    ip.startsWith('10.') ||
+    ip.startsWith('192.168.') ||
+    ip.startsWith('169.254.') ||
+    ip.startsWith('0.') ||
+    /^172\.(1[6-9]|2\d|3[0-1])\./.test(ip) ||
+    ip === '::1'
+  );
+}
 
 const MANGADEX_API = 'https://api.mangadex.org';
 const MANGADEX_UPLOADS = 'https://uploads.mangadex.org';
@@ -17,18 +84,18 @@ const DEFAULT_HEADERS: Record<string, string> = {
 
 // ============================================================================
 // DNS-over-HTTPS (DoH) Resolver & HTTPS Client
-// Bypasses Indonesian ISP DNS Blocking (Telkomsel Internet Baik / IndiHome / Kominfo)
-// without needing VPN or Cloudflare WARP!
+// Bypasses Indonesian ISP DNS Blocking (Telkomsel / IndiHome) safely
 // ============================================================================
 const dnsCache = new Map<string, { ip: string; expires: number }>();
 
-// Pre-seed known MangaDex Anycast IPs for instant 0ms connection
 dnsCache.set('api.mangadex.org', { ip: '45.129.229.1', expires: Date.now() + 3600_000 });
 dnsCache.set('uploads.mangadex.org', { ip: '45.129.229.2', expires: Date.now() + 3600_000 });
 
 async function resolveHostDoH(hostname: string): Promise<string> {
-  // If already an IPv4 address, return as-is
   if (/^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+    if (isPrivateOrLoopbackIp(hostname)) {
+      throw new Error('Blocked private IP address');
+    }
     return hostname;
   }
 
@@ -37,7 +104,6 @@ async function resolveHostDoH(hostname: string): Promise<string> {
     return cached.ip;
   }
 
-  // Query Google DoH directly by IP (8.8.8.8) so ISP DNS cannot intercept it
   const dohEndpoints = [
     `https://8.8.8.8/resolve?name=${encodeURIComponent(hostname)}&type=A`,
     `https://1.1.1.1/dns-query?name=${encodeURIComponent(hostname)}&type=A`,
@@ -54,6 +120,9 @@ async function resolveHostDoH(hostname: string): Promise<string> {
         const aRecord = answers.find((a) => a.type === 1 && a.data);
         if (aRecord?.data) {
           const ip = String(aRecord.data).trim();
+          if (isPrivateOrLoopbackIp(ip)) {
+            throw new Error('DNS resolved to blocked private IP');
+          }
           dnsCache.set(hostname, {
             ip,
             expires: Date.now() + Math.max((aRecord.TTL || 300) * 1000, 300_000),
@@ -61,12 +130,11 @@ async function resolveHostDoH(hostname: string): Promise<string> {
           return ip;
         }
       }
-    } catch {
-      // Try next DoH provider
+    } catch (e: any) {
+      if (e?.message?.includes('private IP')) throw e;
     }
   }
 
-  // Fallback for *.mangadex.org
   if (hostname.endsWith('mangadex.org')) {
     return '45.129.229.1';
   }
@@ -82,16 +150,25 @@ interface DoHResponse {
   json: <T = any>() => T;
 }
 
+const MAX_RESPONSE_BYTES = 15 * 1024 * 1024; // 15 MB max payload protection
+
 async function dohGet(
   urlStr: string,
   customHeaders: Record<string, string> = {},
   redirectCount = 0
 ): Promise<DoHResponse> {
-  if (redirectCount > 5) {
+  if (redirectCount > 3) {
     throw new Error('Too many redirects');
   }
 
   const parsed = new URL(urlStr);
+  if (parsed.protocol !== 'https:') {
+    throw new Error('Only HTTPS protocol is allowed');
+  }
+  if (!isAllowedImageHost(parsed.hostname) && parsed.hostname !== 'api.mangadex.org') {
+    throw new Error(`Forbidden upstream host: ${parsed.hostname}`);
+  }
+
   const ip = await resolveHostDoH(parsed.hostname);
 
   return new Promise<DoHResponse>((resolve, reject) => {
@@ -132,7 +209,18 @@ async function dohGet(
         }
 
         const chunks: Buffer[] = [];
-        res.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+        let totalBytes = 0;
+
+        res.on('data', (chunk) => {
+          const buf = Buffer.from(chunk);
+          totalBytes += buf.length;
+          if (totalBytes > MAX_RESPONSE_BYTES) {
+            req.destroy(new Error('Response exceeded maximum size limit'));
+            return;
+          }
+          chunks.push(buf);
+        });
+
         res.on('end', () => {
           const buffer = Buffer.concat(chunks);
           resolve({
@@ -154,7 +242,6 @@ async function dohGet(
   });
 }
 
-// Helper to format MangaDex manga item into clean frontend object
 function formatManga(item: any) {
   const attr = item.attributes || {};
   const titles = attr.title || {};
@@ -192,7 +279,7 @@ function formatManga(item: any) {
     ? `/api/proxy-image?url=${encodeURIComponent(
         `${MANGADEX_UPLOADS}/covers/${item.id}/${coverFileName}.512.jpg`
       )}`
-    : 'https://placehold.co/512x728/18181b/f97316?text=No+Cover';
+    : 'https://placehold.co/512x728/18181b/f9cb55?text=No+Cover';
 
   const coverUrlFull = coverFileName
     ? `/api/proxy-image?url=${encodeURIComponent(
@@ -227,12 +314,50 @@ function formatManga(item: any) {
   };
 }
 
-// 1. Proxy Image via DoH to bypass ISP blocking & MangaDex hotlink protection
+// Helper to auto-sync local mangadex-cache.json in background when running locally
+function updateLocalCacheBackground(sortKey: string, list: any[]) {
+  try {
+    const cacheFile = path.resolve(process.cwd(), 'src', 'data', 'mangadex-cache.json');
+    if (!fs.existsSync(cacheFile)) return;
+    const raw = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
+    if (sortKey === 'latest' || sortKey === 'popular' || sortKey === 'rating') {
+      raw[sortKey] = list;
+      raw.scrapedAt = new Date().toISOString();
+      fs.writeFileSync(cacheFile, JSON.stringify(raw, null, 2), 'utf-8');
+    }
+  } catch {
+    // Ignore on read-only serverless environments (like Vercel)
+  }
+}
+
+// 1. Hardened Image Proxy (Strict Allowlist + MIME Sanitization)
+const SAFE_IMAGE_MIMES = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'image/avif',
+]);
+
 app.get('/api/proxy-image', async (req: Request, res: Response) => {
   try {
-    const imageUrl = req.query.url as string;
-    if (!imageUrl || !imageUrl.startsWith('https://')) {
-      res.status(400).send('Invalid URL');
+    const imageUrl = String(req.query.url || '');
+    if (!imageUrl.startsWith('https://')) {
+      res.status(400).send('Invalid protocol');
+      return;
+    }
+
+    let parsed: URL;
+    try {
+      parsed = new URL(imageUrl);
+    } catch {
+      res.status(400).send('Malformed URL');
+      return;
+    }
+
+    if (!isAllowedImageHost(parsed.hostname)) {
+      res.status(403).send('Forbidden image host');
       return;
     }
 
@@ -246,22 +371,27 @@ app.get('/api/proxy-image', async (req: Request, res: Response) => {
       return;
     }
 
-    const contentType = (response.headers['content-type'] as string) || 'image/jpeg';
-    res.setHeader('Content-Type', contentType);
+    const rawMime = String(response.headers['content-type'] || 'image/jpeg')
+      .split(';')[0]
+      .trim()
+      .toLowerCase();
+    const safeMime = SAFE_IMAGE_MIMES.has(rawMime) ? rawMime : 'image/jpeg';
+
+    res.setHeader('Content-Type', safeMime);
+    res.setHeader('Content-Security-Policy', "default-src 'none'; img-src 'self'");
     res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400');
     res.send(response.buffer);
   } catch (err) {
-    console.error('Image proxy error:', err);
     res.status(500).send('Image proxy error');
   }
 });
 
-// 2. Get Manga List (Latest Updates, Popular, Search, Tag Filter)
+// 2. Get Manga List (Real-time from MangaDex + Auto Cache Sync)
 app.get('/api/manga', async (req: Request, res: Response) => {
   try {
     const {
       q = '',
-      sort = 'latest', // 'latest' | 'popular' | 'rating'
+      sort = 'latest',
       limit = '24',
       offset = '0',
       tag = '',
@@ -269,9 +399,12 @@ app.get('/api/manga', async (req: Request, res: Response) => {
       demographic = '',
     } = req.query as Record<string, string>;
 
+    const safeLimit = Math.min(100, Math.max(1, Number(limit) || 24));
+    const safeOffset = Math.min(9900, Math.max(0, Number(offset) || 0));
+
     const params = new URLSearchParams();
-    params.append('limit', limit);
-    params.append('offset', offset);
+    params.append('limit', String(safeLimit));
+    params.append('offset', String(safeOffset));
     params.append('includes[]', 'cover_art');
     params.append('includes[]', 'author');
     params.append('includes[]', 'artist');
@@ -280,18 +413,18 @@ app.get('/api/manga', async (req: Request, res: Response) => {
     params.append('hasAvailableChapters', 'true');
 
     if (q.trim()) {
-      params.append('title', q.trim());
+      params.append('title', q.trim().slice(0, 100));
     }
 
-    if (tag.trim()) {
+    if (tag.trim() && isValidUuid(tag.trim())) {
       params.append('includedTags[]', tag.trim());
     }
 
-    if (status.trim()) {
+    if (['ongoing', 'completed', 'hiatus', 'cancelled'].includes(status.trim())) {
       params.append('status[]', status.trim());
     }
 
-    if (demographic.trim()) {
+    if (['shounen', 'shoujo', 'josei', 'seinen'].includes(demographic.trim())) {
       params.append('publicationDemographic[]', demographic.trim());
     }
 
@@ -313,17 +446,21 @@ app.get('/api/manga', async (req: Request, res: Response) => {
     const json: any = response.json();
     const list = (json.data || []).map(formatManga);
 
+    // If default first page fetch, keep local cache JSON fresh automatically
+    if (!q.trim() && !tag.trim() && !status.trim() && safeOffset === 0 && list.length >= 12) {
+      updateLocalCacheBackground(sort, list);
+    }
+
     res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
     res.json({
       data: list,
       total: json.total || list.length,
-      limit: Number(limit),
-      offset: Number(offset),
+      limit: safeLimit,
+      offset: safeOffset,
       fetchedAt: new Date().toISOString(),
     });
   } catch (err: any) {
-    console.error('Error fetching manga list:', err);
-    res.status(500).json({ error: err.message || 'Gagal mengambil daftar manga dari MangaDex' });
+    res.status(500).json({ error: 'Gagal mengambil daftar manga dari MangaDex' });
   }
 });
 
@@ -343,8 +480,8 @@ app.get('/api/tags', async (_req: Request, res: Response) => {
 
     res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400');
     res.json({ data: tags });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Gagal memuat daftar genre' });
+  } catch {
+    res.status(500).json({ error: 'Gagal memuat daftar genre' });
   }
 });
 
@@ -352,6 +489,11 @@ app.get('/api/tags', async (_req: Request, res: Response) => {
 app.get('/api/manga/:id', async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
+    if (!isValidUuid(id)) {
+      res.status(400).json({ error: 'ID Manga tidak valid' });
+      return;
+    }
+
     const params = new URLSearchParams();
     params.append('includes[]', 'cover_art');
     params.append('includes[]', 'author');
@@ -388,20 +530,27 @@ app.get('/api/manga/:id', async (req: Request, res: Response) => {
         follows,
       },
     });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Gagal mengambil detail manga' });
+  } catch {
+    res.status(500).json({ error: 'Gagal mengambil detail manga' });
   }
 });
 
-// 5. Get Manga Chapters Feed (Supports ID, EN, or All languages)
+// 5. Get Manga Chapters Feed
 app.get('/api/manga/:id/chapters', async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
+    if (!isValidUuid(id)) {
+      res.status(400).json({ error: 'ID Manga tidak valid' });
+      return;
+    }
+
     const { lang = 'all', limit = '500', offset = '0' } = req.query as Record<string, string>;
+    const safeLimit = Math.min(500, Math.max(1, Number(limit) || 500));
+    const safeOffset = Math.min(10000, Math.max(0, Number(offset) || 0));
 
     const params = new URLSearchParams();
-    params.append('limit', limit);
-    params.append('offset', offset);
+    params.append('limit', String(safeLimit));
+    params.append('offset', String(safeOffset));
     params.append('includes[]', 'scanlation_group');
     params.append('contentRating[]', 'safe');
     params.append('contentRating[]', 'suggestive');
@@ -447,8 +596,8 @@ app.get('/api/manga/:id/chapters', async (req: Request, res: Response) => {
       data: chapters,
       total: json.total || chapters.length,
     });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Gagal mengambil daftar chapter' });
+  } catch {
+    res.status(500).json({ error: 'Gagal mengambil daftar chapter' });
   }
 });
 
@@ -456,6 +605,11 @@ app.get('/api/manga/:id/chapters', async (req: Request, res: Response) => {
 app.get('/api/chapter/:chapterId', async (req: Request, res: Response) => {
   try {
     const chapterId = String(req.params.chapterId);
+    if (!isValidUuid(chapterId)) {
+      res.status(400).json({ error: 'ID Chapter tidak valid' });
+      return;
+    }
+
     const { quality = 'data-saver' } = req.query as Record<string, string>;
 
     const [atHomeRes, chapterInfoRes] = await Promise.all([
@@ -514,7 +668,7 @@ app.get('/api/chapter/:chapterId', async (req: Request, res: Response) => {
       total: pages.length,
       chapter: chapterMeta,
     });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Gagal memuat halaman komik' });
+  } catch {
+    res.status(500).json({ error: 'Gagal memuat halaman komik' });
   }
 });

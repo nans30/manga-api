@@ -132,15 +132,41 @@ export function exportLibraryData(): string {
 
 export function importLibraryData(jsonStr: string): boolean {
   try {
+    if (jsonStr.length > 5 * 1024 * 1024) return false; // Max 5MB JSON backup
     const parsed = JSON.parse(jsonStr);
+    const isSafeUrl = (u: unknown) =>
+      typeof u === 'string' &&
+      (u.startsWith('/api/proxy-image') || u.startsWith('https://'));
+
     if (Array.isArray(parsed.bookmarks)) {
-      localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(parsed.bookmarks));
+      const cleanBookmarks = parsed.bookmarks
+        .slice(0, 500)
+        .filter((b: any) => b && typeof b.id === 'string' && typeof b.title === 'string')
+        .map((b: any) => ({
+          ...b,
+          coverUrl: isSafeUrl(b.coverUrl)
+            ? b.coverUrl
+            : 'https://placehold.co/512x728/18181b/f9cb55?text=No+Cover',
+        }));
+      localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(cleanBookmarks));
     }
     if (Array.isArray(parsed.history)) {
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(parsed.history));
+      const cleanHistory = parsed.history
+        .slice(0, 100)
+        .filter((h: any) => h && typeof h.mangaId === 'string' && typeof h.chapterId === 'string')
+        .map((h: any) => ({
+          ...h,
+          coverUrl: isSafeUrl(h.coverUrl)
+            ? h.coverUrl
+            : 'https://placehold.co/512x728/18181b/f9cb55?text=No+Cover',
+        }));
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(cleanHistory));
     }
     if (Array.isArray(parsed.readChapters)) {
-      localStorage.setItem(READ_CHAPTERS_KEY, JSON.stringify(parsed.readChapters));
+      const cleanRead = parsed.readChapters
+        .slice(0, 2000)
+        .filter((id: any) => typeof id === 'string');
+      localStorage.setItem(READ_CHAPTERS_KEY, JSON.stringify(cleanRead));
     }
     window.dispatchEvent(new Event('ciaran-storage-update'));
     return true;

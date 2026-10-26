@@ -1,5 +1,5 @@
 {
-  "scrapedAt": "2026-10-26T09:11:04.909Z",
+  "scrapedAt": "2026-10-26T09:42:05.175Z",
   "source": "https://mangadex.org",
   "latest": [
     {
@@ -162,6 +162,266 @@
       ]
     },
     {
+      "id": "e279d973-e1dd-4cfc-b643-fda857b6f4a0",
+      "title": "Otome Game no Mob Desura Naindaga",
+      "altTitle": "乙女ゲーのモブですらないんだが",
+      "description": "Taichi was reincarnated as Isaac, an apprentice gardener in the world of an otome game. But, looking back, Isaac wasn't even part of the game... This is the story of the interweaving lives of the Duke's daughter, Lydia, and a boy who isn't even an NPC.\n\n[Original Novel](https://ncode.syosetu.com/n1313ff/)",
+      "status": "completed",
+      "year": 2020,
+      "contentRating": "safe",
+      "originalLanguage": "ja",
+      "lastChapter": null,
+      "updatedAt": "2026-10-26T09:27:11+00:00",
+      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fe279d973-e1dd-4cfc-b643-fda857b6f4a0%2F5f2f4133-0e39-485f-a698-34adf0d3b285.jpg.512.jpg",
+      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fe279d973-e1dd-4cfc-b643-fda857b6f4a0%2F5f2f4133-0e39-485f-a698-34adf0d3b285.jpg",
+      "author": "Gyokuro",
+      "artist": "Himeno Meno",
+      "tags": [
+        {
+          "id": "0bc90acb-ccc1-44ca-a34a-b9f3a73259d0",
+          "name": "Reincarnation",
+          "group": "theme"
+        },
+        {
+          "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
+          "name": "Romance",
+          "group": "genre"
+        },
+        {
+          "id": "4d32cc48-9f00-4cca-9b5a-a839f0764984",
+          "name": "Comedy",
+          "group": "genre"
+        },
+        {
+          "id": "9438db5a-7e2a-4ac0-b39e-e0d95a34b8a8",
+          "name": "Video Games",
+          "group": "theme"
+        },
+        {
+          "id": "ace04997-f6bd-436e-b261-779182193d3d",
+          "name": "Isekai",
+          "group": "genre"
+        },
+        {
+          "id": "cdc58593-87dd-415e-bbc0-2ec27bf404cc",
+          "name": "Fantasy",
+          "group": "genre"
+        },
+        {
+          "id": "d14322ac-4d6f-4e9b-afd9-629d5f4d8a41",
+          "name": "Villainess",
+          "group": "theme"
+        },
+        {
+          "id": "f4122d1c-3b44-44d0-9936-ff7502c39ad3",
+          "name": "Adaptation",
+          "group": "format"
+        }
+      ]
+    },
+    {
+      "id": "fc7e628c-6c26-497a-b17d-dfea90b44652",
+      "title": "Bocchi no Boku ni Kyousei Kanojo ga Yattekita",
+      "altTitle": "ぼっちの僕に強制彼女がやってきた",
+      "description": "On my 24th birthday, I came home to find a woman who wanted to be my girlfriend! As a \"loner\" since junior high school, I was confused by all this. But the truth is she is my mother's junior at work, and my mother asked her to!? A pseudo-romance between two people with the same interests has begun!",
+      "status": "hiatus",
+      "year": 2021,
+      "contentRating": "safe",
+      "originalLanguage": "ja",
+      "lastChapter": null,
+      "updatedAt": "2026-09-29T15:09:17+00:00",
+      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Ffc7e628c-6c26-497a-b17d-dfea90b44652%2F0ee3a6f2-e443-45b5-acaf-a3a28317b32b.jpg.512.jpg",
+      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Ffc7e628c-6c26-497a-b17d-dfea90b44652%2F0ee3a6f2-e443-45b5-acaf-a3a28317b32b.jpg",
+      "author": "Nonoka Kuri",
+      "artist": "Nonoka Kuri",
+      "tags": [
+        {
+          "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
+          "name": "Romance",
+          "group": "genre"
+        },
+        {
+          "id": "4d32cc48-9f00-4cca-9b5a-a839f0764984",
+          "name": "Comedy",
+          "group": "genre"
+        },
+        {
+          "id": "92d6d951-ca5e-429c-ac78-451071cbf064",
+          "name": "Office Workers",
+          "group": "theme"
+        },
+        {
+          "id": "b9af3a63-f058-46de-a9a0-e0c13906197a",
+          "name": "Drama",
+          "group": "genre"
+        },
+        {
+          "id": "e5301a23-ebd9-49dd-a0cb-2add944c7fe9",
+          "name": "Slice of Life",
+          "group": "genre"
+        }
+      ]
+    },
+    {
+      "id": "1897e7a8-202c-44ec-b389-b09a4424760e",
+      "title": "Glass Koubou no Renkinjutsushi",
+      "altTitle": "ガラス工房の錬金術師",
+      "description": "Luo is reincarnated as the eldest son of a frontier lord's family. After meeting the fire spirit Lava, he is reminded of his dream from his previous life of becoming a glass artist. He wants to create beautiful glass art with his own hands once again. When he finds out that glass is not widely used, he challenges himself to create glass with the power of alchemy together with Lava. Together with his renowned alchemist master, he creates potions, beer glasses, and the first glass mirror in another world.",
+      "status": "ongoing",
+      "year": 2025,
+      "contentRating": "safe",
+      "originalLanguage": "ja",
+      "lastChapter": null,
+      "updatedAt": "2026-07-27T10:10:03+00:00",
+      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F1897e7a8-202c-44ec-b389-b09a4424760e%2F05a760ab-6d33-4b36-850e-305463bb15e2.jpg.512.jpg",
+      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F1897e7a8-202c-44ec-b389-b09a4424760e%2F05a760ab-6d33-4b36-850e-305463bb15e2.jpg",
+      "author": "Maki Sakura",
+      "artist": "Kanba Yuki",
+      "tags": [
+        {
+          "id": "36fd93ea-e8b8-445e-b836-358f02b3d33d",
+          "name": "Monsters",
+          "group": "theme"
+        },
+        {
+          "id": "a1f53773-c69a-4ce5-8cab-fffcd90b1565",
+          "name": "Magic",
+          "group": "theme"
+        },
+        {
+          "id": "cdc58593-87dd-415e-bbc0-2ec27bf404cc",
+          "name": "Fantasy",
+          "group": "genre"
+        },
+        {
+          "id": "e5301a23-ebd9-49dd-a0cb-2add944c7fe9",
+          "name": "Slice of Life",
+          "group": "genre"
+        },
+        {
+          "id": "f4122d1c-3b44-44d0-9936-ff7502c39ad3",
+          "name": "Adaptation",
+          "group": "format"
+        }
+      ]
+    },
+    {
+      "id": "ac8b964c-7952-431c-8f9c-905aae4de704",
+      "title": "Invincible",
+      "altTitle": "Invincible Fist King",
+      "description": "The king who came out and claimed the world with only two fists!\n\n---\n\n- [Original Webtoon <RidiBooks>](https://ridibooks.com/books/845010758)\n\n- [Original Webtoon <MComics>](https://www.mcomics.co.kr/contents?idx=2003)\n\n- [Original Webtoon <Mootoon>](https://www.mootoon.co.kr/comic/moo_list.mg?tcode=trfo)\n\n- [Original Webtoon <Toomics>](https://www.toomics.com/webtoon/episode/toon/4652)\n\n- [Original Webtoon <Comico>](https://www.comico.kr/comic/3522)\n\n- [Original Webtoon <Mr.Blue>](https://www.mrblue.com/comic/C000049465)\n\n- [Original Webtoon <Lezhin>](https://www.lezhin.com/ko/comic/invincibility_fist)\n\n- [Original Webtoon <kakao>](https://page.kakao.com/home?seriesId=48475105)\n\n- [Original Webtoon <Naver>](https://series.naver.com/comic/detail.series?productNo=2319214)\n\n---\n\n- [Original e-Book <RidiBooks>](https://ridibooks.com/books/845009465)\n\n- [Original e-Book <Mr.Blue>](https://www.mrblue.com/comic/se_0058)\n\n- [Original e-Book <Aladin>](https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=104104824)\n\n- [Original e-Book <Yes24>](http://www.yes24.com/Product/Goods/93592312)",
+      "status": "completed",
+      "year": 2015,
+      "contentRating": "safe",
+      "originalLanguage": "ko",
+      "lastChapter": null,
+      "updatedAt": "2025-11-15T16:34:58+00:00",
+      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fac8b964c-7952-431c-8f9c-905aae4de704%2Fb8bceb08-5f10-49fd-b07c-132213e727fe.jpg.512.jpg",
+      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fac8b964c-7952-431c-8f9c-905aae4de704%2Fb8bceb08-5f10-49fd-b07c-132213e727fe.jpg",
+      "author": "Cho-U (초우)",
+      "artist": "Daejin Kim (김대진)",
+      "tags": [
+        {
+          "id": "391b0423-d847-456f-aff0-8b0cfc03066b",
+          "name": "Action",
+          "group": "genre"
+        },
+        {
+          "id": "3e2b8dae-350e-4ab8-a8ce-016e844b9f0d",
+          "name": "Long Strip",
+          "group": "format"
+        },
+        {
+          "id": "799c202e-7daa-44eb-9cf7-8a3c0441531e",
+          "name": "Martial Arts",
+          "group": "theme"
+        },
+        {
+          "id": "87cc87cd-a395-47af-b27a-93258283bbc6",
+          "name": "Adventure",
+          "group": "genre"
+        },
+        {
+          "id": "acc803a4-c95a-4c22-86fc-eb6b582d82a2",
+          "name": "Wuxia",
+          "group": "genre"
+        },
+        {
+          "id": "b9af3a63-f058-46de-a9a0-e0c13906197a",
+          "name": "Drama",
+          "group": "genre"
+        },
+        {
+          "id": "cdc58593-87dd-415e-bbc0-2ec27bf404cc",
+          "name": "Fantasy",
+          "group": "genre"
+        },
+        {
+          "id": "e197df38-d0e7-43b5-9b09-2842d0c326dd",
+          "name": "Web Comic",
+          "group": "format"
+        }
+      ]
+    },
+    {
+      "id": "e6909948-0a4a-4577-9e64-125837045dec",
+      "title": "Hiroin-kun",
+      "altTitle": "ヒロインくん",
+      "description": "The story of a boy, Hiroin Akira, whose mother always wanted a daughter. His father, a scientist, makes him unknowingly take a remedy that turns him from a hero into a heroine.",
+      "status": "completed",
+      "year": 1979,
+      "contentRating": "suggestive",
+      "originalLanguage": "ja",
+      "lastChapter": "25",
+      "updatedAt": "2026-09-25T16:31:18+00:00",
+      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fe6909948-0a4a-4577-9e64-125837045dec%2Fb0f494a8-5b00-4595-9c7f-4cba11d64400.jpg.512.jpg",
+      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fe6909948-0a4a-4577-9e64-125837045dec%2Fb0f494a8-5b00-4595-9c7f-4cba11d64400.jpg",
+      "author": "Yoshikawa Susumu",
+      "artist": "Yoshikawa Susumu",
+      "tags": [
+        {
+          "id": "2bd2e8d0-f146-434a-9b51-fc9ff2c5fe6a",
+          "name": "Genderswap",
+          "group": "theme"
+        },
+        {
+          "id": "391b0423-d847-456f-aff0-8b0cfc03066b",
+          "name": "Action",
+          "group": "genre"
+        },
+        {
+          "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
+          "name": "Romance",
+          "group": "genre"
+        },
+        {
+          "id": "4d32cc48-9f00-4cca-9b5a-a839f0764984",
+          "name": "Comedy",
+          "group": "genre"
+        },
+        {
+          "id": "97893a4c-12af-4dac-b6be-0dffb353568e",
+          "name": "Sexual Violence",
+          "group": "content"
+        },
+        {
+          "id": "b9af3a63-f058-46de-a9a0-e0c13906197a",
+          "name": "Drama",
+          "group": "genre"
+        },
+        {
+          "id": "caaa44eb-cd40-4177-b930-79d3ef2afe87",
+          "name": "School Life",
+          "group": "theme"
+        },
+        {
+          "id": "da2d50ca-3018-4cc0-ac7a-6b7d472a29ea",
+          "name": "Delinquents",
+          "group": "theme"
+        }
+      ]
+    },
+    {
       "id": "89ed3ec2-ebe6-4d6b-92eb-d753a8bb365e",
       "title": "Rougo ni Sonaete Isekai de 8-manmai no Kinka wo Tamemasu",
       "altTitle": "老後に備えて異世界で8万枚の金貨を貯めます",
@@ -274,49 +534,6 @@
           "id": "e5301a23-ebd9-49dd-a0cb-2add944c7fe9",
           "name": "Slice of Life",
           "group": "genre"
-        }
-      ]
-    },
-    {
-      "id": "1897e7a8-202c-44ec-b389-b09a4424760e",
-      "title": "Glass Koubou no Renkinjutsushi",
-      "altTitle": "ガラス工房の錬金術師",
-      "description": "Luo is reincarnated as the eldest son of a frontier lord's family. After meeting the fire spirit Lava, he is reminded of his dream from his previous life of becoming a glass artist. He wants to create beautiful glass art with his own hands once again. When he finds out that glass is not widely used, he challenges himself to create glass with the power of alchemy together with Lava. Together with his renowned alchemist master, he creates potions, beer glasses, and the first glass mirror in another world.",
-      "status": "ongoing",
-      "year": 2025,
-      "contentRating": "safe",
-      "originalLanguage": "ja",
-      "lastChapter": null,
-      "updatedAt": "2026-07-27T10:10:03+00:00",
-      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F1897e7a8-202c-44ec-b389-b09a4424760e%2F05a760ab-6d33-4b36-850e-305463bb15e2.jpg.512.jpg",
-      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F1897e7a8-202c-44ec-b389-b09a4424760e%2F05a760ab-6d33-4b36-850e-305463bb15e2.jpg",
-      "author": "Maki Sakura",
-      "artist": "Kanba Yuki",
-      "tags": [
-        {
-          "id": "36fd93ea-e8b8-445e-b836-358f02b3d33d",
-          "name": "Monsters",
-          "group": "theme"
-        },
-        {
-          "id": "a1f53773-c69a-4ce5-8cab-fffcd90b1565",
-          "name": "Magic",
-          "group": "theme"
-        },
-        {
-          "id": "cdc58593-87dd-415e-bbc0-2ec27bf404cc",
-          "name": "Fantasy",
-          "group": "genre"
-        },
-        {
-          "id": "e5301a23-ebd9-49dd-a0cb-2add944c7fe9",
-          "name": "Slice of Life",
-          "group": "genre"
-        },
-        {
-          "id": "f4122d1c-3b44-44d0-9936-ff7502c39ad3",
-          "name": "Adaptation",
-          "group": "format"
         }
       ]
     },
@@ -686,481 +903,6 @@
           "id": "caaa44eb-cd40-4177-b930-79d3ef2afe87",
           "name": "School Life",
           "group": "theme"
-        }
-      ]
-    },
-    {
-      "id": "c7dbb6ff-b804-4037-989e-b771fa542b1c",
-      "title": "Sakisome Complex",
-      "altTitle": "咲きそめコンプレックス",
-      "description": "Kohinata Riko's love interests are very low. However, she doesn't want to admit it, and knows there's no way she'll be able to admit it, so she keeps it to herself for a long time. One day, while she was having a study session at her classmate Tomoka's house, a girl with a school bag appeared in front of them! It turns out that Tomoka has a younger sister who is still in elementary school. Riko feels like time has stopped because she's so cute, but it seems like the sister has some hostility towards Riko...? A high school girl who has pedophilic urges for children and a girl who wants to become an adult...",
-      "status": "ongoing",
-      "year": 2025,
-      "contentRating": "suggestive",
-      "originalLanguage": "ja",
-      "lastChapter": null,
-      "updatedAt": "2026-02-20T21:39:20+00:00",
-      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fc7dbb6ff-b804-4037-989e-b771fa542b1c%2Fe462e1c5-30d3-4a66-a59d-9b96fe4138bd.jpg.512.jpg",
-      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fc7dbb6ff-b804-4037-989e-b771fa542b1c%2Fe462e1c5-30d3-4a66-a59d-9b96fe4138bd.jpg",
-      "author": "Nmi",
-      "artist": "Nmi",
-      "tags": [
-        {
-          "id": "2d1f5d56-a1e5-4d0d-a961-2193588b08ec",
-          "name": "Loli",
-          "group": "theme"
-        },
-        {
-          "id": "4d32cc48-9f00-4cca-9b5a-a839f0764984",
-          "name": "Comedy",
-          "group": "genre"
-        },
-        {
-          "id": "a3c67850-4684-404e-9b7f-c69850ee5da6",
-          "name": "Girls' Love",
-          "group": "genre"
-        },
-        {
-          "id": "caaa44eb-cd40-4177-b930-79d3ef2afe87",
-          "name": "School Life",
-          "group": "theme"
-        },
-        {
-          "id": "e197df38-d0e7-43b5-9b09-2842d0c326dd",
-          "name": "Web Comic",
-          "group": "format"
-        }
-      ]
-    },
-    {
-      "id": "7991e715-40ae-4c3e-b0e0-aa8bee90ece7",
-      "title": "Shachou to Sake to Hoshi",
-      "altTitle": "社長と酒と星",
-      "description": "Izutsu Reina (24) baru saja menggantikan posisi ayahnya sebagai direktur Izutsu Printing setelah sang ayah tiba-tiba meninggal. Ishizumi Kenichi (37), seorang chief/kepala divisi di perusahaan itu, mulai khawatir melihat Reina yang belakangan terlalu keras sama staf karena dia masih berjuang menyesuaikan diri dan mengisi posisi besar yang ditinggalkan ayahnya.\n\nSuatu malam, Ishizumi secara nggak sengaja ketemu Reina di taman. Dia lagi mabuk berat dan frustrasi, sampai teriak, “Aku udah nggak tahan lagi! Aku mau berhenti jadi bos!” saking tipsy-nya, Reina bahkan nggak sadar kalau dia lagi ngomong sama bawahannya. Tapi justru di momen itu, dia menurunkan temboknya. Di bawah langit malam, Ishizumi diam-diam bertekad untuk terus mendukung Reina sebisanya.",
-      "status": "ongoing",
-      "year": 2025,
-      "contentRating": "suggestive",
-      "originalLanguage": "ja",
-      "lastChapter": null,
-      "updatedAt": "2026-07-05T13:50:15+00:00",
-      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F7991e715-40ae-4c3e-b0e0-aa8bee90ece7%2F0e193f95-bfb7-4862-a493-41331816f169.jpg.512.jpg",
-      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F7991e715-40ae-4c3e-b0e0-aa8bee90ece7%2F0e193f95-bfb7-4862-a493-41331816f169.jpg",
-      "author": "Zurikishi",
-      "artist": "Zurikishi",
-      "tags": [
-        {
-          "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
-          "name": "Romance",
-          "group": "genre"
-        },
-        {
-          "id": "4d32cc48-9f00-4cca-9b5a-a839f0764984",
-          "name": "Comedy",
-          "group": "genre"
-        },
-        {
-          "id": "92d6d951-ca5e-429c-ac78-451071cbf064",
-          "name": "Office Workers",
-          "group": "theme"
-        },
-        {
-          "id": "e5301a23-ebd9-49dd-a0cb-2add944c7fe9",
-          "name": "Slice of Life",
-          "group": "genre"
-        }
-      ]
-    },
-    {
-      "id": "c9a8ffb7-682f-40e2-87fe-9537e8f425ea",
-      "title": "WEE!!!",
-      "altTitle": "",
-      "description": "When you miss school and meeting friends, follow along on Amu's daily school life! Together along with her friends that does weird and stupid things, they together go through high school filled with likes, sorrow, feelings and love!",
-      "status": "ongoing",
-      "year": 2021,
-      "contentRating": "safe",
-      "originalLanguage": "id",
-      "lastChapter": null,
-      "updatedAt": "2026-05-05T08:34:39+00:00",
-      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fc9a8ffb7-682f-40e2-87fe-9537e8f425ea%2F9cdfed6d-6bb2-4576-8733-e51a0b1a93dd.jpg.512.jpg",
-      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fc9a8ffb7-682f-40e2-87fe-9537e8f425ea%2F9cdfed6d-6bb2-4576-8733-e51a0b1a93dd.jpg",
-      "author": "Amoeba UwU",
-      "artist": "Amoeba UwU",
-      "tags": [
-        {
-          "id": "3e2b8dae-350e-4ab8-a8ce-016e844b9f0d",
-          "name": "Long Strip",
-          "group": "format"
-        },
-        {
-          "id": "4d32cc48-9f00-4cca-9b5a-a839f0764984",
-          "name": "Comedy",
-          "group": "genre"
-        },
-        {
-          "id": "caaa44eb-cd40-4177-b930-79d3ef2afe87",
-          "name": "School Life",
-          "group": "theme"
-        },
-        {
-          "id": "e5301a23-ebd9-49dd-a0cb-2add944c7fe9",
-          "name": "Slice of Life",
-          "group": "genre"
-        },
-        {
-          "id": "f5ba408b-0e7a-484d-8d49-4e9125ac96de",
-          "name": "Full Color",
-          "group": "format"
-        }
-      ]
-    },
-    {
-      "id": "b1b140c9-9924-4ee7-aaa2-1108d84cb844",
-      "title": "Bibibitto Izumi-kun",
-      "altTitle": "ビビビっと和泉くん",
-      "description": "Izumi Santa, 15 years old. Lives a life where he leaves everything up to everyone else with zero will of his own...\nIs that about to come to an end?! Santa was planning to get through high school innocuously, without any fuss, without ruffling anyone's feathers, or being laughed at. One day, while visiting the Kyudo club during observation period, something just clicks, and a whole new feeling takes off inside him. Every day's full of screw-ups and embarrassment, but Santa's pure, straightforward, and oddly endearing presence brings colour to the youth of everyone around him!",
-      "status": "ongoing",
-      "year": 2026,
-      "contentRating": "safe",
-      "originalLanguage": "ja",
-      "lastChapter": null,
-      "updatedAt": "2026-09-07T16:43:57+00:00",
-      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fb1b140c9-9924-4ee7-aaa2-1108d84cb844%2Fd4f2ff5d-d13a-48f4-b193-5813b886eac6.jpg.512.jpg",
-      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fb1b140c9-9924-4ee7-aaa2-1108d84cb844%2Fd4f2ff5d-d13a-48f4-b193-5813b886eac6.jpg",
-      "author": "Asukam",
-      "artist": "Asukam",
-      "tags": [
-        {
-          "id": "69964a64-2f90-4d33-beeb-f3ed2875eb4c",
-          "name": "Sports",
-          "group": "genre"
-        },
-        {
-          "id": "caaa44eb-cd40-4177-b930-79d3ef2afe87",
-          "name": "School Life",
-          "group": "theme"
-        },
-        {
-          "id": "e5301a23-ebd9-49dd-a0cb-2add944c7fe9",
-          "name": "Slice of Life",
-          "group": "genre"
-        }
-      ]
-    },
-    {
-      "id": "d2db4a9c-0957-4bdf-8951-776bc6a8e6a6",
-      "title": "Shinu Unmei ni Aru Akuyaku Reijou no Ani ni Tensei Shita node, Imouto wo Sodatete Mirai wo Kaetai to Omoimasu",
-      "altTitle": "死ぬ運命にある悪役令嬢の兄に転生したので、妹を育てて未来を変えたいと思います",
-      "description": "Zechs has a younger sister. Her name is Caron, and he loves her very much. However, if things continue as they are, she will die an untimely death. This world is the same as the RPG romance game he played in his previous life where Caron is destined to die in every route. There was no way Zechs would allow his beloved sister to die so cruelly - that's why he'll resist fate to the bitter end!\n___\n[Original Web Novel](https://ncode.syosetu.com/n5205hi/)",
-      "status": "ongoing",
-      "year": 2025,
-      "contentRating": "safe",
-      "originalLanguage": "ja",
-      "lastChapter": null,
-      "updatedAt": "2026-06-11T13:17:43+00:00",
-      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fd2db4a9c-0957-4bdf-8951-776bc6a8e6a6%2F803395bc-8b7f-4110-bfee-de3dbb2bf84c.jpg.512.jpg",
-      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fd2db4a9c-0957-4bdf-8951-776bc6a8e6a6%2F803395bc-8b7f-4110-bfee-de3dbb2bf84c.jpg",
-      "author": "Mizusato Yuuki",
-      "artist": "Iwami Shouko",
-      "tags": [
-        {
-          "id": "0bc90acb-ccc1-44ca-a34a-b9f3a73259d0",
-          "name": "Reincarnation",
-          "group": "theme"
-        },
-        {
-          "id": "391b0423-d847-456f-aff0-8b0cfc03066b",
-          "name": "Action",
-          "group": "genre"
-        },
-        {
-          "id": "87cc87cd-a395-47af-b27a-93258283bbc6",
-          "name": "Adventure",
-          "group": "genre"
-        },
-        {
-          "id": "a1f53773-c69a-4ce5-8cab-fffcd90b1565",
-          "name": "Magic",
-          "group": "theme"
-        },
-        {
-          "id": "aafb99c1-7f60-43fa-b75f-fc9502ce29c7",
-          "name": "Harem",
-          "group": "theme"
-        },
-        {
-          "id": "ace04997-f6bd-436e-b261-779182193d3d",
-          "name": "Isekai",
-          "group": "genre"
-        },
-        {
-          "id": "b9af3a63-f058-46de-a9a0-e0c13906197a",
-          "name": "Drama",
-          "group": "genre"
-        },
-        {
-          "id": "caaa44eb-cd40-4177-b930-79d3ef2afe87",
-          "name": "School Life",
-          "group": "theme"
-        }
-      ]
-    },
-    {
-      "id": "d34ba929-11ee-4511-a3ae-40ab7b608c7b",
-      "title": "Please Don't Die!",
-      "altTitle": "Please Don't Die!",
-      "description": "Yoon Ha-jin lives a fragile life, precariously balanced between life and death. One ordinary day, everything changes when he encounters a mysterious, timid girl who claims to be his protector, and a Grim Reaper who has come for him.",
-      "status": "ongoing",
-      "year": 2026,
-      "contentRating": "safe",
-      "originalLanguage": "ko",
-      "lastChapter": null,
-      "updatedAt": "2026-02-22T17:59:52+00:00",
-      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fd34ba929-11ee-4511-a3ae-40ab7b608c7b%2Fa1a88c17-06ea-4618-a217-6c7f69d2e4a3.jpg.512.jpg",
-      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fd34ba929-11ee-4511-a3ae-40ab7b608c7b%2Fa1a88c17-06ea-4618-a217-6c7f69d2e4a3.jpg",
-      "author": "지와",
-      "artist": "지와",
-      "tags": [
-        {
-          "id": "3e2b8dae-350e-4ab8-a8ce-016e844b9f0d",
-          "name": "Long Strip",
-          "group": "format"
-        },
-        {
-          "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
-          "name": "Romance",
-          "group": "genre"
-        },
-        {
-          "id": "b9af3a63-f058-46de-a9a0-e0c13906197a",
-          "name": "Drama",
-          "group": "genre"
-        },
-        {
-          "id": "cdc58593-87dd-415e-bbc0-2ec27bf404cc",
-          "name": "Fantasy",
-          "group": "genre"
-        },
-        {
-          "id": "f5ba408b-0e7a-484d-8d49-4e9125ac96de",
-          "name": "Full Color",
-          "group": "format"
-        }
-      ]
-    },
-    {
-      "id": "3143b64a-769c-4044-89b1-1a00480099b7",
-      "title": "Mugen no Majutsushi - Maryoku Nashi de Heimin no Ko to Hakugaisareta Ore. Jitsu wa Mugen no Maryokumochi",
-      "altTitle": "無限の魔術師　魔力無しで平民の子と迫害された俺。実は無限の魔力持ち。",
-      "description": "Resto, a boy who was reincarnated with unlimited magical power. For some reason, he pretends to have no magic power and spends his days enduring persecution, but... But his life changes forever when he saves the lives of Viola and Primula, the daughters of a court magician! To have as many children as possible of his blood born to the Marquise Rosemary... Recognized as a gifted magician and his sisters' son-in-law, Resto spends his days training for the entrance exam to the Royal Academy as a live-in student... His talent is honed as he defeats unorthodox demons and develops unorthodox magic, accomplishing feats no one could have predicted.\n___\nWinner of the 9th Kakuyom Web Novel Contest, Otherworldly Fantasy Category Special Award & CW Manga Award.",
-      "status": "ongoing",
-      "year": 2025,
-      "contentRating": "suggestive",
-      "originalLanguage": "ja",
-      "lastChapter": null,
-      "updatedAt": "2026-10-26T08:44:35+00:00",
-      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F3143b64a-769c-4044-89b1-1a00480099b7%2Fcfe04fe4-c1f1-4a36-ab3a-f1ad0d37b7fa.jpg.512.jpg",
-      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F3143b64a-769c-4044-89b1-1a00480099b7%2Fcfe04fe4-c1f1-4a36-ab3a-f1ad0d37b7fa.jpg",
-      "author": "LeonarD (レオナールD)",
-      "artist": "Bokan",
-      "tags": [
-        {
-          "id": "0bc90acb-ccc1-44ca-a34a-b9f3a73259d0",
-          "name": "Reincarnation",
-          "group": "theme"
-        },
-        {
-          "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
-          "name": "Romance",
-          "group": "genre"
-        },
-        {
-          "id": "87cc87cd-a395-47af-b27a-93258283bbc6",
-          "name": "Adventure",
-          "group": "genre"
-        },
-        {
-          "id": "a1f53773-c69a-4ce5-8cab-fffcd90b1565",
-          "name": "Magic",
-          "group": "theme"
-        },
-        {
-          "id": "ace04997-f6bd-436e-b261-779182193d3d",
-          "name": "Isekai",
-          "group": "genre"
-        },
-        {
-          "id": "cdc58593-87dd-415e-bbc0-2ec27bf404cc",
-          "name": "Fantasy",
-          "group": "genre"
-        }
-      ]
-    },
-    {
-      "id": "b347d551-52eb-40cb-a11a-bfb9959d6495",
-      "title": "Sekai Saikyou no Kouei: Meikyuukoku no Shinjin Tansakusha",
-      "altTitle": "世界最強の後衛　～迷宮国の新人探索者～",
-      "description": "Workaholic assistant Atobe Arihito fell asleep in his company's bus that was traveling for a vacation. When he awoke he learned he had died due to the bus getting into an accident, and that he had reincarnated into a world of reincarnators - to the Labyrinth Country. To his surprise he was discovered by his slave driving manager, Igarashi Kyouka, who further explains their role in this world.\n\nIn Labyrinth Country, Reincarnators are expected to choose a job and form parties to fight against monsters in Labyrinths. \"Valkyrie\" Kyouka had expected Arihito to work with her once again, but he declines due to his knowledge of her demanding nature. As they depart she vows to make him regret not choosing her.",
-      "status": "ongoing",
-      "year": 2018,
-      "contentRating": "suggestive",
-      "originalLanguage": "ja",
-      "lastChapter": null,
-      "updatedAt": "2026-10-15T22:31:38+00:00",
-      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fb347d551-52eb-40cb-a11a-bfb9959d6495%2Fb4aba001-aaa9-44cf-8181-707ad764c583.jpg.512.jpg",
-      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2Fb347d551-52eb-40cb-a11a-bfb9959d6495%2Fb4aba001-aaa9-44cf-8181-707ad764c583.jpg",
-      "author": "Akatsuki Touwa",
-      "artist": "Rikizo",
-      "tags": [
-        {
-          "id": "391b0423-d847-456f-aff0-8b0cfc03066b",
-          "name": "Action",
-          "group": "genre"
-        },
-        {
-          "id": "4d32cc48-9f00-4cca-9b5a-a839f0764984",
-          "name": "Comedy",
-          "group": "genre"
-        },
-        {
-          "id": "87cc87cd-a395-47af-b27a-93258283bbc6",
-          "name": "Adventure",
-          "group": "genre"
-        },
-        {
-          "id": "aafb99c1-7f60-43fa-b75f-fc9502ce29c7",
-          "name": "Harem",
-          "group": "theme"
-        },
-        {
-          "id": "ace04997-f6bd-436e-b261-779182193d3d",
-          "name": "Isekai",
-          "group": "genre"
-        },
-        {
-          "id": "cdc58593-87dd-415e-bbc0-2ec27bf404cc",
-          "name": "Fantasy",
-          "group": "genre"
-        },
-        {
-          "id": "f4122d1c-3b44-44d0-9936-ff7502c39ad3",
-          "name": "Adaptation",
-          "group": "format"
-        }
-      ]
-    },
-    {
-      "id": "39b4e02a-f2f2-4ff0-bf2c-f87cf54ab178",
-      "title": "Tensei Kizoku no Isekai Boukenroku ~Jichou wo Shiranai Kamigami no Shito~",
-      "altTitle": "転生貴族の異世界冒険録～自重を知らない神々の使徒～",
-      "description": "Shiina Kazuya, the protagonist of the story was killed by a stranger in front of a convenience store when he tried to protect two young girls escaping from the stranger who is trying to stab them. The girls fall and are too overcome with fear to get up and continue running away. When Shiina Kazuya awakens he realizes that he was reincarnated as the young noble Cain von Silford, the third son of an aristocrat (Margrave Garm Von Silford) and his second wife (Sarah) in a world filled with sword and sorcery.\n\nPrior to the age of ten Cain grew up in the Gracia Territory surrounded by gods that don't know self-restraint, in the upper echelon of nobility, and a loving family (father Garm Von Silford, mother Sarah, and older sister Raine). At the age of ten Cain is given peerage (Title of Duke, own estate, and an engagement), which leads to him living in Esfort the Royal Capitol.",
-      "status": "ongoing",
-      "year": 2018,
-      "contentRating": "safe",
-      "originalLanguage": "ja",
-      "lastChapter": null,
-      "updatedAt": "2026-05-14T11:49:51+00:00",
-      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F39b4e02a-f2f2-4ff0-bf2c-f87cf54ab178%2Fee2acb86-94f9-4df3-b3f5-52bf50a8da8f.jpg.512.jpg",
-      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F39b4e02a-f2f2-4ff0-bf2c-f87cf54ab178%2Fee2acb86-94f9-4df3-b3f5-52bf50a8da8f.jpg",
-      "author": "Yashu",
-      "artist": "nini",
-      "tags": [
-        {
-          "id": "0bc90acb-ccc1-44ca-a34a-b9f3a73259d0",
-          "name": "Reincarnation",
-          "group": "theme"
-        },
-        {
-          "id": "391b0423-d847-456f-aff0-8b0cfc03066b",
-          "name": "Action",
-          "group": "genre"
-        },
-        {
-          "id": "39730448-9a5f-48a2-85b0-a70db87b1233",
-          "name": "Demons",
-          "group": "theme"
-        },
-        {
-          "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
-          "name": "Romance",
-          "group": "genre"
-        },
-        {
-          "id": "87cc87cd-a395-47af-b27a-93258283bbc6",
-          "name": "Adventure",
-          "group": "genre"
-        },
-        {
-          "id": "a1f53773-c69a-4ce5-8cab-fffcd90b1565",
-          "name": "Magic",
-          "group": "theme"
-        },
-        {
-          "id": "aafb99c1-7f60-43fa-b75f-fc9502ce29c7",
-          "name": "Harem",
-          "group": "theme"
-        },
-        {
-          "id": "ace04997-f6bd-436e-b261-779182193d3d",
-          "name": "Isekai",
-          "group": "genre"
-        }
-      ]
-    },
-    {
-      "id": "8b34f37a-0181-4f0b-8ce3-01217e9a602c",
-      "title": "Tolong Ganggu aku, Nona Penjahat!",
-      "altTitle": "いじめてください、悪役令嬢様！",
-      "description": "Aku, Yvonne, bereinkarnasi dalam otome game sebagai penjahat kaya. Menurut plot permainan, karakter yang dibenci oleh semua orang seperti aku memiliki peran utama menindas sang heroin, mendorongnya ke berbagai rute romantis minat cinta. Tapi sepertinya ada yang salah dengan Elsa, sang heroine! Dia terlalu dekat denganku!",
-      "status": "ongoing",
-      "year": 2021,
-      "contentRating": "suggestive",
-      "originalLanguage": "zh",
-      "lastChapter": null,
-      "updatedAt": "2026-02-18T17:25:03+00:00",
-      "coverUrl": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F8b34f37a-0181-4f0b-8ce3-01217e9a602c%2F5344765f-1199-49b2-b231-10048dd74828.png.512.jpg",
-      "coverUrlFull": "/api/proxy-image?url=https%3A%2F%2Fuploads.mangadex.org%2Fcovers%2F8b34f37a-0181-4f0b-8ce3-01217e9a602c%2F5344765f-1199-49b2-b231-10048dd74828.png",
-      "author": "Chise",
-      "artist": "断s",
-      "tags": [
-        {
-          "id": "0bc90acb-ccc1-44ca-a34a-b9f3a73259d0",
-          "name": "Reincarnation",
-          "group": "theme"
-        },
-        {
-          "id": "3e2b8dae-350e-4ab8-a8ce-016e844b9f0d",
-          "name": "Long Strip",
-          "group": "format"
-        },
-        {
-          "id": "423e2eae-a7a2-4a8b-ac03-a8351462d71d",
-          "name": "Romance",
-          "group": "genre"
-        },
-        {
-          "id": "a1f53773-c69a-4ce5-8cab-fffcd90b1565",
-          "name": "Magic",
-          "group": "theme"
-        },
-        {
-          "id": "a3c67850-4684-404e-9b7f-c69850ee5da6",
-          "name": "Girls' Love",
-          "group": "genre"
-        },
-        {
-          "id": "ace04997-f6bd-436e-b261-779182193d3d",
-          "name": "Isekai",
-          "group": "genre"
-        },
-        {
-          "id": "caaa44eb-cd40-4177-b930-79d3ef2afe87",
-          "name": "School Life",
-          "group": "theme"
-        },
-        {
-          "id": "cdc58593-87dd-415e-bbc0-2ec27bf404cc",
-          "name": "Fantasy",
-          "group": "genre"
         }
       ]
     }
