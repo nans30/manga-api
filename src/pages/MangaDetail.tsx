@@ -14,6 +14,7 @@ import {
   getCachedMangaById,
   cacheMangaObjects,
   useSysLang,
+  getMangaDescription,
 } from '../storage';
 import {
   ComicStarburstButton,
@@ -151,10 +152,11 @@ export const MangaDetail: React.FC = () => {
   const targetChapter = firstChapter || latestChapter;
 
   const ratingScore = manga.rating ? Number(manga.rating).toFixed(1) : '5.0';
+  const fullDesc = getMangaDescription(manga, sysLang);
   const shortDesc =
-    manga.description.length > 140 && !expandedDesc
-      ? manga.description.slice(0, 140).trim() + '... '
-      : manga.description;
+    fullDesc.length > 140 && !expandedDesc
+      ? fullDesc.slice(0, 140).trim() + '... '
+      : fullDesc;
 
   const authorPageUrl = `/author/${manga.authorId || 'search'}?name=${encodeURIComponent(
     manga.author
@@ -288,7 +290,7 @@ export const MangaDetail: React.FC = () => {
             {/* Synopsis */}
             <p className="text-xs sm:text-sm text-[#6e6e6e] dark:text-[#c1c1c1] leading-relaxed">
               {shortDesc}
-              {manga.description.length > 140 && (
+              {fullDesc.length > 140 && (
                 <button
                   onClick={() => setExpandedDesc(!expandedDesc)}
                   className="text-[#f9cb55] font-semibold hover:underline ml-1"

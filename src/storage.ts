@@ -50,6 +50,21 @@ export function getCachedMangaById(id?: string): Manga | null {
   return memoryMangaMap.get(id) || null;
 }
 
+export function getMangaDescription(manga: Manga, sysLang: SystemLang): string {
+  if (sysLang === 'id') {
+    return (
+      manga.descriptionId ||
+      manga.description ||
+      'Tidak ada sinopsis untuk komik ini.'
+    );
+  }
+  return (
+    manga.descriptionEn ||
+    manga.description ||
+    'No synopsis available for this manga.'
+  );
+}
+
 export function getSysLang(): SystemLang {
   try {
     const saved = localStorage.getItem(SYS_LANG_KEY);

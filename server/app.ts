@@ -54,6 +54,7 @@ class BoundedTTLCache<V> {
 // Bounded caches (Zero memory leak even after days of uptime)
 const apiResponseCache = new BoundedTTLCache<any>(100, 45_000); // 45s fast API cache
 const serverMangaCache = new BoundedTTLCache<any>(400, 1800_000); // 30m manga detail cache
+const translationCache = new BoundedTTLCache<string>(1500, 86400_000); // 24h description translation cache
 const dnsCache = new BoundedTTLCache<string>(100, 3600_000); // 1h DNS cache
 const rateLimitCache = new BoundedTTLCache<{ count: number; resetAt: number }>(
   1000,
@@ -348,6 +349,16 @@ async function dohGet(
   });
 }
 
+function cleanMangaDescription(raw: string): string {
+  if (!raw) return '';
+  return raw
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/(\*\*|__|\*|_|~~|`)/g, '')
+    .replace(/---[\s\S]*$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function formatManga(item: any) {
   const attr = item.attributes || {};
   const titles = attr.title || {};
@@ -360,20 +371,25 @@ function formatManga(item: any) {
 
   const title =
     titles.en ||
-    titles.id ||
     titles['ja-ro'] ||
-    findAltTitle('id') ||
+    titles.id ||
     findAltTitle('en') ||
+    findAltTitle('id') ||
     findAltTitle('ja-ro') ||
     Object.values(titles)[0] ||
     'Untitled Manga';
 
   const descObj = attr.description || {};
+  const rawId = cleanMangaDescription(descObj.id || '');
+  const rawEn = cleanMangaDescription(
+    descObj.en || Object.values(descObj)[0] || ''
+  );
+
+  const cachedId = item.id ? translationCache.get(`id:${item.id}`) : undefined;
+  const descriptionEn = rawEn || rawId || 'No synopsis available for this manga.';
+  const descriptionId = rawId || cachedId || '';
   const description =
-    descObj.id ||
-    descObj.en ||
-    Object.values(descObj)[0] ||
-    'Tidak ada sinopsis untuk manga ini.';
+    descriptionId || descriptionEn || 'Tidak ada sinopsis untuk manga ini.';
 
   const relationships = item.relationships || [];
   const coverRel = relationships.find((r: any) => r.type === 'cover_art');
@@ -410,6 +426,9 @@ function formatManga(item: any) {
     title,
     altTitle: findAltTitle('ja') || findAltTitle('en') || '',
     description,
+    descriptionId: descriptionId || descriptionEn,
+    descriptionEn,
+    _needsIdTranslation: !descriptionId && Boolean(rawEn),
     status: attr.status || 'ongoing',
     year: attr.year || null,
     contentRating: attr.contentRating || 'safe',
@@ -434,6 +453,78 @@ function formatManga(item: any) {
     serverMangaCache.set(formatted.id, formatted);
   }
   return formatted;
+}
+
+// Automatically translate English manga descriptions into Bahasa Indonesia in fast batches
+// so that System Language 'id' always shows Indonesian descriptions and 'en' shows English descriptions.
+async function ensureBilingualDescriptions(list: any[]): Promise<void> {
+  const pending: any[] = [];
+
+  for (const m of list) {
+    if (!m || !m.id) continue;
+    const cached = translationCache.get(`id:${m.id}`);
+    if (cached) {
+      m.descriptionId = cached;
+      m.description = cached;
+      delete m._needsIdTranslation;
+    } else if (m._needsIdTranslation && m.descriptionEn) {
+      pending.push(m);
+    } else {
+      delete m._needsIdTranslation;
+    }
+  }
+
+  if (pending.length === 0) return;
+
+  const CHUNK_SIZE = 10;
+  const chunks: any[][] = [];
+  for (let i = 0; i < pending.length; i += CHUNK_SIZE) {
+    chunks.push(pending.slice(i, i + CHUNK_SIZE));
+  }
+
+  await Promise.all(
+    chunks.map(async (chunk) => {
+      try {
+        const joined = chunk
+          .map((m) =>
+            String(m.descriptionEn || '')
+              .replace(/===/g, '-')
+              .slice(0, 420)
+          )
+          .join('\n\n===\n\n');
+
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=id&dt=t&q=${encodeURIComponent(
+          joined
+        )}`;
+        const res = await fetch(url, {
+          signal: AbortSignal.timeout(4000),
+          headers: { 'User-Agent': 'Mozilla/5.0' },
+        });
+        if (!res.ok) return;
+
+        const tJson: any = await res.json();
+        const fullTranslated = (tJson?.[0] || [])
+          .map((part: any) => part?.[0] || '')
+          .join('');
+        const parts = fullTranslated.split(/\s*===\s*/);
+
+        chunk.forEach((m, idx) => {
+          const tr = (parts[idx] || '').trim();
+          if (tr) {
+            m.descriptionId = tr;
+            m.description = tr;
+            translationCache.set(`id:${m.id}`, tr);
+          }
+          delete m._needsIdTranslation;
+          serverMangaCache.set(m.id, m);
+        });
+      } catch {
+        chunk.forEach((m) => {
+          delete m._needsIdTranslation;
+        });
+      }
+    })
+  );
 }
 
 // ============================================================================
@@ -601,6 +692,8 @@ app.get('/api/manga', async (req: Request, res: Response) => {
       }
     }
 
+    await ensureBilingualDescriptions(list);
+
     const payload = {
       data: list,
       total: json.total || list.length,
@@ -685,6 +778,8 @@ app.get('/api/manga/:id', async (req: Request, res: Response) => {
       res.status(404).json({ error: 'Manga tidak ditemukan' });
       return;
     }
+
+    await ensureBilingualDescriptions([formatted]);
 
     let rating = formatted.rating || null;
     let follows = formatted.follows || null;

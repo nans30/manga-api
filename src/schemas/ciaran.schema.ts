@@ -51,6 +51,8 @@ export const MangaSchema = z.object({
   title: z.string().min(1).max(500),
   altTitle: z.string().optional(),
   description: z.string().default('Tidak ada sinopsis untuk manga ini.'),
+  descriptionId: z.string().optional(),
+  descriptionEn: z.string().optional(),
   status: z.enum(['ongoing', 'completed', 'hiatus', 'cancelled']).catch('ongoing'),
   year: z.number().int().min(1900).max(2100).nullable(),
   contentRating: z.enum(['safe', 'suggestive', 'erotica', 'pornographic']).catch('safe'),

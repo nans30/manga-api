@@ -9,6 +9,8 @@ export interface Manga {
   title: string;
   altTitle?: string;
   description: string;
+  descriptionId?: string;
+  descriptionEn?: string;
   status: string;
   year: number | null;
   contentRating: string;

@@ -6,6 +6,7 @@ import {
   toggleBookmark,
   cacheMangaObjects,
   useSysLang,
+  getMangaDescription,
 } from '../storage';
 import { NavBookmarkIcon } from '../components/Icons';
 import { ArrowLeft, Star, User, Loader2 } from 'lucide-react';
@@ -175,7 +176,7 @@ export const AuthorWorks: React.FC = () => {
 
                   <Link to={`/manga/${manga.id}`} state={{ manga }}>
                     <p className="text-xs text-[#6e6e6e] dark:text-[#c1c1c1] line-clamp-2 mt-2 leading-relaxed">
-                      {manga.description}
+                      {getMangaDescription(manga, sysLang)}
                     </p>
                   </Link>
                 </div>

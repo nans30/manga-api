@@ -9,6 +9,7 @@ import {
   getBookmarks,
   cacheMangaObjects,
   useSysLang,
+  getMangaDescription,
 } from '../storage';
 import { HeaderBagIcon, FlagIdIcon, FlagEnIcon } from '../components/Icons';
 import scrapedCache from '../data/mangadex-cache.json';
@@ -133,6 +134,9 @@ export const Home: React.FC = () => {
         {/* Top Row: NOW + Icons (Mobile & Desktop) */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <div className="md:hidden w-9 h-9 rounded-xl bg-[#f9cb55] flex items-center justify-center text-[#121212] font-manga text-xl shadow-md shrink-0">
+              C
+            </div>
             <h1 className="font-manga text-3xl sm:text-4xl tracking-wider text-[#121212] dark:text-[#f8f8f8]">
               NOW
             </h1>
@@ -309,7 +313,7 @@ export const Home: React.FC = () => {
                     {popularManga[1].title}
                   </h3>
                   <p className="text-xs text-[#c1c1c1] line-clamp-2">
-                    {popularManga[1].description}
+                    {getMangaDescription(popularManga[1], sysLang)}
                   </p>
                 </div>
               </Link>

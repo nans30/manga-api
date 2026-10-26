@@ -6,6 +6,7 @@ import {
   toggleBookmark,
   cacheMangaObjects,
   useSysLang,
+  getMangaDescription,
 } from '../storage';
 import { NavBookmarkIcon, FlagIdIcon, FlagEnIcon } from '../components/Icons';
 import scrapedCache from '../data/mangadex-cache.json';
@@ -502,7 +503,7 @@ export const AllBooks: React.FC = () => {
                   {/* 2-line Description */}
                   <Link to={detailLink} state={{ manga }}>
                     <p className="text-xs text-[#6e6e6e] dark:text-[#c1c1c1] line-clamp-2 mt-2 leading-relaxed">
-                      {manga.description}
+                      {getMangaDescription(manga, sysLang)}
                     </p>
                   </Link>
                 </div>

@@ -14,6 +14,8 @@ import {
   getSavedReaderMode,
   setSavedReaderMode,
   ReaderViewMode,
+  useSysLang,
+  getMangaDescription,
 } from '../storage';
 import { NavBookmarkIcon } from '../components/Icons';
 import {
@@ -33,6 +35,7 @@ export const Library: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTabParam = searchParams.get('tab');
+  const [sysLang] = useSysLang();
 
   const [tab, setTab] = useState<'bookmarks' | 'history' | 'profile'>(
     activeTabParam === 'profile'
@@ -238,7 +241,7 @@ export const Library: React.FC = () => {
                       </span>
                     </div>
                     <p className="text-xs text-[#6e6e6e] dark:text-[#c1c1c1] line-clamp-2 mt-2">
-                      {manga.description}
+                      {getMangaDescription(manga, sysLang)}
                     </p>
                   </div>
                 </div>
