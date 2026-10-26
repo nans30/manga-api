@@ -1,5 +1,7 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
+import https from 'node:https';
+import { URL } from 'node:url';
 
 export const app = express();
 app.use(cors());
@@ -8,10 +10,149 @@ app.use(express.json());
 const MANGADEX_API = 'https://api.mangadex.org';
 const MANGADEX_UPLOADS = 'https://uploads.mangadex.org';
 
-const DEFAULT_HEADERS = {
+const DEFAULT_HEADERS: Record<string, string> = {
   'User-Agent': 'CiaranMangaReader/1.0 (Personal Reader)',
   'Accept': 'application/json',
 };
+
+// ============================================================================
+// DNS-over-HTTPS (DoH) Resolver & HTTPS Client
+// Bypasses Indonesian ISP DNS Blocking (Telkomsel Internet Baik / IndiHome / Kominfo)
+// without needing VPN or Cloudflare WARP!
+// ============================================================================
+const dnsCache = new Map<string, { ip: string; expires: number }>();
+
+// Pre-seed known MangaDex Anycast IPs for instant 0ms connection
+dnsCache.set('api.mangadex.org', { ip: '45.129.229.1', expires: Date.now() + 3600_000 });
+dnsCache.set('uploads.mangadex.org', { ip: '45.129.229.2', expires: Date.now() + 3600_000 });
+
+async function resolveHostDoH(hostname: string): Promise<string> {
+  // If already an IPv4 address, return as-is
+  if (/^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+    return hostname;
+  }
+
+  const cached = dnsCache.get(hostname);
+  if (cached && cached.expires > Date.now()) {
+    return cached.ip;
+  }
+
+  // Query Google DoH directly by IP (8.8.8.8) so ISP DNS cannot intercept it
+  const dohEndpoints = [
+    `https://8.8.8.8/resolve?name=${encodeURIComponent(hostname)}&type=A`,
+    `https://1.1.1.1/dns-query?name=${encodeURIComponent(hostname)}&type=A`,
+  ];
+
+  for (const endpoint of dohEndpoints) {
+    try {
+      const res = await fetch(endpoint, {
+        headers: { accept: 'application/dns-json' },
+      });
+      if (res.ok) {
+        const data: any = await res.json();
+        const answers: any[] = data?.Answer || [];
+        const aRecord = answers.find((a) => a.type === 1 && a.data);
+        if (aRecord?.data) {
+          const ip = String(aRecord.data).trim();
+          dnsCache.set(hostname, {
+            ip,
+            expires: Date.now() + Math.max((aRecord.TTL || 300) * 1000, 300_000),
+          });
+          return ip;
+        }
+      }
+    } catch {
+      // Try next DoH provider
+    }
+  }
+
+  // Fallback for *.mangadex.org
+  if (hostname.endsWith('mangadex.org')) {
+    return '45.129.229.1';
+  }
+
+  throw new Error(`Could not resolve hostname via DoH: ${hostname}`);
+}
+
+interface DoHResponse {
+  ok: boolean;
+  status: number;
+  headers: Record<string, string | string[] | undefined>;
+  buffer: Buffer;
+  json: <T = any>() => T;
+}
+
+async function dohGet(
+  urlStr: string,
+  customHeaders: Record<string, string> = {},
+  redirectCount = 0
+): Promise<DoHResponse> {
+  if (redirectCount > 5) {
+    throw new Error('Too many redirects');
+  }
+
+  const parsed = new URL(urlStr);
+  const ip = await resolveHostDoH(parsed.hostname);
+
+  return new Promise<DoHResponse>((resolve, reject) => {
+    const req = https.request(
+      {
+        hostname: parsed.hostname,
+        port: parsed.port || 443,
+        path: parsed.pathname + parsed.search,
+        method: 'GET',
+        servername: parsed.hostname,
+        headers: {
+          ...DEFAULT_HEADERS,
+          ...customHeaders,
+          Host: parsed.host,
+        },
+        lookup: (_host, options: any, cb: any) => {
+          if (typeof options === 'function') {
+            cb = options;
+            return cb(null, ip, 4);
+          }
+          if (options && options.all) {
+            return cb(null, [{ address: ip, family: 4 }]);
+          }
+          return cb(null, ip, 4);
+        },
+      },
+      (res) => {
+        const status = res.statusCode || 500;
+        const location = res.headers.location;
+
+        if ([301, 302, 303, 307, 308].includes(status) && location) {
+          res.resume();
+          const nextUrl = new URL(location, urlStr).toString();
+          dohGet(nextUrl, customHeaders, redirectCount + 1)
+            .then(resolve)
+            .catch(reject);
+          return;
+        }
+
+        const chunks: Buffer[] = [];
+        res.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+        res.on('end', () => {
+          const buffer = Buffer.concat(chunks);
+          resolve({
+            ok: status >= 200 && status < 300,
+            status,
+            headers: res.headers,
+            buffer,
+            json: <T = any>() => JSON.parse(buffer.toString('utf-8')) as T,
+          });
+        });
+      }
+    );
+
+    req.on('error', (err) => reject(err));
+    req.setTimeout(15000, () => {
+      req.destroy(new Error(`Request timeout for ${urlStr}`));
+    });
+    req.end();
+  });
+}
 
 // Helper to format MangaDex manga item into clean frontend object
 function formatManga(item: any) {
@@ -19,7 +160,6 @@ function formatManga(item: any) {
   const titles = attr.title || {};
   const altTitles = attr.altTitles || [];
 
-  // Prefer English, Indonesian, Romaji, or first available title
   const findAltTitle = (lang: string) => {
     const found = altTitles.find((t: any) => t[lang]);
     return found ? found[lang] : undefined;
@@ -87,7 +227,7 @@ function formatManga(item: any) {
   };
 }
 
-// 1. Proxy Image to bypass MangaDex hotlink protection on Vercel & local
+// 1. Proxy Image via DoH to bypass ISP blocking & MangaDex hotlink protection
 app.get('/api/proxy-image', async (req: Request, res: Response) => {
   try {
     const imageUrl = req.query.url as string;
@@ -96,11 +236,9 @@ app.get('/api/proxy-image', async (req: Request, res: Response) => {
       return;
     }
 
-    const response = await fetch(imageUrl, {
-      headers: {
-        'User-Agent': DEFAULT_HEADERS['User-Agent'],
-        'Referer': 'https://mangadex.org/',
-      },
+    const response = await dohGet(imageUrl, {
+      Accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+      Referer: 'https://mangadex.org/',
     });
 
     if (!response.ok) {
@@ -108,12 +246,10 @@ app.get('/api/proxy-image', async (req: Request, res: Response) => {
       return;
     }
 
-    const contentType = response.headers.get('content-type') || 'image/jpeg';
+    const contentType = (response.headers['content-type'] as string) || 'image/jpeg';
     res.setHeader('Content-Type', contentType);
     res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400');
-
-    const arrayBuffer = await response.arrayBuffer();
-    res.send(Buffer.from(arrayBuffer));
+    res.send(response.buffer);
   } catch (err) {
     console.error('Image proxy error:', err);
     res.status(500).send('Image proxy error');
@@ -164,21 +300,19 @@ app.get('/api/manga', async (req: Request, res: Response) => {
     } else if (sort === 'rating') {
       params.append('order[rating]', 'desc');
     } else {
-      // Realtime latest uploaded chapter
       params.append('order[latestUploadedChapter]', 'desc');
     }
 
     const url = `${MANGADEX_API}/manga?${params.toString()}`;
-    const response = await fetch(url, { headers: DEFAULT_HEADERS });
+    const response = await dohGet(url);
 
     if (!response.ok) {
       throw new Error(`MangaDex responded with ${response.status}`);
     }
 
-    const json: any = await response.json();
+    const json: any = response.json();
     const list = (json.data || []).map(formatManga);
 
-    // Short cache so updates are always fresh
     res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
     res.json({
       data: list,
@@ -196,10 +330,8 @@ app.get('/api/manga', async (req: Request, res: Response) => {
 // 3. Get All Genre Tags
 app.get('/api/tags', async (_req: Request, res: Response) => {
   try {
-    const response = await fetch(`${MANGADEX_API}/manga/tag`, {
-      headers: DEFAULT_HEADERS,
-    });
-    const json: any = await response.json();
+    const response = await dohGet(`${MANGADEX_API}/manga/tag`);
+    const json: any = response.json();
     const tags = (json.data || [])
       .map((t: any) => ({
         id: t.id,
@@ -226,8 +358,8 @@ app.get('/api/manga/:id', async (req: Request, res: Response) => {
     params.append('includes[]', 'artist');
 
     const [mangaRes, statsRes] = await Promise.all([
-      fetch(`${MANGADEX_API}/manga/${id}?${params.toString()}`, { headers: DEFAULT_HEADERS }),
-      fetch(`${MANGADEX_API}/statistics/manga/${id}`, { headers: DEFAULT_HEADERS }).catch(() => null),
+      dohGet(`${MANGADEX_API}/manga/${id}?${params.toString()}`),
+      dohGet(`${MANGADEX_API}/statistics/manga/${id}`).catch(() => null),
     ]);
 
     if (!mangaRes.ok) {
@@ -235,13 +367,13 @@ app.get('/api/manga/:id', async (req: Request, res: Response) => {
       return;
     }
 
-    const mangaJson: any = await mangaRes.json();
+    const mangaJson: any = mangaRes.json();
     const formatted = formatManga(mangaJson.data);
 
     let rating = null;
     let follows = null;
     if (statsRes && statsRes.ok) {
-      const statsJson: any = await statsRes.json();
+      const statsJson: any = statsRes.json();
       const st = statsJson.statistics?.[id];
       if (st) {
         rating = st.rating?.bayesian ? Number(st.rating.bayesian).toFixed(2) : null;
@@ -283,20 +415,17 @@ app.get('/api/manga/:id/chapters', async (req: Request, res: Response) => {
     } else if (lang === 'en') {
       params.append('translatedLanguage[]', 'en');
     } else {
-      // Prioritaskan Bahasa Indonesia & Inggris
       params.append('translatedLanguage[]', 'id');
       params.append('translatedLanguage[]', 'en');
     }
 
-    const response = await fetch(`${MANGADEX_API}/manga/${id}/feed?${params.toString()}`, {
-      headers: DEFAULT_HEADERS,
-    });
+    const response = await dohGet(`${MANGADEX_API}/manga/${id}/feed?${params.toString()}`);
 
     if (!response.ok) {
       throw new Error(`MangaDex feed error: ${response.status}`);
     }
 
-    const json: any = await response.json();
+    const json: any = response.json();
     const chapters = (json.data || [])
       .filter((ch: any) => !ch.attributes?.externalUrl && (ch.attributes?.pages || 0) > 0)
       .map((ch: any) => {
@@ -330,17 +459,15 @@ app.get('/api/chapter/:chapterId', async (req: Request, res: Response) => {
     const { quality = 'data-saver' } = req.query as Record<string, string>;
 
     const [atHomeRes, chapterInfoRes] = await Promise.all([
-      fetch(`${MANGADEX_API}/at-home/server/${chapterId}`, { headers: DEFAULT_HEADERS }),
-      fetch(`${MANGADEX_API}/chapter/${chapterId}?includes[]=manga&includes[]=scanlation_group`, {
-        headers: DEFAULT_HEADERS,
-      }),
+      dohGet(`${MANGADEX_API}/at-home/server/${chapterId}`),
+      dohGet(`${MANGADEX_API}/chapter/${chapterId}?includes[]=manga&includes[]=scanlation_group`),
     ]);
 
     if (!atHomeRes.ok) {
       throw new Error(`Gagal memuat server gambar chapter (${atHomeRes.status})`);
     }
 
-    const atHomeJson: any = await atHomeRes.json();
+    const atHomeJson: any = atHomeRes.json();
     const baseUrl = atHomeJson.baseUrl;
     const hash = atHomeJson.chapter?.hash;
     const files: string[] =
@@ -360,7 +487,7 @@ app.get('/api/chapter/:chapterId', async (req: Request, res: Response) => {
 
     let chapterMeta: any = null;
     if (chapterInfoRes.ok) {
-      const infoJson: any = await chapterInfoRes.json();
+      const infoJson: any = chapterInfoRes.json();
       const chData = infoJson.data;
       const mangaRel = (chData?.relationships || []).find((r: any) => r.type === 'manga');
       const groupRel = (chData?.relationships || []).find((r: any) => r.type === 'scanlation_group');
