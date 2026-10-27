@@ -296,7 +296,11 @@ export const MangaDetail: React.FC = () => {
               {manga.tags.map((t) => (
                 <Link
                   key={t.id}
-                  to={`/books?tag=${t.id}`}
+                  to={
+                    t.id.length === 36
+                      ? `/books?tag=${t.id}`
+                      : `/books?genre=${t.id}&lang=id`
+                  }
                   className="px-3 py-1 rounded-lg bg-[#ececec] dark:bg-[#1e1e1e] border border-[#c1c1c1]/30 dark:border-[#2b2b2b] text-xs font-medium text-[#6e6e6e] dark:text-[#c1c1c1] hover:border-[#f9cb55] hover:text-[#121212] dark:hover:text-[#f8f8f8] transition-colors"
                 >
                   {t.name}

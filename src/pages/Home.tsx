@@ -469,6 +469,82 @@ export const Home: React.FC = () => {
           ))}
         </div>
 
+        {/* ==================== FEATURED GENRE / CATEGORY CIRCLE CARDS (Photo 1 Match) ==================== */}
+        <div className="pt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          {[
+            {
+              labelId: 'Isekai',
+              labelEn: 'Isekai',
+              img: '/api/proxy-image?url=' + encodeURIComponent('https://komiku.org/asset/img/isekai.jpg'),
+              fallbackImg: 'https://komiku.org/asset/img/isekai.jpg',
+              to: `/books?genre=isekai&tag=ace04997-f6bd-436e-b261-779182193d3d${homeLang ? `&lang=${homeLang}` : ''}`,
+            },
+            {
+              labelId: 'Fantasi',
+              labelEn: 'Fantasy',
+              img: '/api/proxy-image?url=' + encodeURIComponent('https://komiku.org/asset/img/fantasy.png'),
+              fallbackImg: 'https://komiku.org/asset/img/fantasy.png',
+              to: `/books?genre=fantasy&tag=cdc58593-87dd-415e-bbc0-2ec27bf404cc${homeLang ? `&lang=${homeLang}` : ''}`,
+            },
+            {
+              labelId: 'Ecchi',
+              labelEn: 'Ecchi',
+              img: '/api/proxy-image?url=' + encodeURIComponent('https://komiku.org/asset/img/ecchi.jpg'),
+              fallbackImg: 'https://komiku.org/asset/img/ecchi.jpg',
+              to: `/books?genre=ecchi&contentRating=suggestive${homeLang ? `&lang=${homeLang}` : ''}`,
+            },
+            {
+              labelId: 'Romantis',
+              labelEn: 'Romance',
+              img: '/api/proxy-image?url=' + encodeURIComponent('https://komiku.org/asset/img/Romantis.png'),
+              fallbackImg: 'https://komiku.org/asset/img/Romantis.png',
+              to: `/books?genre=romance&tag=423e2eae-a7a2-4a8b-ac03-a8351462d71d${homeLang ? `&lang=${homeLang}` : ''}`,
+            },
+            {
+              labelId: 'Berwarna',
+              labelEn: 'Full-Color',
+              img: '/api/proxy-image?url=' + encodeURIComponent('https://komiku.org/asset/img/full-color.jpg'),
+              fallbackImg: 'https://komiku.org/asset/img/full-color.jpg',
+              to: `/books?genre=berwarna&tipe=manhwa${homeLang ? `&lang=${homeLang}` : ''}`,
+            },
+            {
+              labelId: 'Tamat',
+              labelEn: 'Completed',
+              img: '/api/proxy-image?url=' + encodeURIComponent('https://komiku.org/asset/img/Tamat.png'),
+              fallbackImg: 'https://komiku.org/asset/img/Tamat.png',
+              to: `/books?status=completed${homeLang ? `&lang=${homeLang}` : ''}`,
+            },
+          ].map((cat) => (
+            <Link
+              key={cat.labelId}
+              to={cat.to}
+              className="group flex flex-col items-center justify-between p-4 rounded-2xl bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#2a2a2a] hover:border-[#f9cb55] shadow-sm hover:shadow-xl transition-all"
+            >
+              <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden bg-[#ececec] dark:bg-[#242424] shadow-md">
+                <img
+                  src={cat.img}
+                  alt={cat.labelId}
+                  loading="lazy"
+                  onError={(e) => {
+                    if (e.currentTarget.src !== cat.fallbackImg) {
+                      e.currentTarget.src = cat.fallbackImg;
+                    }
+                  }}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+              </div>
+
+              <h4 className="font-bold text-sm text-[#121212] dark:text-[#f8f8f8] mt-3">
+                {sysLang === 'id' ? cat.labelId : cat.labelEn}
+              </h4>
+
+              <span className="mt-2 px-5 py-1.5 rounded-lg bg-[#ececec] dark:bg-[#262626] group-hover:bg-[#f9cb55] text-xs font-semibold text-[#121212] dark:text-[#f8f8f8] group-hover:text-[#121212] transition-colors">
+                {sysLang === 'id' ? 'Baca' : 'Read'}
+              </span>
+            </Link>
+          ))}
+        </div>
+
         <div className="pt-4 flex justify-center">
           <Link
             to={homeLang ? `/books?lang=${homeLang}` : '/books'}

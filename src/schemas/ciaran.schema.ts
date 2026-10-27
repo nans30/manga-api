@@ -5,12 +5,23 @@ import { z } from 'zod';
 // ============================================================================
 export const UuidParamSchema = z
   .string()
-  .uuid({ message: 'Format UUID tidak valid' });
+  .refine(
+    (val) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        val
+      ) || /^komiku(-ch)?:[a-z0-9._-]+$/i.test(val),
+    { message: 'Format UUID atau ID Komik tidak valid' }
+  );
 
 const ALLOWED_IMAGE_HOSTS = [
   'uploads.mangadex.org',
   '.mangadex.org',
   '.mangadex.network',
+  'komiku.org',
+  '.komiku.org',
+  '.komiku.to',
+  '.komiku.id',
+  '.komikid.org',
 ] as const;
 
 export function isSafeMangaDexImageUrl(rawUrl: string): boolean {

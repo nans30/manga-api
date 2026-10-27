@@ -13,7 +13,6 @@ import scrapedCache from '../data/mangadex-cache.json';
 import {
   ArrowLeft,
   Star,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Search,
@@ -37,17 +36,22 @@ export const AllBooks: React.FC = () => {
   const [sysLang] = useSysLang();
 
   const query = searchParams.get('q') || '';
-  const sort = searchParams.get('sort') || 'popular';
+  const sort = searchParams.get('sort') || 'latest';
+  const status = searchParams.get('status') || '';
+  const tipe = searchParams.get('tipe') || '';
   const selectedTag = searchParams.get('tag') || '';
+  const selectedTag2 = searchParams.get('tag2') || '';
+  const selectedGenre = searchParams.get('genre') || '';
+  const selectedGenre2 = searchParams.get('genre2') || '';
+  const contentRating = searchParams.get('contentRating') || '';
   const authorId = searchParams.get('authorId') || '';
-  const authorName = searchParams.get('authorName') || '';
   const lang = searchParams.get('lang') || ''; // '' | 'id' | 'en'
   const page = Math.max(1, Number(searchParams.get('page') || '1'));
 
   const [books, setBooks] = useState<Manga[]>(() => getInitialCachedBooks(sort));
-  const [tags, setTags] = useState<MangaTag[]>(() => (cacheData.tags || []).slice(0, 20));
+  const [tags, setTags] = useState<MangaTag[]>(() => cacheData.tags || []);
   const [loading, setLoading] = useState(false);
-  const [total, setTotal] = useState(9984);
+  const [total, setTotal] = useState(7930);
   const [searchText, setSearchText] = useState(query);
   const [suggestions, setSuggestions] = useState<Manga[]>([]);
   const [searching, setSearching] = useState(false);
@@ -55,8 +59,22 @@ export const AllBooks: React.FC = () => {
   const searchBoxRef = useRef<HTMLDivElement>(null);
   const [, setTick] = useState(0);
 
+  // Local state for the 5 filter dropdowns (Update, Status, Tipe, Genre 1, Genre 2) + Cari button
+  const [draftSort, setDraftSort] = useState(sort);
+  const [draftStatus, setDraftStatus] = useState(status);
+  const [draftTipe, setDraftTipe] = useState(tipe);
+  const [draftTag1, setDraftTag1] = useState(selectedTag || selectedGenre);
+  const [draftTag2, setDraftTag2] = useState(selectedTag2 || selectedGenre2);
+
+  useEffect(() => {
+    setDraftSort(sort);
+    setDraftStatus(status);
+    setDraftTipe(tipe);
+    setDraftTag1(selectedTag || selectedGenre);
+    setDraftTag2(selectedTag2 || selectedGenre2);
+  }, [sort, status, tipe, selectedTag, selectedGenre, selectedTag2, selectedGenre2]);
+
   const LIMIT = 24;
-  // Full API limit (MangaDex allows offset + limit <= 10,000 => up to 416 pages of 24 items, or actual total pages)
   const MAX_API_PAGES = Math.floor(10000 / LIMIT); // 416 pages
   const totalPages = Math.max(1, Math.min(MAX_API_PAGES, Math.ceil(total / LIMIT)));
 
@@ -83,7 +101,7 @@ export const AllBooks: React.FC = () => {
     }
     setSearching(true);
     const timer = setTimeout(() => {
-      fetch(`/api/manga?q=${encodeURIComponent(q)}&limit=6`)
+      fetch(`/api/manga?q=${encodeURIComponent(q)}&limit=6${lang ? `&lang=${lang}` : ''}`)
         .then((r) => r.json())
         .then((json) => {
           if (json.data) {
@@ -95,10 +113,22 @@ export const AllBooks: React.FC = () => {
         .finally(() => setSearching(false));
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchText]);
+  }, [searchText, lang]);
 
   const fetchBooks = useCallback(async () => {
-    const isDefault = !query && !selectedTag && !authorId && !lang && page === 1;
+    const isDefault =
+      !query &&
+      !status &&
+      !tipe &&
+      !selectedTag &&
+      !selectedTag2 &&
+      !selectedGenre &&
+      !selectedGenre2 &&
+      !contentRating &&
+      !authorId &&
+      !lang &&
+      page === 1;
+
     if (isDefault) {
       const initial = getInitialCachedBooks(sort);
       if (initial.length > 0) setBooks(initial);
@@ -110,7 +140,13 @@ export const AllBooks: React.FC = () => {
       const params = new URLSearchParams();
       if (query) params.set('q', query);
       params.set('sort', sort);
+      if (status) params.set('status', status);
+      if (tipe) params.set('tipe', tipe);
       if (selectedTag) params.set('tag', selectedTag);
+      if (selectedTag2) params.set('tag2', selectedTag2);
+      if (selectedGenre) params.set('genre', selectedGenre);
+      if (selectedGenre2) params.set('genre2', selectedGenre2);
+      if (contentRating) params.set('contentRating', contentRating);
       if (authorId) params.set('authorId', authorId);
       if (lang) params.set('lang', lang);
       params.set('limit', String(LIMIT));
@@ -129,7 +165,20 @@ export const AllBooks: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [query, sort, selectedTag, authorId, lang, page]);
+  }, [
+    query,
+    sort,
+    status,
+    tipe,
+    selectedTag,
+    selectedTag2,
+    selectedGenre,
+    selectedGenre2,
+    contentRating,
+    authorId,
+    lang,
+    page,
+  ]);
 
   useEffect(() => {
     fetchBooks();
@@ -139,7 +188,7 @@ export const AllBooks: React.FC = () => {
     fetch('/api/tags')
       .then((r) => r.json())
       .then((j) => {
-        if (j.data?.length) setTags(j.data.slice(0, 24));
+        if (j.data?.length) setTags(j.data);
       })
       .catch(() => {});
   }, []);
@@ -149,6 +198,61 @@ export const AllBooks: React.FC = () => {
     if (val) next.set(key, val);
     else next.delete(key);
     if (key !== 'page') next.delete('page');
+    setSearchParams(next);
+  };
+
+  // Resolve a selected tag ID or slug to both MangaDex UUID and Komiku genre slug
+  const resolveGenreSelection = (val: string): { tagId: string; genreSlug: string } => {
+    if (!val) return { tagId: '', genreSlug: '' };
+    const byId = tags.find((t) => t.id === val);
+    if (byId) {
+      return {
+        tagId: byId.id,
+        genreSlug: byId.name.toLowerCase().replace(/\s+/g, '-'),
+      };
+    }
+    const bySlug = tags.find(
+      (t) => t.name.toLowerCase().replace(/\s+/g, '-') === val.toLowerCase()
+    );
+    if (bySlug) {
+      return {
+        tagId: bySlug.id,
+        genreSlug: bySlug.name.toLowerCase().replace(/\s+/g, '-'),
+      };
+    }
+    return { tagId: '', genreSlug: val.toLowerCase() };
+  };
+
+  const handleApplyFilter = (e: React.FormEvent) => {
+    e.preventDefault();
+    const next = new URLSearchParams(searchParams);
+    next.set('sort', draftSort || 'latest');
+
+    if (draftStatus) next.set('status', draftStatus);
+    else next.delete('status');
+
+    if (draftTipe) next.set('tipe', draftTipe);
+    else next.delete('tipe');
+
+    const g1 = resolveGenreSelection(draftTag1);
+    if (g1.tagId) next.set('tag', g1.tagId);
+    else next.delete('tag');
+    if (g1.genreSlug) next.set('genre', g1.genreSlug);
+    else next.delete('genre');
+
+    const g2 = resolveGenreSelection(draftTag2);
+    if (g2.tagId) next.set('tag2', g2.tagId);
+    else next.delete('tag2');
+    if (g2.genreSlug) next.set('genre2', g2.genreSlug);
+    else next.delete('genre2');
+
+    if (g1.genreSlug === 'ecchi' || g2.genreSlug === 'ecchi') {
+      next.set('contentRating', 'suggestive');
+    } else {
+      next.delete('contentRating');
+    }
+
+    next.delete('page');
     setSearchParams(next);
   };
 
@@ -291,42 +395,31 @@ export const AllBooks: React.FC = () => {
         )}
       </div>
 
-      {/* Horizontal Genre Pills */}
-      <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-1 -mx-5 px-5 sm:mx-0 sm:px-0">
-        <button
-          onClick={() => updateParam('tag', '')}
-          className={`px-5 py-2.5 rounded-xl font-manga text-sm tracking-wider uppercase shrink-0 transition-all ${
-            !selectedTag
-              ? 'bg-[#f9cb55] text-[#121212] shadow-md shadow-[#f9cb55]/15'
-              : 'bg-[#ffffff] dark:bg-[#1e1e1e] text-[#121212] dark:text-[#f8f8f8] border border-[#c1c1c1]/30 dark:border-[#2a2a2a] hover:border-[#f9cb55]'
-          }`}
-        >
-          {sysLang === 'id' ? 'SEMUA' : 'ALL'}
-        </button>
+      {/* ==================== PERPUSTAKAAN KOMIK 5-DROPDOWN FILTER BAR (Photo 2 Match) ==================== */}
+      <div className="p-5 sm:p-6 rounded-2xl bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/35 dark:border-[#2a2a2a] shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold text-[#121212] dark:text-[#f8f8f8]">
+              {sysLang === 'id' ? 'Perpustakaan Komik' : 'Comic Library'}
+            </h2>
+            <p className="text-xs sm:text-sm text-[#6e6e6e] dark:text-[#c1c1c1] mt-0.5">
+              {sysLang === 'id' ? (
+                <>
+                  Jelajahi <strong className="text-[#121212] dark:text-[#f8f8f8]">{total.toLocaleString('id-ID')}</strong> judul komik dan{' '}
+                  <strong className="text-[#121212] dark:text-[#f8f8f8]">422.655</strong> jumlah chapter yang tersedia{' '}
+                  {lang === 'id' ? 'di Komiku Bahasa Indonesia.' : 'di Ciaran.'}
+                </>
+              ) : (
+                <>
+                  Explore <strong className="text-[#121212] dark:text-[#f8f8f8]">{total.toLocaleString('en-US')}</strong> comic titles and{' '}
+                  <strong className="text-[#121212] dark:text-[#f8f8f8]">422,655</strong> chapters available.
+                </>
+              )}
+            </p>
+          </div>
 
-        {tags.map((tag) => {
-          const active = selectedTag === tag.id;
-          return (
-            <button
-              key={tag.id}
-              onClick={() => updateParam('tag', active ? '' : tag.id)}
-              className={`px-5 py-2.5 rounded-xl font-manga text-sm tracking-wider uppercase shrink-0 transition-all ${
-                active
-                  ? 'bg-[#f9cb55] text-[#121212] shadow-md shadow-[#f9cb55]/15'
-                  : 'bg-[#ffffff] dark:bg-[#1e1e1e] text-[#121212] dark:text-[#f8f8f8] border border-[#c1c1c1]/30 dark:border-[#2a2a2a] hover:border-[#f9cb55]'
-              }`}
-            >
-              {tag.name}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Icon-Only Language Filter + Count & Sort Row */}
-      <div className="flex items-center justify-between gap-3 pt-1 flex-wrap">
-        <div className="flex items-center gap-3">
-          {/* Icon-Only Language Filter (Globe / ID / EN) */}
-          <div className="inline-flex items-center gap-1 bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#2a2a2a] rounded-xl p-1">
+          {/* Icon-Only Language Source Switcher (Globe / ID Komiku.org / EN MangaDex) */}
+          <div className="inline-flex items-center gap-1 bg-[#ececec] dark:bg-[#121212] border border-[#c1c1c1]/30 dark:border-[#2a2a2a] rounded-xl p-1 self-start sm:self-auto">
             <button
               type="button"
               onClick={() => updateParam('lang', '')}
@@ -342,7 +435,7 @@ export const AllBooks: React.FC = () => {
             <button
               type="button"
               onClick={() => updateParam('lang', 'id')}
-              title="Bahasa Indonesia"
+              title="Bahasa Indonesia (Komiku.org)"
               className={`p-1.5 rounded-lg transition-all ${
                 lang === 'id'
                   ? 'bg-[#f9cb55] ring-2 ring-[#f9cb55]/50 shadow-sm'
@@ -354,7 +447,7 @@ export const AllBooks: React.FC = () => {
             <button
               type="button"
               onClick={() => updateParam('lang', 'en')}
-              title="English"
+              title="English (MangaDex)"
               className={`p-1.5 rounded-lg transition-all ${
                 lang === 'en'
                   ? 'bg-[#f9cb55] ring-2 ring-[#f9cb55]/50 shadow-sm'
@@ -364,31 +457,110 @@ export const AllBooks: React.FC = () => {
               <FlagEnIcon className="w-4 h-4" />
             </button>
           </div>
-
-          <span className="text-xs sm:text-sm font-medium text-[#6e6e6e] dark:text-[#c1c1c1]">
-            {total.toLocaleString('id-ID')} {sysLang === 'id' ? 'komik' : 'books'} •{' '}
-            {sysLang === 'id' ? 'Hal' : 'Page'} {page}/{totalPages}
-          </span>
         </div>
 
-        <div className="relative inline-flex items-center">
-          <select
-            value={sort}
-            onChange={(e) => updateParam('sort', e.target.value)}
-            className="appearance-none bg-transparent pr-6 py-1 text-xs sm:text-sm font-semibold text-[#121212] dark:text-[#f8f8f8] focus:outline-none cursor-pointer"
-          >
-            <option value="popular" className="bg-[#ffffff] dark:bg-[#1b1b1b]">
-              {sysLang === 'id' ? 'Urutkan: Terpopuler' : 'by Popularity'}
-            </option>
-            <option value="latest" className="bg-[#ffffff] dark:bg-[#1b1b1b]">
-              {sysLang === 'id' ? 'Urutkan: Terbaru' : 'by Latest Update'}
-            </option>
-            <option value="rating" className="bg-[#ffffff] dark:bg-[#1b1b1b]">
-              {sysLang === 'id' ? 'Urutkan: Rating Tertinggi' : 'by Top Rating'}
-            </option>
-          </select>
-          <ChevronDown className="w-4 h-4 text-[#121212] dark:text-[#f8f8f8] pointer-events-none absolute right-0" />
-        </div>
+        {/* 5 Filter Selects + Cari Button (Exact Photo 2 Layout) */}
+        <form
+          onSubmit={handleApplyFilter}
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-12 gap-2.5 items-center pt-1"
+        >
+          {/* 1. Update / Sort */}
+          <div className="lg:col-span-2">
+            <select
+              value={draftSort}
+              onChange={(e) => setDraftSort(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#f3f4f6] dark:bg-[#242424] border border-[#c1c1c1]/40 dark:border-[#333333] text-xs sm:text-sm font-medium text-[#121212] dark:text-[#f8f8f8] focus:outline-none focus:border-[#f9cb55] cursor-pointer"
+            >
+              <option value="latest">Update</option>
+              <option value="popular">
+                {sysLang === 'id' ? 'Terpopuler' : 'Popular'}
+              </option>
+              <option value="rating">
+                {sysLang === 'id' ? 'Rating Tertinggi' : 'Top Rated'}
+              </option>
+            </select>
+          </div>
+
+          {/* 2. Status */}
+          <div className="lg:col-span-2">
+            <select
+              value={draftStatus}
+              onChange={(e) => setDraftStatus(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#f3f4f6] dark:bg-[#242424] border border-[#c1c1c1]/40 dark:border-[#333333] text-xs sm:text-sm font-medium text-[#121212] dark:text-[#f8f8f8] focus:outline-none focus:border-[#f9cb55] cursor-pointer"
+            >
+              <option value="">Status</option>
+              <option value="ongoing">Ongoing</option>
+              <option value="completed">
+                {sysLang === 'id' ? 'Tamat' : 'Completed'}
+              </option>
+              <option value="hiatus">Hiatus</option>
+            </select>
+          </div>
+
+          {/* 3. Tipe (Manga / Manhwa / Manhua) */}
+          <div className="lg:col-span-2">
+            <select
+              value={draftTipe}
+              onChange={(e) => setDraftTipe(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#f3f4f6] dark:bg-[#242424] border border-[#c1c1c1]/40 dark:border-[#333333] text-xs sm:text-sm font-medium text-[#121212] dark:text-[#f8f8f8] focus:outline-none focus:border-[#f9cb55] cursor-pointer"
+            >
+              <option value="">{sysLang === 'id' ? 'Tipe' : 'Type'}</option>
+              <option value="manga">Manga</option>
+              <option value="manhwa">Manhwa</option>
+              <option value="manhua">Manhua</option>
+            </select>
+          </div>
+
+          {/* 4. Genre 1 */}
+          <div className="lg:col-span-2">
+            <select
+              value={draftTag1}
+              onChange={(e) => setDraftTag1(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#f3f4f6] dark:bg-[#242424] border border-[#c1c1c1]/40 dark:border-[#333333] text-xs sm:text-sm font-medium text-[#121212] dark:text-[#f8f8f8] focus:outline-none focus:border-[#f9cb55] cursor-pointer"
+            >
+              <option value="">Genre 1</option>
+              <option value="ecchi">Ecchi</option>
+              <option value="berwarna">
+                {sysLang === 'id' ? 'Berwarna (Full-Color)' : 'Full-Color'}
+              </option>
+              {tags.map((t) => (
+                <option key={`g1-${t.id}`} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 5. Genre 2 */}
+          <div className="lg:col-span-3">
+            <select
+              value={draftTag2}
+              onChange={(e) => setDraftTag2(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#f3f4f6] dark:bg-[#242424] border border-[#c1c1c1]/40 dark:border-[#333333] text-xs sm:text-sm font-medium text-[#121212] dark:text-[#f8f8f8] focus:outline-none focus:border-[#f9cb55] cursor-pointer"
+            >
+              <option value="">Genre 2</option>
+              <option value="ecchi">Ecchi</option>
+              <option value="berwarna">
+                {sysLang === 'id' ? 'Berwarna (Full-Color)' : 'Full-Color'}
+              </option>
+              {tags.map((t) => (
+                <option key={`g2-${t.id}`} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 6. Cari Button */}
+          <div className="col-span-2 sm:col-span-1 lg:col-span-1">
+            <button
+              type="submit"
+              className="w-full py-2.5 px-4 rounded-xl bg-[#f9cb55] hover:bg-[#eab83e] text-[#121212] font-bold text-xs sm:text-sm shadow-sm transition-all cursor-pointer"
+            >
+              {sysLang === 'id' ? 'Cari' : 'Filter'}
+            </button>
+          </div>
+        </form>
       </div>
 
       {/* Book List */}
@@ -551,7 +723,7 @@ export const AllBooks: React.FC = () => {
           </div>
 
           <button
-            disabled={page >= totalPages || books.length < LIMIT}
+            disabled={page >= totalPages || books.length < 10}
             onClick={() => goToPage(page + 1)}
             className="px-4 py-2.5 rounded-xl bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/40 dark:border-[#2a2a2a] text-xs font-bold uppercase tracking-wider disabled:opacity-35 hover:border-[#f9cb55] flex items-center gap-1.5 transition-colors"
           >

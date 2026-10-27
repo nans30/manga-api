@@ -14,12 +14,23 @@ const cors: typeof import('cors') = (corsPkg as any).default || corsPkg;
 // ============================================================================
 const UuidParamSchema = z
   .string()
-  .uuid({ message: 'Format UUID tidak valid' });
+  .refine(
+    (val) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        val
+      ) || /^komiku(-ch)?:[a-z0-9._-]+$/i.test(val),
+    { message: 'Format UUID atau ID Komik tidak valid' }
+  );
 
 const ALLOWED_IMAGE_HOSTS = [
   'uploads.mangadex.org',
   '.mangadex.org',
   '.mangadex.network',
+  'komiku.org',
+  '.komiku.org',
+  '.komiku.to',
+  '.komiku.id',
+  '.komikid.org',
 ] as const;
 
 function isSafeMangaDexImageUrl(rawUrl: string): boolean {
@@ -44,15 +55,9 @@ const MangaQueryParamsSchema = z.object({
   sort: z.enum(['latest', 'popular', 'rating']).catch('latest'),
   limit: z.coerce.number().int().min(1).max(100).catch(24),
   offset: z.coerce.number().int().min(0).max(9900).catch(0),
-  tag: z
-    .string()
-    .trim()
-    .refine((val) => val === '' || UuidParamSchema.safeParse(val).success, {
-      message: 'Tag ID harus berupa UUID yang valid',
-    })
-    .default(''),
+  tag: z.string().trim().default(''),
   status: z
-    .enum(['', 'ongoing', 'completed', 'hiatus', 'cancelled'])
+    .enum(['', 'ongoing', 'completed', 'hiatus', 'cancelled', 'end'])
     .catch(''),
   demographic: z
     .enum(['', 'shounen', 'shoujo', 'josei', 'seinen'])
@@ -115,8 +120,8 @@ class BoundedTTLCache<V> {
   }
 }
 
-const apiResponseCache = new BoundedTTLCache<any>(100, 45_000);
-const serverMangaCache = new BoundedTTLCache<any>(400, 1800_000);
+const apiResponseCache = new BoundedTTLCache<any>(150, 45_000);
+const serverMangaCache = new BoundedTTLCache<any>(500, 1800_000);
 const translationCache = new BoundedTTLCache<string>(1500, 86400_000);
 const dnsCache = new BoundedTTLCache<string>(100, 3600_000);
 const rateLimitCache = new BoundedTTLCache<{ count: number; resetAt: number }>(
@@ -179,8 +184,14 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-function isValidUuid(id: string): boolean {
+function isValidId(id: string): boolean {
   return UuidParamSchema.safeParse(id).success;
+}
+
+function isPureUuid(id: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    id
+  );
 }
 
 function isAllowedImageHost(hostname: string): boolean {
@@ -188,7 +199,12 @@ function isAllowedImageHost(hostname: string): boolean {
   return (
     host === 'uploads.mangadex.org' ||
     host.endsWith('.mangadex.org') ||
-    host.endsWith('.mangadex.network')
+    host.endsWith('.mangadex.network') ||
+    host === 'komiku.org' ||
+    host.endsWith('.komiku.org') ||
+    host.endsWith('.komiku.to') ||
+    host.endsWith('.komiku.id') ||
+    host.endsWith('.komikid.org')
   );
 }
 
@@ -244,10 +260,13 @@ function isValidImageBinary(buf: Buffer): boolean {
 
 const MANGADEX_API = 'https://api.mangadex.org';
 const MANGADEX_UPLOADS = 'https://uploads.mangadex.org';
+const KOMIKU_BASE = 'https://komiku.org';
+const KOMIKU_API = 'https://api.komiku.org';
 
 const DEFAULT_HEADERS: Record<string, string> = {
-  'User-Agent': 'CiaranMangaReader/1.0 (Personal Reader)',
-  'Accept': 'application/json',
+  'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+  'Accept': 'application/json, text/html, */*',
 };
 
 async function resolveHostDoH(hostname: string): Promise<string> {
@@ -330,8 +349,11 @@ async function dohGet(
     throw new Error(`Forbidden upstream host: ${parsed.hostname}`);
   }
 
-  // On Vercel Cloud (outside Indonesian ISP block), native fetch is ultra-fast & reliable
-  if (process.env.VERCEL) {
+  // For Komiku hosts or when running on Vercel Cloud, native fetch works directly at high speed
+  const isKomikuHost =
+    parsed.hostname.includes('komiku.') || parsed.hostname.includes('komikid.');
+
+  if (process.env.VERCEL || isKomikuHost) {
     try {
       const nativeRes = await fetch(urlStr, {
         headers: {
@@ -430,6 +452,386 @@ async function dohGet(
     });
     req.end();
   });
+}
+
+// ============================================================================
+// KOMIKU.ORG REAL-TIME SCRAPER (Bahasa Indonesia Catalog, Detail & Chapters)
+// ============================================================================
+function decodeHtmlEntities(str: string): string {
+  if (!str) return '';
+  return str
+    .replace(/&#039;/g, "'")
+    .replace(/&#8217;/g, "'")
+    .replace(/&#8211;/g, '-')
+    .replace(/&#8220;/g, '"')
+    .replace(/&#8221;/g, '"')
+    .replace(/&#038;/g, '&')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function parseKomikuCatalogHtml(html: string): any[] {
+  const results: any[] = [];
+  const blocks = html.split(/<div class="bge">/i).slice(1);
+
+  for (const block of blocks) {
+    const slugMatch = block.match(
+      /href="(?:https?:\/\/komiku\.org)?\/manga\/([^/"]+)\/?"/i
+    );
+    if (!slugMatch) continue;
+    const slug = slugMatch[1].trim();
+    const id = `komiku:${slug}`;
+
+    const titleMatch = block.match(/<h3>([\s\S]*?)<\/h3>/i);
+    const title = titleMatch ? decodeHtmlEntities(titleMatch[1]) : slug;
+
+    const imgMatch = block.match(/<img[^>]+src="([^"]+)"/i);
+    let rawCover = imgMatch ? imgMatch[1].replace(/&#038;/g, '&') : '';
+    // Convert landscape crop (?resize=450,235) into clean portrait cover
+    rawCover = rawCover.replace(/\?resize=[^"&]+(&quality=\d+)?/i, '');
+
+    const coverUrl = rawCover.startsWith('https://')
+      ? `/api/proxy-image?url=${encodeURIComponent(rawCover)}`
+      : 'https://placehold.co/256x364/18181b/f9cb55?text=Komiku';
+
+    const typeMatch = block.match(/<b>(Manga|Manhwa|Manhua)<\/b>\s*([^<]*)/i);
+    const comicType = (typeMatch?.[1] || 'Manga').toLowerCase();
+    const primaryGenre = decodeHtmlEntities(typeMatch?.[2] || 'Action');
+
+    const originalLanguage =
+      comicType === 'manhwa' ? 'ko' : comicType === 'manhua' ? 'zh' : 'ja';
+
+    const descMatch = block.match(/<p>([\s\S]*?)<\/p>/i);
+    const descId = descMatch
+      ? decodeHtmlEntities(descMatch[1])
+      : `Baca komik ${title} Bahasa Indonesia terbaru di Ciaran.`;
+
+    const latestChMatch = block.match(
+      /Terbaru:\s*<\/span>\s*<span>\s*(?:Chapter\s*)?([^<]+)<\/span>/i
+    );
+    const lastChapter = latestChMatch ? latestChMatch[1].trim() : null;
+
+    const item = {
+      id,
+      title,
+      altTitle: comicType.toUpperCase(),
+      description: descId,
+      descriptionId: descId,
+      descriptionEn: descId,
+      status: 'ongoing',
+      year: 2025,
+      contentRating: 'safe',
+      originalLanguage,
+      lastChapter,
+      updatedAt: new Date().toISOString(),
+      coverUrl,
+      coverUrlFull: coverUrl,
+      author: 'Komiku ID',
+      authorId: '',
+      artist: 'Komiku ID',
+      artistId: '',
+      tags: primaryGenre
+        ? [
+            {
+              id: primaryGenre.toLowerCase().replace(/\s+/g, '-'),
+              name: primaryGenre,
+              group: 'genre',
+            },
+          ]
+        : [],
+    };
+    serverMangaCache.set(id, item);
+    results.push(item);
+  }
+
+  return results;
+}
+
+async function fetchKomikuMangaList(options: {
+  q?: string;
+  sort?: string;
+  status?: string;
+  tipe?: string;
+  genre?: string;
+  genre2?: string;
+  page?: number;
+}): Promise<{ list: any[]; total: number }> {
+  const page = Math.max(1, options.page || 1);
+  let url = '';
+
+  if (options.q) {
+    url = `${KOMIKU_API}/?post_type=manga&s=${encodeURIComponent(options.q)}`;
+  } else if (options.genre === 'berwarna' || options.genre === 'full-color') {
+    url =
+      page > 1
+        ? `${KOMIKU_API}/other/berwarna/page/${page}/`
+        : `${KOMIKU_API}/other/berwarna/`;
+  } else {
+    const params = new URLSearchParams();
+    if (options.sort === 'popular') {
+      params.set('orderby', 'meta_value_num');
+    } else if (options.sort === 'rating') {
+      params.set('orderby', 'date');
+    } else {
+      params.set('orderby', 'modified');
+    }
+    params.set('tipe', options.tipe || '');
+    params.set('genre', options.genre || '');
+    params.set('genre2', options.genre2 || '');
+    if (options.status === 'completed' || options.status === 'end') {
+      params.set('status', 'end');
+    } else if (options.status === 'ongoing') {
+      params.set('status', 'ongoing');
+    } else {
+      params.set('status', '');
+    }
+
+    const basePath =
+      page > 1 ? `${KOMIKU_API}/manga/page/${page}/` : `${KOMIKU_API}/manga/`;
+    url = `${basePath}?${params.toString()}`;
+  }
+
+  const res = await fetch(url, {
+    headers: {
+      ...DEFAULT_HEADERS,
+      Referer: `${KOMIKU_BASE}/`,
+    },
+    signal: AbortSignal.timeout(10000),
+  });
+
+  if (!res.ok) {
+    return { list: [], total: 0 };
+  }
+
+  const html = await res.text();
+  const list = parseKomikuCatalogHtml(html);
+  return {
+    list,
+    total: options.q ? list.length : Math.max(list.length, 7930),
+  };
+}
+
+function parseKomikuDateToIso(dateStr: string): string {
+  const clean = decodeHtmlEntities(dateStr);
+  const m = clean.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) {
+    const [, dd, mm, yyyy] = m;
+    return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}T00:00:00Z`;
+  }
+  return new Date().toISOString();
+}
+
+async function fetchKomikuMangaDetailAndChapters(slug: string): Promise<{
+  manga: any;
+  chapters: any[];
+} | null> {
+  const url = `${KOMIKU_BASE}/manga/${encodeURIComponent(slug)}/`;
+  const res = await fetch(url, {
+    headers: {
+      ...DEFAULT_HEADERS,
+      Referer: `${KOMIKU_BASE}/`,
+    },
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!res.ok) return null;
+
+  const html = await res.text();
+
+  const titleMatch =
+    html.match(/<tr><td>Judul:<\/td><td[^>]*>([\s\S]*?)<\/td><\/tr>/i) ||
+    html.match(/<h1[^>]*>[\s\S]*?<span[^>]*>([\s\S]*?)<\/span>/i);
+  const title = titleMatch ? decodeHtmlEntities(titleMatch[1]) : slug;
+
+  const altMatch = html.match(
+    /<tr><td>Judul Alternatif:<\/td><td[^>]*>([\s\S]*?)<\/td><\/tr>/i
+  );
+  const altTitle = altMatch ? decodeHtmlEntities(altMatch[1]) : '';
+
+  const authorMatch = html.match(
+    /<tr><td>(?:Author|Pengarang|Komikus):<\/td><td[^>]*>([\s\S]*?)<\/td><\/tr>/i
+  );
+  const rawAuthor = authorMatch ? decodeHtmlEntities(authorMatch[1]) : '';
+  const author = rawAuthor && rawAuthor !== '-' ? rawAuthor : 'Komiku Official';
+
+  const statusMatch = html.match(
+    /<tr><td>Status:<\/td><td[^>]*>([\s\S]*?)<\/td><\/tr>/i
+  );
+  const rawStatus = statusMatch
+    ? decodeHtmlEntities(statusMatch[1]).toLowerCase()
+    : 'ongoing';
+  const status =
+    rawStatus.includes('end') || rawStatus.includes('tamat')
+      ? 'completed'
+      : 'ongoing';
+
+  const typeMatch = html.match(
+    /<tr><td>(?:Tipe|Jenis Komik):<\/td><td[^>]*>([\s\S]*?)<\/td><\/tr>/i
+  );
+  const rawType = typeMatch
+    ? decodeHtmlEntities(typeMatch[1]).toLowerCase()
+    : 'manga';
+  const originalLanguage = rawType.includes('manhwa')
+    ? 'ko'
+    : rawType.includes('manhua')
+    ? 'zh'
+    : 'ja';
+
+  const descMatch = html.match(/<p class="desc"[^>]*>([\s\S]*?)<\/p>/i);
+  const descId = descMatch
+    ? decodeHtmlEntities(descMatch[1])
+    : `Baca komik ${title} Bahasa Indonesia lengkap di Ciaran.`;
+
+  const ogImgMatch = html.match(
+    /<meta property="og:image"\s+content="([^"]+)"/i
+  );
+  const rawCover = ogImgMatch ? ogImgMatch[1].replace(/\?.*$/, '') : '';
+  const coverUrl = rawCover.startsWith('https://')
+    ? `/api/proxy-image?url=${encodeURIComponent(rawCover)}`
+    : 'https://placehold.co/256x364/18181b/f9cb55?text=Komiku';
+
+  const tags: any[] = [];
+  const genreRegex =
+    /<li class="genre"><a href="\/genre\/([^/"]+)\/?"[^>]*><span>([^<]+)<\/span><\/a><\/li>/gi;
+  let gMatch: RegExpExecArray | null;
+  while ((gMatch = genreRegex.exec(html)) !== null) {
+    tags.push({
+      id: gMatch[1].trim(),
+      name: decodeHtmlEntities(gMatch[2]),
+      group: 'genre',
+    });
+  }
+
+  const chapters: any[] = [];
+  const seenChapters = new Set<string>();
+  const rowRegex =
+    /<td class="judulseries">[\s\S]*?<a href="\/([^/"]+)\/?"[^>]*>[\s\S]*?<b>([\s\S]*?)<\/b>[\s\S]*?<\/td>\s*<td class="tanggalseries">([\s\S]*?)<\/td>/gi;
+  let rMatch: RegExpExecArray | null;
+  while ((rMatch = rowRegex.exec(html)) !== null) {
+    const chSlug = rMatch[1].trim();
+    const chLabel = decodeHtmlEntities(rMatch[2]);
+    const chNumMatch = chLabel.match(/Chapter\s*([0-9.]+|[a-zA-Z0-9.-]+)/i);
+    const chNum = chNumMatch ? chNumMatch[1] : chLabel;
+    if (seenChapters.has(chNum)) continue;
+    seenChapters.add(chNum);
+
+    chapters.push({
+      id: `komiku-ch:${chSlug}`,
+      chapter: chNum,
+      volume: null,
+      title: chLabel,
+      translatedLanguage: 'id',
+      pages: 35,
+      publishAt: parseKomikuDateToIso(rMatch[3]),
+      groupName: 'Komiku ID',
+    });
+  }
+
+  const id = `komiku:${slug}`;
+  const manga = {
+    id,
+    title,
+    altTitle,
+    description: descId,
+    descriptionId: descId,
+    descriptionEn: descId,
+    status,
+    year: 2025,
+    contentRating: 'safe',
+    originalLanguage,
+    lastChapter: chapters[0]?.chapter || null,
+    updatedAt: new Date().toISOString(),
+    coverUrl,
+    coverUrlFull: coverUrl,
+    author,
+    authorId: '',
+    artist: author,
+    artistId: '',
+    tags: tags.slice(0, 8),
+    rating: '4.9',
+    follows: 12500,
+  };
+
+  serverMangaCache.set(id, manga);
+  return { manga, chapters };
+}
+
+async function fetchKomikuChapterPages(chapterSlug: string): Promise<{
+  pages: any[];
+  total: number;
+  chapter: any;
+} | null> {
+  const url = `${KOMIKU_BASE}/${encodeURIComponent(chapterSlug)}/`;
+  const res = await fetch(url, {
+    headers: {
+      ...DEFAULT_HEADERS,
+      Referer: `${KOMIKU_BASE}/`,
+    },
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!res.ok) return null;
+
+  const html = await res.text();
+
+  let seriesTitle = 'Manga';
+  let chNumber = '1';
+  let seriesSlug = '';
+
+  const chDataMatch = html.match(/var\s+chapterData\s*=\s*\{([\s\S]*?)\};/i);
+  if (chDataMatch) {
+    const rawData = chDataMatch[1];
+    const sMatch = rawData.match(/series\s*:\s*"([^"]+)"/i);
+    const cMatch = rawData.match(/chapter\s*:\s*"([^"]+)"/i);
+    const lMatch = rawData.match(/link_series\s*:\s*"\\?\/manga\\?\/([^/\\"]+)/i);
+    if (sMatch) seriesTitle = decodeHtmlEntities(sMatch[1]);
+    if (cMatch) chNumber = cMatch[1];
+    if (lMatch) seriesSlug = lMatch[1];
+  }
+
+  const bacaSectionMatch = html.match(
+    /<div id="Baca_Komik"[^>]*>([\s\S]*?)<\/div>/i
+  );
+  const bacaHtml = bacaSectionMatch ? bacaSectionMatch[1] : html;
+
+  const imgRegex = /<img[^>]+src="([^"]+)"[^>]*>/gi;
+  const rawUrls: string[] = [];
+  let iMatch: RegExpExecArray | null;
+  while ((iMatch = imgRegex.exec(bacaHtml)) !== null) {
+    const src = iMatch[1].trim();
+    if (
+      src.startsWith('https://') &&
+      (src.includes('komiku.') || src.includes('komikid.')) &&
+      !src.includes('komiku-promosi') &&
+      !src.includes('/asset/')
+    ) {
+      rawUrls.push(src);
+    }
+  }
+
+  const pages = rawUrls.map((rawUrl, index) => ({
+    index: index + 1,
+    url: `/api/proxy-image?url=${encodeURIComponent(rawUrl)}`,
+    rawUrl,
+  }));
+
+  return {
+    pages,
+    total: pages.length,
+    chapter: {
+      id: `komiku-ch:${chapterSlug}`,
+      chapter: chNumber,
+      volume: null,
+      title: `Chapter ${chNumber}`,
+      translatedLanguage: 'id',
+      mangaId: seriesSlug ? `komiku:${seriesSlug}` : '',
+      mangaTitle: seriesTitle,
+      groupName: 'Komiku ID',
+    },
+  };
 }
 
 function cleanMangaDescription(raw: string): string {
@@ -608,7 +1010,7 @@ async function ensureBilingualDescriptions(list: any[]): Promise<void> {
 }
 
 // ============================================================================
-// 1. Hardened Image Proxy
+// 1. Hardened Image Proxy (Supports MangaDex & Komiku.org)
 // ============================================================================
 const SAFE_IMAGE_MIMES = new Set([
   'image/jpeg',
@@ -646,9 +1048,12 @@ app.get('/api/proxy-image', async (req: Request, res: Response) => {
       return;
     }
 
+    const isKomiku =
+      parsed.hostname.includes('komiku.') || parsed.hostname.includes('komikid.');
+
     const response = await dohGet(rawUrl, {
       Accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
-      Referer: 'https://mangadex.org/',
+      Referer: isKomiku ? 'https://komiku.org/' : 'https://mangadex.org/',
     });
 
     if (!response.ok || !isValidImageBinary(response.buffer)) {
@@ -672,22 +1077,58 @@ app.get('/api/proxy-image', async (req: Request, res: Response) => {
 });
 
 // ============================================================================
-// 2. Get Manga List
+// 2. Get Manga List (Komiku.org for Bahasa Indonesia + MangaDex for Global/EN)
 // ============================================================================
 app.get('/api/manga', async (req: Request, res: Response) => {
   try {
     const parsedQuery = MangaQueryParamsSchema.parse(req.query);
     const { q, sort, limit: safeLimit, offset: safeOffset, tag, status, demographic } =
       parsedQuery;
+    const tag2 = String(req.query.tag2 || '').trim();
+    const genre = String(req.query.genre || '').trim().toLowerCase();
+    const genre2 = String(req.query.genre2 || '').trim().toLowerCase();
+    const tipe = String(req.query.tipe || '').trim().toLowerCase();
+    const contentRatingParam = String(req.query.contentRating || '').trim().toLowerCase();
     const authorId = String(req.query.authorId || '').trim();
     const lang = String(req.query.lang || '').trim();
 
-    const cacheKey = `manga:${q}:${sort}:${safeLimit}:${safeOffset}:${tag}:${status}:${demographic}:${authorId}:${lang}`;
+    const cacheKey = `manga:${q}:${sort}:${safeLimit}:${safeOffset}:${tag}:${tag2}:${genre}:${genre2}:${tipe}:${contentRatingParam}:${status}:${demographic}:${authorId}:${lang}`;
     const cachedResponse = apiResponseCache.get(cacheKey);
     if (cachedResponse) {
       res.setHeader('X-Cache', 'HIT');
       res.json(cachedResponse);
       return;
+    }
+
+    // When Bahasa Indonesia ('id') is selected (and not filtering by a specific MangaDex author UUID),
+    // pull real-time Indonesian comics directly from https://komiku.org/!
+    if (lang === 'id' && !authorId) {
+      const pageNum = Math.floor(safeOffset / safeLimit) + 1;
+      const komikuData = await fetchKomikuMangaList({
+        q,
+        sort,
+        status,
+        tipe,
+        genre: genre || (tag && !isPureUuid(tag) ? tag : ''),
+        genre2: genre2 || (tag2 && !isPureUuid(tag2) ? tag2 : ''),
+        page: pageNum,
+      });
+
+      if (komikuData.list.length > 0) {
+        const payload = {
+          data: komikuData.list.slice(0, safeLimit),
+          total: komikuData.total,
+          limit: safeLimit,
+          offset: safeOffset,
+          source: 'https://komiku.org',
+          fetchedAt: new Date().toISOString(),
+        };
+        apiResponseCache.set(cacheKey, payload, 45_000);
+        res.setHeader('X-Cache', 'MISS');
+        res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+        res.json(payload);
+        return;
+      }
     }
 
     const params = new URLSearchParams();
@@ -696,27 +1137,49 @@ app.get('/api/manga', async (req: Request, res: Response) => {
     params.append('includes[]', 'cover_art');
     params.append('includes[]', 'author');
     params.append('includes[]', 'artist');
-    params.append('contentRating[]', 'safe');
-    params.append('contentRating[]', 'suggestive');
+
+    if (contentRatingParam === 'suggestive' || genre === 'ecchi' || genre2 === 'ecchi') {
+      params.append('contentRating[]', 'suggestive');
+      params.append('contentRating[]', 'erotica');
+    } else {
+      params.append('contentRating[]', 'safe');
+      params.append('contentRating[]', 'suggestive');
+    }
     params.append('hasAvailableChapters', 'true');
 
     if (q) {
       params.append('title', q);
     }
 
-    if (authorId && isValidUuid(authorId)) {
+    if (authorId && isPureUuid(authorId)) {
       params.append('authorOrArtist', authorId);
     }
 
-    if (lang === 'id' || lang === 'en') {
-      params.append('availableTranslatedLanguage[]', lang);
+    if (lang === 'en') {
+      params.append('availableTranslatedLanguage[]', 'en');
+    } else if (lang === 'id') {
+      params.append('availableTranslatedLanguage[]', 'id');
     }
 
-    if (tag) {
+    if (tipe === 'manga') {
+      params.append('originalLanguage[]', 'ja');
+    } else if (tipe === 'manhwa') {
+      params.append('originalLanguage[]', 'ko');
+    } else if (tipe === 'manhua') {
+      params.append('originalLanguage[]', 'zh');
+      params.append('originalLanguage[]', 'zh-hk');
+    }
+
+    if (tag && isPureUuid(tag)) {
       params.append('includedTags[]', tag);
     }
+    if (tag2 && isPureUuid(tag2) && tag2 !== tag) {
+      params.append('includedTags[]', tag2);
+    }
 
-    if (status) {
+    if (status === 'completed' || status === 'end') {
+      params.append('status[]', 'completed');
+    } else if (status === 'ongoing' || status === 'hiatus' || status === 'cancelled') {
       params.append('status[]', status);
     }
 
@@ -754,7 +1217,7 @@ app.get('/api/manga', async (req: Request, res: Response) => {
     if (authorSearchRes && authorSearchRes.ok) {
       const authorJson: any = authorSearchRes.json();
       const firstAuthorId = authorJson?.data?.[0]?.id;
-      if (firstAuthorId && isValidUuid(firstAuthorId)) {
+      if (firstAuthorId && isPureUuid(firstAuthorId)) {
         const byAuthorRes = await dohGet(
           `${MANGADEX_API}/manga?authorOrArtist=${firstAuthorId}&limit=10&includes[]=cover_art&includes[]=author&includes[]=artist&contentRating[]=safe&contentRating[]=suggestive`
         ).catch(() => null);
@@ -787,7 +1250,7 @@ app.get('/api/manga', async (req: Request, res: Response) => {
     res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
     res.json(payload);
   } catch {
-    res.status(500).json({ error: 'Gagal mengambil daftar manga dari MangaDex' });
+    res.status(500).json({ error: 'Gagal mengambil daftar manga' });
   }
 });
 
@@ -820,11 +1283,11 @@ app.get('/api/tags', async (_req: Request, res: Response) => {
   }
 });
 
-// 4. Get Single Manga Detail + Statistics
+// 4. Get Single Manga Detail + Statistics (Supports Komiku & MangaDex)
 app.get('/api/manga/:id', async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
-    if (!isValidUuid(id)) {
+    if (!isValidId(id)) {
       res.status(400).json({ error: 'ID Manga tidak valid' });
       return;
     }
@@ -833,6 +1296,24 @@ app.get('/api/manga/:id', async (req: Request, res: Response) => {
     const cachedDetail = apiResponseCache.get(detailCacheKey);
     if (cachedDetail) {
       res.json(cachedDetail);
+      return;
+    }
+
+    if (id.startsWith('komiku:')) {
+      const slug = id.slice('komiku:'.length);
+      const komikuResult = await fetchKomikuMangaDetailAndChapters(slug);
+      if (!komikuResult) {
+        res.status(404).json({ error: 'Komik tidak ditemukan di Komiku' });
+        return;
+      }
+      const payload = { data: komikuResult.manga };
+      apiResponseCache.set(detailCacheKey, payload, 120_000);
+      apiResponseCache.set(
+        `chapters:${id}:all`,
+        { data: komikuResult.chapters, total: komikuResult.chapters.length },
+        120_000
+      );
+      res.json(payload);
       return;
     }
 
@@ -886,11 +1367,11 @@ app.get('/api/manga/:id', async (req: Request, res: Response) => {
   }
 });
 
-// 5. Get Manga Chapters Feed
+// 5. Get Manga Chapters Feed (Supports Komiku.org + Auto-Fallback to Komiku for Bahasa Indonesia!)
 app.get('/api/manga/:id/chapters', async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
-    if (!isValidUuid(id)) {
+    if (!isValidId(id)) {
       res.status(400).json({ error: 'ID Manga tidak valid' });
       return;
     }
@@ -898,6 +1379,29 @@ app.get('/api/manga/:id/chapters', async (req: Request, res: Response) => {
     const { lang, limit: safeLimit, offset: safeOffset } =
       ChapterFeedParamsSchema.parse(req.query);
     const preferLang = req.query.prefer === 'en' ? 'en' : 'id';
+
+    // Direct Komiku.org manga chapters
+    if (id.startsWith('komiku:')) {
+      const cachedKomikuCh = apiResponseCache.get(`chapters:${id}:all`);
+      if (cachedKomikuCh) {
+        if (lang === 'en') {
+          res.json({ data: [], total: 0 });
+          return;
+        }
+        res.json(cachedKomikuCh);
+        return;
+      }
+      const slug = id.slice('komiku:'.length);
+      const komikuResult = await fetchKomikuMangaDetailAndChapters(slug);
+      const chList = komikuResult?.chapters || [];
+      const payload = {
+        data: lang === 'en' ? [] : chList,
+        total: lang === 'en' ? 0 : chList.length,
+      };
+      apiResponseCache.set(`chapters:${id}:all`, { data: chList, total: chList.length }, 120_000);
+      res.json(payload);
+      return;
+    }
 
     const feedCacheKey = `chapters:${id}:${lang}:${preferLang}:${safeLimit}:${safeOffset}`;
     const cachedFeed = apiResponseCache.get(feedCacheKey);
@@ -957,9 +1461,35 @@ app.get('/api/manga/:id/chapters', async (req: Request, res: Response) => {
         };
       });
 
+    // If user wants Bahasa Indonesia ('id' or preferLang='id') and MangaDex has 0 Indonesian chapters,
+    // automatically search Komiku.org by manga title to provide complete Bahasa Indonesia chapters!
+    const hasIdChapters = rawChapters.some((c: any) => c.translatedLanguage === 'id');
+    if (!hasIdChapters && (lang === 'id' || preferLang === 'id')) {
+      try {
+        const cachedManga = serverMangaCache.get(id);
+        const searchTitle = cachedManga?.title || '';
+        if (searchTitle) {
+          const kSearch = await fetchKomikuMangaList({ q: searchTitle });
+          const firstMatch = kSearch.list[0];
+          if (firstMatch && firstMatch.id.startsWith('komiku:')) {
+            const kSlug = firstMatch.id.slice('komiku:'.length);
+            const kDetail = await fetchKomikuMangaDetailAndChapters(kSlug);
+            if (kDetail && kDetail.chapters.length > 0) {
+              rawChapters.push(...kDetail.chapters);
+            }
+          }
+        }
+      } catch {
+        // Ignore Komiku fallback error
+      }
+    }
+
     // Deduplicate by chapter/episode number so 12 episodes in 2 languages stays 12 episodes (not 24)
     const chapterMap = new Map<string, any>();
     for (const ch of rawChapters) {
+      if (lang === 'id' && ch.translatedLanguage !== 'id') continue;
+      if (lang === 'en' && ch.translatedLanguage !== 'en') continue;
+
       const key = ch.chapter;
       const existing = chapterMap.get(key);
       if (!existing) {
@@ -968,11 +1498,12 @@ app.get('/api/manga/:id/chapters', async (req: Request, res: Response) => {
         existing.translatedLanguage !== preferLang &&
         ch.translatedLanguage === preferLang
       ) {
-        // Prefer the chapter matching user's preferred language when lang='all'
         chapterMap.set(key, ch);
       }
     }
-    const chapters = Array.from(chapterMap.values());
+    const chapters = Array.from(chapterMap.values()).sort(
+      (a, b) => parseFloat(b.chapter || '0') - parseFloat(a.chapter || '0')
+    );
 
     const payload = {
       data: chapters,
@@ -985,11 +1516,11 @@ app.get('/api/manga/:id/chapters', async (req: Request, res: Response) => {
   }
 });
 
-// 6. Get Chapter Pages (At-Home Server Images)
+// 6. Get Chapter Pages (Supports Komiku.org & MangaDex At-Home Server Images)
 app.get('/api/chapter/:chapterId', async (req: Request, res: Response) => {
   try {
     const chapterId = String(req.params.chapterId);
-    if (!isValidUuid(chapterId)) {
+    if (!isValidId(chapterId)) {
       res.status(400).json({ error: 'ID Chapter tidak valid' });
       return;
     }
@@ -999,6 +1530,18 @@ app.get('/api/chapter/:chapterId', async (req: Request, res: Response) => {
     const cachedPages = apiResponseCache.get(chapterCacheKey);
     if (cachedPages) {
       res.json(cachedPages);
+      return;
+    }
+
+    if (chapterId.startsWith('komiku-ch:')) {
+      const chapterSlug = chapterId.slice('komiku-ch:'.length);
+      const komikuPages = await fetchKomikuChapterPages(chapterSlug);
+      if (!komikuPages || komikuPages.pages.length === 0) {
+        res.status(404).json({ error: 'Halaman komik tidak ditemukan di Komiku' });
+        return;
+      }
+      apiResponseCache.set(chapterCacheKey, komikuPages, 300_000);
+      res.json(komikuPages);
       return;
     }
 
