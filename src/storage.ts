@@ -145,17 +145,21 @@ export function isBookmarked(mangaId: string): boolean {
 }
 
 export function toggleBookmark(manga: Manga): boolean {
-  const list = getBookmarks();
-  const exists = list.some((m) => m.id === manga.id);
-  let updated: Manga[];
-  if (exists) {
-    updated = list.filter((m) => m.id !== manga.id);
-  } else {
-    updated = [manga, ...list];
+  try {
+    const list = getBookmarks();
+    const exists = list.some((m) => m.id === manga.id);
+    let updated: Manga[];
+    if (exists) {
+      updated = list.filter((m) => m.id !== manga.id);
+    } else {
+      updated = [manga, ...list].slice(0, 500);
+    }
+    localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(updated));
+    window.dispatchEvent(new Event('ciaran-storage-update'));
+    return !exists;
+  } catch {
+    return false;
   }
-  localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(updated));
-  window.dispatchEvent(new Event('ciaran-storage-update'));
-  return !exists;
 }
 
 export function getReadingHistory(): ReadingHistoryItem[] {

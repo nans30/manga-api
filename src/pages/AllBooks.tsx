@@ -70,9 +70,20 @@ export const AllBooks: React.FC = () => {
     setDraftSort(sort);
     setDraftStatus(status);
     setDraftTipe(tipe);
-    setDraftTag1(selectedTag || selectedGenre);
-    setDraftTag2(selectedTag2 || selectedGenre2);
-  }, [sort, status, tipe, selectedTag, selectedGenre, selectedTag2, selectedGenre2]);
+
+    const resolveInitialDropdownVal = (tagParam: string, genreParam: string) => {
+      if (tagParam) return tagParam;
+      if (!genreParam) return '';
+      if (genreParam === 'ecchi' || genreParam === 'berwarna') return genreParam;
+      const matched = tags.find(
+        (t) => t.name.toLowerCase().replace(/\s+/g, '-') === genreParam.toLowerCase()
+      );
+      return matched ? matched.id : genreParam;
+    };
+
+    setDraftTag1(resolveInitialDropdownVal(selectedTag, selectedGenre));
+    setDraftTag2(resolveInitialDropdownVal(selectedTag2, selectedGenre2));
+  }, [sort, status, tipe, selectedTag, selectedGenre, selectedTag2, selectedGenre2, tags]);
 
   const LIMIT = 24;
   const MAX_API_PAGES = Math.floor(10000 / LIMIT); // 416 pages
@@ -115,73 +126,80 @@ export const AllBooks: React.FC = () => {
     return () => clearTimeout(timer);
   }, [searchText, lang]);
 
-  const fetchBooks = useCallback(async () => {
-    const isDefault =
-      !query &&
-      !status &&
-      !tipe &&
-      !selectedTag &&
-      !selectedTag2 &&
-      !selectedGenre &&
-      !selectedGenre2 &&
-      !contentRating &&
-      !authorId &&
-      !lang &&
-      page === 1;
+  const fetchBooks = useCallback(
+    async (signal?: AbortSignal) => {
+      const isDefault =
+        !query &&
+        !status &&
+        !tipe &&
+        !selectedTag &&
+        !selectedTag2 &&
+        !selectedGenre &&
+        !selectedGenre2 &&
+        !contentRating &&
+        !authorId &&
+        !lang &&
+        page === 1;
 
-    if (isDefault) {
-      const initial = getInitialCachedBooks(sort);
-      if (initial.length > 0) setBooks(initial);
-    } else {
-      setLoading(true);
-    }
-
-    try {
-      const params = new URLSearchParams();
-      if (query) params.set('q', query);
-      params.set('sort', sort);
-      if (status) params.set('status', status);
-      if (tipe) params.set('tipe', tipe);
-      if (selectedTag) params.set('tag', selectedTag);
-      if (selectedTag2) params.set('tag2', selectedTag2);
-      if (selectedGenre) params.set('genre', selectedGenre);
-      if (selectedGenre2) params.set('genre2', selectedGenre2);
-      if (contentRating) params.set('contentRating', contentRating);
-      if (authorId) params.set('authorId', authorId);
-      if (lang) params.set('lang', lang);
-      params.set('limit', String(LIMIT));
-      const safeOffset = Math.min(10000 - LIMIT, Math.max(0, (page - 1) * LIMIT));
-      params.set('offset', String(safeOffset));
-
-      const res = await fetch(`/api/manga?${params.toString()}`);
-      const json = await res.json();
-      if (json.data) {
-        cacheMangaObjects(json.data);
-        setBooks(json.data);
-        setTotal(json.total || json.data.length);
+      if (isDefault) {
+        const initial = getInitialCachedBooks(sort);
+        if (initial.length > 0) setBooks(initial);
+      } else {
+        setLoading(true);
       }
-    } catch {
-      // keep cached books
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    query,
-    sort,
-    status,
-    tipe,
-    selectedTag,
-    selectedTag2,
-    selectedGenre,
-    selectedGenre2,
-    contentRating,
-    authorId,
-    lang,
-    page,
-  ]);
+
+      try {
+        const params = new URLSearchParams();
+        if (query) params.set('q', query);
+        params.set('sort', sort);
+        if (status) params.set('status', status);
+        if (tipe) params.set('tipe', tipe);
+        if (selectedTag) params.set('tag', selectedTag);
+        if (selectedTag2) params.set('tag2', selectedTag2);
+        if (selectedGenre) params.set('genre', selectedGenre);
+        if (selectedGenre2) params.set('genre2', selectedGenre2);
+        if (contentRating) params.set('contentRating', contentRating);
+        if (authorId) params.set('authorId', authorId);
+        if (lang) params.set('lang', lang);
+        params.set('limit', String(LIMIT));
+        const safeOffset = Math.min(10000 - LIMIT, Math.max(0, (page - 1) * LIMIT));
+        params.set('offset', String(safeOffset));
+
+        const res = await fetch(`/api/manga?${params.toString()}`, { signal });
+        const json = await res.json();
+        if (!signal?.aborted && json.data) {
+          cacheMangaObjects(json.data);
+          setBooks(json.data);
+          setTotal(json.total || json.data.length);
+        }
+      } catch {
+        // keep cached books or ignore abort
+      } finally {
+        if (!signal?.aborted) {
+          setLoading(false);
+        }
+      }
+    },
+    [
+      query,
+      sort,
+      status,
+      tipe,
+      selectedTag,
+      selectedTag2,
+      selectedGenre,
+      selectedGenre2,
+      contentRating,
+      authorId,
+      lang,
+      page,
+    ]
+  );
 
   useEffect(() => {
-    fetchBooks();
+    const controller = new AbortController();
+    fetchBooks(controller.signal);
+    return () => controller.abort();
   }, [fetchBooks]);
 
   useEffect(() => {

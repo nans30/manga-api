@@ -46,6 +46,13 @@ function isSafeMangaDexImageUrl(rawUrl: string): boolean {
   }
 }
 
+const SafeSlugOrUuidSchema = z
+  .string()
+  .trim()
+  .max(64)
+  .regex(/^[a-z0-9._-]*$/i)
+  .catch('');
+
 const MangaQueryParamsSchema = z.object({
   q: z
     .string()
@@ -55,7 +62,14 @@ const MangaQueryParamsSchema = z.object({
   sort: z.enum(['latest', 'popular', 'rating']).catch('latest'),
   limit: z.coerce.number().int().min(1).max(100).catch(24),
   offset: z.coerce.number().int().min(0).max(9900).catch(0),
-  tag: z.string().trim().default(''),
+  tag: SafeSlugOrUuidSchema,
+  tag2: SafeSlugOrUuidSchema,
+  genre: SafeSlugOrUuidSchema.transform((v) => v.toLowerCase()),
+  genre2: SafeSlugOrUuidSchema.transform((v) => v.toLowerCase()),
+  tipe: z.enum(['', 'manga', 'manhwa', 'manhua']).catch(''),
+  contentRating: z.enum(['', 'safe', 'suggestive', 'erotica']).catch(''),
+  authorId: SafeSlugOrUuidSchema,
+  lang: z.enum(['', 'id', 'en']).catch(''),
   status: z
     .enum(['', 'ongoing', 'completed', 'hiatus', 'cancelled', 'end'])
     .catch(''),
@@ -120,9 +134,13 @@ class BoundedTTLCache<V> {
   }
 }
 
-const apiResponseCache = new BoundedTTLCache<any>(150, 45_000);
+const apiResponseCache = new BoundedTTLCache<any>(200, 45_000);
 const serverMangaCache = new BoundedTTLCache<any>(500, 1800_000);
 const translationCache = new BoundedTTLCache<string>(1500, 86400_000);
+const imageBinaryCache = new BoundedTTLCache<{ buffer: Buffer; mime: string }>(
+  60,
+  600_000
+);
 const dnsCache = new BoundedTTLCache<string>(100, 3600_000);
 const rateLimitCache = new BoundedTTLCache<{ count: number; resetAt: number }>(
   1000,
@@ -360,9 +378,26 @@ async function dohGet(
           ...DEFAULT_HEADERS,
           ...customHeaders,
         },
+        redirect: 'manual',
         signal: AbortSignal.timeout(10000),
       });
+
+      const status = nativeRes.status;
+      const location = nativeRes.headers.get('location');
+      if ([301, 302, 303, 307, 308].includes(status) && location) {
+        const nextUrl = new URL(location, urlStr).toString();
+        return dohGet(nextUrl, customHeaders, redirectCount + 1);
+      }
+
+      const contentLength = Number(nativeRes.headers.get('content-length') || 0);
+      if (contentLength > MAX_RESPONSE_BYTES) {
+        throw new Error('Response exceeded maximum size limit');
+      }
+
       const arrBuf = await nativeRes.arrayBuffer();
+      if (arrBuf.byteLength > MAX_RESPONSE_BYTES) {
+        throw new Error('Response exceeded maximum size limit');
+      }
       const buffer = Buffer.from(arrBuf);
       const headersObj: Record<string, string> = {};
       nativeRes.headers.forEach((val, key) => {
@@ -375,8 +410,16 @@ async function dohGet(
         buffer,
         json: <T = any>() => JSON.parse(buffer.toString('utf-8')) as T,
       };
-    } catch {
-      // Fallback to DoH below if native fetch ever fails
+    } catch (e: any) {
+      if (
+        e?.message?.includes('Too many redirects') ||
+        e?.message?.includes('Forbidden upstream host') ||
+        e?.message?.includes('Only HTTPS') ||
+        e?.message?.includes('maximum size limit')
+      ) {
+        throw e;
+      }
+      // Fallback to DoH below if native fetch ever fails due to network/DNS
     }
   }
 
@@ -1048,6 +1091,19 @@ app.get('/api/proxy-image', async (req: Request, res: Response) => {
       return;
     }
 
+    const cachedImg = imageBinaryCache.get(rawUrl);
+    if (cachedImg) {
+      res.setHeader('X-Cache', 'HIT');
+      res.setHeader('Content-Type', cachedImg.mime);
+      res.setHeader('Content-Security-Policy', "default-src 'none'; img-src 'self'");
+      res.setHeader(
+        'Cache-Control',
+        'public, max-age=604800, s-maxage=604800, stale-while-revalidate=86400, immutable'
+      );
+      res.send(cachedImg.buffer);
+      return;
+    }
+
     const isKomiku =
       parsed.hostname.includes('komiku.') || parsed.hostname.includes('komikid.');
 
@@ -1067,9 +1123,17 @@ app.get('/api/proxy-image', async (req: Request, res: Response) => {
       .toLowerCase();
     const safeMime = SAFE_IMAGE_MIMES.has(rawMime) ? rawMime : 'image/jpeg';
 
+    if (response.buffer.byteLength <= 250_000) {
+      imageBinaryCache.set(rawUrl, { buffer: response.buffer, mime: safeMime });
+    }
+
+    res.setHeader('X-Cache', 'MISS');
     res.setHeader('Content-Type', safeMime);
     res.setHeader('Content-Security-Policy', "default-src 'none'; img-src 'self'");
-    res.setHeader('Cache-Control', 'public, max-age=604800, s-maxage=604800, immutable');
+    res.setHeader(
+      'Cache-Control',
+      'public, max-age=604800, s-maxage=604800, stale-while-revalidate=86400, immutable'
+    );
     res.send(response.buffer);
   } catch {
     res.status(500).send('Image proxy error');
@@ -1082,20 +1146,28 @@ app.get('/api/proxy-image', async (req: Request, res: Response) => {
 app.get('/api/manga', async (req: Request, res: Response) => {
   try {
     const parsedQuery = MangaQueryParamsSchema.parse(req.query);
-    const { q, sort, limit: safeLimit, offset: safeOffset, tag, status, demographic } =
-      parsedQuery;
-    const tag2 = String(req.query.tag2 || '').trim();
-    const genre = String(req.query.genre || '').trim().toLowerCase();
-    const genre2 = String(req.query.genre2 || '').trim().toLowerCase();
-    const tipe = String(req.query.tipe || '').trim().toLowerCase();
-    const contentRatingParam = String(req.query.contentRating || '').trim().toLowerCase();
-    const authorId = String(req.query.authorId || '').trim();
-    const lang = String(req.query.lang || '').trim();
+    const {
+      q,
+      sort,
+      limit: safeLimit,
+      offset: safeOffset,
+      tag,
+      tag2,
+      genre,
+      genre2,
+      tipe,
+      contentRating: contentRatingParam,
+      authorId,
+      lang,
+      status,
+      demographic,
+    } = parsedQuery;
 
     const cacheKey = `manga:${q}:${sort}:${safeLimit}:${safeOffset}:${tag}:${tag2}:${genre}:${genre2}:${tipe}:${contentRatingParam}:${status}:${demographic}:${authorId}:${lang}`;
     const cachedResponse = apiResponseCache.get(cacheKey);
     if (cachedResponse) {
       res.setHeader('X-Cache', 'HIT');
+      res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=60');
       res.json(cachedResponse);
       return;
     }
@@ -1295,6 +1367,8 @@ app.get('/api/manga/:id', async (req: Request, res: Response) => {
     const detailCacheKey = `detail:${id}`;
     const cachedDetail = apiResponseCache.get(detailCacheKey);
     if (cachedDetail) {
+      res.setHeader('X-Cache', 'HIT');
+      res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300');
       res.json(cachedDetail);
       return;
     }
@@ -1313,6 +1387,8 @@ app.get('/api/manga/:id', async (req: Request, res: Response) => {
         { data: komikuResult.chapters, total: komikuResult.chapters.length },
         120_000
       );
+      res.setHeader('X-Cache', 'MISS');
+      res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300');
       res.json(payload);
       return;
     }
@@ -1361,11 +1437,18 @@ app.get('/api/manga/:id', async (req: Request, res: Response) => {
       },
     };
     apiResponseCache.set(detailCacheKey, payload, 120_000);
+    res.setHeader('X-Cache', 'MISS');
+    res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300');
     res.json(payload);
   } catch {
     res.status(500).json({ error: 'Gagal mengambil detail manga' });
   }
 });
+
+function parseChapterNumber(chStr: string): number {
+  const n = parseFloat(String(chStr || '').replace(/[^0-9.]/g, ''));
+  return Number.isFinite(n) ? n : -1;
+}
 
 // 5. Get Manga Chapters Feed (Supports Komiku.org + Auto-Fallback to Komiku for Bahasa Indonesia!)
 app.get('/api/manga/:id/chapters', async (req: Request, res: Response) => {
@@ -1382,12 +1465,16 @@ app.get('/api/manga/:id/chapters', async (req: Request, res: Response) => {
 
     // Direct Komiku.org manga chapters
     if (id.startsWith('komiku:')) {
+      if (lang === 'en') {
+        res.setHeader('X-Cache', 'HIT');
+        res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300');
+        res.json({ data: [], total: 0 });
+        return;
+      }
       const cachedKomikuCh = apiResponseCache.get(`chapters:${id}:all`);
       if (cachedKomikuCh) {
-        if (lang === 'en') {
-          res.json({ data: [], total: 0 });
-          return;
-        }
+        res.setHeader('X-Cache', 'HIT');
+        res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300');
         res.json(cachedKomikuCh);
         return;
       }
@@ -1395,10 +1482,12 @@ app.get('/api/manga/:id/chapters', async (req: Request, res: Response) => {
       const komikuResult = await fetchKomikuMangaDetailAndChapters(slug);
       const chList = komikuResult?.chapters || [];
       const payload = {
-        data: lang === 'en' ? [] : chList,
-        total: lang === 'en' ? 0 : chList.length,
+        data: chList,
+        total: chList.length,
       };
-      apiResponseCache.set(`chapters:${id}:all`, { data: chList, total: chList.length }, 120_000);
+      apiResponseCache.set(`chapters:${id}:all`, payload, 120_000);
+      res.setHeader('X-Cache', 'MISS');
+      res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300');
       res.json(payload);
       return;
     }
@@ -1406,6 +1495,8 @@ app.get('/api/manga/:id/chapters', async (req: Request, res: Response) => {
     const feedCacheKey = `chapters:${id}:${lang}:${preferLang}:${safeLimit}:${safeOffset}`;
     const cachedFeed = apiResponseCache.get(feedCacheKey);
     if (cachedFeed) {
+      res.setHeader('X-Cache', 'HIT');
+      res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=180');
       res.json(cachedFeed);
       return;
     }
@@ -1502,7 +1593,7 @@ app.get('/api/manga/:id/chapters', async (req: Request, res: Response) => {
       }
     }
     const chapters = Array.from(chapterMap.values()).sort(
-      (a, b) => parseFloat(b.chapter || '0') - parseFloat(a.chapter || '0')
+      (a, b) => parseChapterNumber(b.chapter) - parseChapterNumber(a.chapter)
     );
 
     const payload = {
@@ -1510,6 +1601,8 @@ app.get('/api/manga/:id/chapters', async (req: Request, res: Response) => {
       total: chapters.length,
     };
     apiResponseCache.set(feedCacheKey, payload, 60_000);
+    res.setHeader('X-Cache', 'MISS');
+    res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=180');
     res.json(payload);
   } catch {
     res.status(500).json({ error: 'Gagal mengambil daftar chapter' });
@@ -1529,6 +1622,8 @@ app.get('/api/chapter/:chapterId', async (req: Request, res: Response) => {
     const chapterCacheKey = `pages:${chapterId}:${quality}`;
     const cachedPages = apiResponseCache.get(chapterCacheKey);
     if (cachedPages) {
+      res.setHeader('X-Cache', 'HIT');
+      res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
       res.json(cachedPages);
       return;
     }
@@ -1541,6 +1636,8 @@ app.get('/api/chapter/:chapterId', async (req: Request, res: Response) => {
         return;
       }
       apiResponseCache.set(chapterCacheKey, komikuPages, 300_000);
+      res.setHeader('X-Cache', 'MISS');
+      res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
       res.json(komikuPages);
       return;
     }
@@ -1608,6 +1705,8 @@ app.get('/api/chapter/:chapterId', async (req: Request, res: Response) => {
       chapter: chapterMeta,
     };
     apiResponseCache.set(chapterCacheKey, payload, 300_000);
+    res.setHeader('X-Cache', 'MISS');
+    res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
     res.json(payload);
   } catch {
     res.status(500).json({ error: 'Gagal memuat halaman komik' });

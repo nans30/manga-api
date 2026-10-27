@@ -49,38 +49,51 @@ export const Home: React.FC = () => {
     setSysLang(sysLang === 'id' ? 'en' : 'id');
   };
 
-  const fetchLiveHomeData = useCallback(async () => {
-    setRefreshing(true);
-    try {
-      const langParam = homeLang ? `&lang=${homeLang}` : '';
-      const [latestRes, popRes] = await Promise.all([
-        fetch(`/api/manga?sort=latest&limit=18${langParam}`).then((r) => r.json()),
-        fetch(`/api/manga?sort=popular&limit=12${langParam}`).then((r) => r.json()),
-      ]);
-      if (latestRes.data?.length) {
-        cacheMangaObjects(latestRes.data);
-        setLatestManga(latestRes.data);
+  const fetchLiveHomeData = useCallback(
+    async (signal?: AbortSignal) => {
+      setRefreshing(true);
+      try {
+        const langParam = homeLang ? `&lang=${homeLang}` : '';
+        const [latestRes, popRes] = await Promise.all([
+          fetch(`/api/manga?sort=latest&limit=18${langParam}`, { signal }).then((r) =>
+            r.json()
+          ),
+          fetch(`/api/manga?sort=popular&limit=12${langParam}`, { signal }).then((r) =>
+            r.json()
+          ),
+        ]);
+        if (!signal?.aborted) {
+          if (latestRes.data?.length) {
+            cacheMangaObjects(latestRes.data);
+            setLatestManga(latestRes.data);
+          }
+          if (popRes.data?.length) {
+            cacheMangaObjects(popRes.data);
+            setPopularManga(popRes.data);
+          }
+        }
+      } catch {
+        // fallback to scraped cache seamlessly
+      } finally {
+        if (!signal?.aborted) {
+          setRefreshing(false);
+        }
       }
-      if (popRes.data?.length) {
-        cacheMangaObjects(popRes.data);
-        setPopularManga(popRes.data);
-      }
-    } catch {
-      // fallback to scraped cache seamlessly
-    } finally {
-      setRefreshing(false);
-    }
-  }, [homeLang]);
+    },
+    [homeLang]
+  );
 
   useEffect(() => {
-    fetchLiveHomeData();
+    const controller = new AbortController();
+    fetchLiveHomeData(controller.signal);
     const syncStorage = () => {
       setHistory(getReadingHistory());
       setBookmarkCount(getBookmarks().length);
     };
     window.addEventListener('ciaran-storage-update', syncStorage);
-    const timer = setInterval(fetchLiveHomeData, 60000);
+    const timer = setInterval(() => fetchLiveHomeData(), 60000);
     return () => {
+      controller.abort();
       window.removeEventListener('ciaran-storage-update', syncStorage);
       clearInterval(timer);
     };
@@ -141,7 +154,7 @@ export const Home: React.FC = () => {
               Ciarán
             </h1>
             <button
-              onClick={fetchLiveHomeData}
+              onClick={() => fetchLiveHomeData()}
               disabled={refreshing}
               className="p-1.5 rounded-full text-[#6e6e6e] dark:text-[#c1c1c1] hover:text-[#f9cb55] transition-colors"
               title="Refresh"

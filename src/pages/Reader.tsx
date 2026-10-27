@@ -301,6 +301,10 @@ export const Reader: React.FC = () => {
   // Keyboard Left / Right arrow, Escape & F key fullscreen support on PC
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+
       if (e.key === 'Escape' && isFullscreen) {
         exitFullscreen();
         return;
