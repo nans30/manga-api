@@ -20,6 +20,8 @@ function NavigationHistoryTracker() {
     ) {
       sessionStorage.setItem('ciaran_last_main_path', fullPath);
     }
+    // Always reset scroll to top on page/filter navigation
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
   }, [location.pathname, location.search]);
 
   return null;

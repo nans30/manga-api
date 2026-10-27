@@ -85,6 +85,24 @@ export const AllBooks: React.FC = () => {
     setDraftTag2(resolveInitialDropdownVal(selectedTag2, selectedGenre2));
   }, [sort, status, tipe, selectedTag, selectedGenre, selectedTag2, selectedGenre2, tags]);
 
+  // Always scroll to top when filters, search query, or page change
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+  }, [
+    query,
+    sort,
+    status,
+    tipe,
+    selectedTag,
+    selectedTag2,
+    selectedGenre,
+    selectedGenre2,
+    contentRating,
+    authorId,
+    lang,
+    page,
+  ]);
+
   const LIMIT = 24;
   const MAX_API_PAGES = Math.floor(10000 / LIMIT); // 416 pages
   const totalPages = Math.max(1, Math.min(MAX_API_PAGES, Math.ceil(total / LIMIT)));

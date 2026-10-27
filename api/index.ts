@@ -1197,7 +1197,7 @@ app.get('/api/manga', async (req: Request, res: Response) => {
         };
         apiResponseCache.set(cacheKey, payload, 45_000);
         res.setHeader('X-Cache', 'MISS');
-        res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+        res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=60');
         res.json(payload);
         return;
       }
@@ -1268,7 +1268,13 @@ app.get('/api/manga', async (req: Request, res: Response) => {
     }
 
     const url = `${MANGADEX_API}/manga?${params.toString()}`;
-    const [response, authorSearchRes] = await Promise.all([
+    const pageNum = Math.floor(safeOffset / safeLimit) + 1;
+
+    // When lang === '' (Semua Bahasa / All Languages) and not searching a specific author UUID:
+    // Fetch BOTH Komiku.org (Bahasa Indonesia) AND MangaDex (Global/English) in parallel!
+    const shouldFetchKomikuAlso = !lang && !authorId;
+
+    const [response, authorSearchRes, komikuMergedRes] = await Promise.all([
       dohGet(url),
       q && !authorId && safeOffset === 0
         ? dohGet(
@@ -1277,6 +1283,17 @@ app.get('/api/manga', async (req: Request, res: Response) => {
             )}&limit=2`
           ).catch(() => null)
         : Promise.resolve(null),
+      shouldFetchKomikuAlso
+        ? fetchKomikuMangaList({
+            q,
+            sort,
+            status,
+            tipe,
+            genre: genre || (tag && !isPureUuid(tag) ? tag : ''),
+            genre2: genre2 || (tag2 && !isPureUuid(tag2) ? tag2 : ''),
+            page: pageNum,
+          }).catch(() => ({ list: [], total: 0 }))
+        : Promise.resolve({ list: [], total: 0 }),
     ]);
 
     if (!response.ok) {
@@ -1284,7 +1301,7 @@ app.get('/api/manga', async (req: Request, res: Response) => {
     }
 
     const json: any = response.json();
-    const list: any[] = (json.data || []).map(formatManga);
+    const mdList: any[] = (json.data || []).map(formatManga);
 
     if (authorSearchRes && authorSearchRes.ok) {
       const authorJson: any = authorSearchRes.json();
@@ -1296,10 +1313,10 @@ app.get('/api/manga', async (req: Request, res: Response) => {
         if (byAuthorRes && byAuthorRes.ok) {
           const byAuthorJson: any = byAuthorRes.json();
           const authorManga = (byAuthorJson.data || []).map(formatManga);
-          const existingIds = new Set(list.map((m) => m.id));
+          const existingIds = new Set(mdList.map((m) => m.id));
           for (const m of authorManga) {
             if (!existingIds.has(m.id)) {
-              list.push(m);
+              mdList.push(m);
               existingIds.add(m.id);
             }
           }
@@ -1307,11 +1324,32 @@ app.get('/api/manga', async (req: Request, res: Response) => {
       }
     }
 
+    // Merge both languages together when All Languages (!lang) is selected
+    let list: any[] = mdList;
+    const komikuItems = komikuMergedRes?.list || [];
+    if (shouldFetchKomikuAlso && komikuItems.length > 0) {
+      const merged: any[] = [];
+      const seen = new Set<string>();
+      const maxCount = Math.max(komikuItems.length, mdList.length);
+
+      for (let i = 0; i < maxCount; i++) {
+        if (komikuItems[i] && !seen.has(komikuItems[i].id)) {
+          merged.push(komikuItems[i]);
+          seen.add(komikuItems[i].id);
+        }
+        if (mdList[i] && !seen.has(mdList[i].id)) {
+          merged.push(mdList[i]);
+          seen.add(mdList[i].id);
+        }
+      }
+      list = merged.slice(0, safeLimit);
+    }
+
     await ensureBilingualDescriptions(list);
 
     const payload = {
       data: list,
-      total: json.total || list.length,
+      total: (json.total || mdList.length) + (komikuMergedRes?.total || 0),
       limit: safeLimit,
       offset: safeOffset,
       fetchedAt: new Date().toISOString(),
@@ -1319,7 +1357,7 @@ app.get('/api/manga', async (req: Request, res: Response) => {
 
     apiResponseCache.set(cacheKey, payload, 45_000);
     res.setHeader('X-Cache', 'MISS');
-    res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+    res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=60');
     res.json(payload);
   } catch {
     res.status(500).json({ error: 'Gagal mengambil daftar manga' });
