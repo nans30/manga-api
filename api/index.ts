@@ -18,7 +18,7 @@ const UuidParamSchema = z
     (val) =>
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
         val
-      ) || /^komiku(-ch)?:[a-z0-9._-]+$/i.test(val),
+      ) || /^komiku(-ch)?:[a-z0-9._%~+-]+$/i.test(val),
     { message: 'Format UUID atau ID Komik tidak valid' }
   );
 
@@ -538,6 +538,17 @@ function decodeHtmlEntities(str: string): string {
     .trim();
 }
 
+function cleanKomikuSlug(s: string): string {
+  let clean = String(s || '').trim();
+  clean = clean.replace(/^https?:\/\/komiku\.org\//i, '');
+  clean = clean.replace(/^\/?manga\//i, '');
+  clean = clean.replace(/^\/+/, '').replace(/\/+$/, '');
+  try {
+    clean = decodeURIComponent(clean);
+  } catch {}
+  return encodeURI(clean);
+}
+
 function parseKomikuCatalogHtml(html: string): any[] {
   const results: any[] = [];
   const blocks = html.split(/<div class="bge">/i).slice(1);
@@ -693,7 +704,7 @@ async function fetchKomikuMangaDetailAndChapters(slug: string): Promise<{
   manga: any;
   chapters: any[];
 } | null> {
-  const url = `${KOMIKU_BASE}/manga/${encodeURIComponent(slug)}/`;
+  const url = `${KOMIKU_BASE}/manga/${cleanKomikuSlug(slug)}/`;
   const res = await fetch(url, {
     headers: {
       ...DEFAULT_HEADERS,
@@ -828,7 +839,7 @@ async function fetchKomikuChapterPages(chapterSlug: string): Promise<{
   total: number;
   chapter: any;
 } | null> {
-  const url = `${KOMIKU_BASE}/${encodeURIComponent(chapterSlug)}/`;
+  const url = `${KOMIKU_BASE}/${cleanKomikuSlug(chapterSlug)}/`;
   const res = await fetch(url, {
     headers: {
       ...DEFAULT_HEADERS,
@@ -855,13 +866,31 @@ async function fetchKomikuChapterPages(chapterSlug: string): Promise<{
     if (lMatch) seriesSlug = lMatch[1];
   }
 
-  const bacaSectionMatch = html.match(
-    /<div id="Baca_Komik"[^>]*>([\s\S]*?)<\/div>/i
-  );
-  const bacaHtml = bacaSectionMatch ? bacaSectionMatch[1] : html;
+  let bacaHtml = html;
+  const startIdx = html.indexOf('id="Baca_Komik"');
+  if (startIdx !== -1) {
+    const endMarkers = [
+      'class="navigasi"',
+      'class="baca-bawah"',
+      'id="Komentar"',
+      '<footer',
+    ];
+    let endIdx = -1;
+    for (const marker of endMarkers) {
+      const pos = html.indexOf(marker, startIdx);
+      if (pos !== -1 && (endIdx === -1 || pos < endIdx)) {
+        endIdx = pos;
+      }
+    }
+    bacaHtml =
+      endIdx !== -1
+        ? html.slice(startIdx, endIdx)
+        : html.slice(startIdx, startIdx + 300000);
+  }
 
-  const imgRegex = /<img[^>]+src="([^"]+)"[^>]*>/gi;
+  const imgRegex = /<img[^>]+(?:src|data-src|data-lazy-src)="([^"]+)"[^>]*>/gi;
   const rawUrls: string[] = [];
+  const seenUrls = new Set<string>();
   let iMatch: RegExpExecArray | null;
   while ((iMatch = imgRegex.exec(bacaHtml)) !== null) {
     const src = iMatch[1].trim();
@@ -869,8 +898,10 @@ async function fetchKomikuChapterPages(chapterSlug: string): Promise<{
       src.startsWith('https://') &&
       (src.includes('komiku.') || src.includes('komikid.')) &&
       !src.includes('komiku-promosi') &&
-      !src.includes('/asset/')
+      !src.includes('/asset/') &&
+      !seenUrls.has(src)
     ) {
+      seenUrls.add(src);
       rawUrls.push(src);
     }
   }
