@@ -48,12 +48,27 @@ export const Reader: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [hudVisible, setHudVisible] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  // Brief non-intrusive hint shown ONLY at the start of Tap Kanan-Kiri mode
+  const [showTapHint, setShowTapHint] = useState(false);
   const [theme, setThemeState] = useState<ThemeMode>(() => getTheme());
   const [mangaInfo, setMangaInfo] = useState<any>(null);
 
   // Touch swipe tracking for mobile Tap mode
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
+
+  // Show the Kiri / Kanan hint briefly (2.2s) only at the beginning when in Tap mode
+  useEffect(() => {
+    if (mode === 'tap' && !loading && pages.length > 0) {
+      setShowTapHint(true);
+      const timer = setTimeout(() => {
+        setShowTapHint(false);
+      }, 2200);
+      return () => clearTimeout(timer);
+    } else {
+      setShowTapHint(false);
+    }
+  }, [mode, loading, chapterId, pages.length]);
 
   const handleModeChange = (nextMode: ReaderViewMode) => {
     setMode(nextMode);
@@ -78,7 +93,6 @@ export const Reader: React.FC = () => {
         setHudVisible(true);
       }
     } catch {
-      // Fallback for browsers where fullscreen API is restricted: toggle immersive HUD hide
       setIsFullscreen((prev) => !prev);
       setHudVisible((prev) => !prev);
     }
@@ -177,6 +191,7 @@ export const Reader: React.FC = () => {
       : null;
 
   const goPrevPage = useCallback(() => {
+    setShowTapHint(false);
     if (currentPage > 0) {
       setCurrentPage((p) => p - 1);
       window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
@@ -186,6 +201,7 @@ export const Reader: React.FC = () => {
   }, [currentPage, prevChapter, navigate, activeMangaId, langParam]);
 
   const goNextPage = useCallback(() => {
+    setShowTapHint(false);
     if (currentPage < pages.length - 1) {
       setCurrentPage((p) => p + 1);
       window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
@@ -368,7 +384,7 @@ export const Reader: React.FC = () => {
 
         {/* Expandable Settings Drawer when ☰ is clicked */}
         {menuOpen && (
-          <div className="bg-[#ffffff] dark:bg-[#1b1b1b] border-t border-[#c1c1c1]/30 dark:border-[#2a2a2a] px-5 py-4 shadow-xl">
+          <div className="bg-[#ffffff] dark:bg-[#1b1b1b] border-t border-[#c1c1c1]/30 dark:border-[#2a2a2a] px-5 py-4 shadow-xl space-y-3">
             <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-4 text-xs">
               <div className="flex items-center gap-2">
                 <span className="text-[#6e6e6e] dark:text-[#c1c1c1] font-medium">
@@ -396,11 +412,24 @@ export const Reader: React.FC = () => {
                 </button>
               </div>
 
-              <div className="text-[#6e6e6e] dark:text-[#c1c1c1]">
-                {sysLang === 'id'
-                  ? 'Tips: Tap Tengah gambar untuk sembunyikan menu • Panah ← → atau F untuk Fullscreen'
-                  : 'Tip: Tap Center to hide menu • Arrow keys ← → or F for Fullscreen'}
-              </div>
+              {pages.length > 1 && (
+                <div className="flex items-center gap-3 w-full sm:w-72">
+                  <span className="text-[#6e6e6e] dark:text-[#c1c1c1] shrink-0">
+                    Hal {currentPage + 1}/{pages.length}
+                  </span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={Math.max(0, pages.length - 1)}
+                    value={currentPage}
+                    onChange={(e) => {
+                      setCurrentPage(Number(e.target.value));
+                      window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+                    }}
+                    className="w-full accent-[#f9cb55] cursor-pointer"
+                  />
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -410,7 +439,7 @@ export const Reader: React.FC = () => {
       <main
         className={
           mode === 'tap'
-            ? 'w-full max-w-5xl mx-auto px-0 pb-20'
+            ? 'w-full max-w-5xl mx-auto px-0 pb-16'
             : 'max-w-4xl mx-auto px-0 sm:px-4 pt-2 pb-24'
         }
       >
@@ -432,8 +461,29 @@ export const Reader: React.FC = () => {
             </button>
           </div>
         ) : mode === 'tap' ? (
-          /* ==================== MODE 1: FULL-SCREEN TAP KANAN-KIRI (HP & PC) ==================== */
+          /* ==================== MODE 1: FULL-SCREEN TAP KANAN-KIRI (100% Clean, No Obtrusive Overlay) ==================== */
           <div className="relative w-full">
+            {/* Initial 2.2-Second Non-Intrusive Guide (Shown ONLY at the beginning, pointer-events-none) */}
+            <div
+              className={`fixed inset-x-0 bottom-8 z-40 flex justify-center px-4 pointer-events-none transition-all duration-500 ${
+                showTapHint
+                  ? 'opacity-100 translate-y-0'
+                  : 'opacity-0 translate-y-4'
+              }`}
+            >
+              <div className="inline-flex items-center gap-3 sm:gap-5 px-4 sm:px-6 py-2.5 rounded-2xl bg-[#121212]/85 backdrop-blur-md border border-[#f9cb55]/50 text-[#f8f8f8] text-xs font-semibold shadow-2xl">
+                <span className="flex items-center gap-1 text-[#c1c1c1]">
+                  <ChevronLeft className="w-4 h-4 text-[#f9cb55]" />
+                  {sysLang === 'id' ? 'Tap Kiri: Sebelumnya' : 'Tap Left: Prev'}
+                </span>
+                <span className="text-[#c1c1c1]/40">|</span>
+                <span className="text-[#f9cb55]">
+                  {sysLang === 'id' ? 'Tap Kanan: Selanjutnya' : 'Tap Right: Next'}
+                </span>
+                <ChevronRight className="w-4 h-4 text-[#f9cb55] -ml-2" />
+              </div>
+            </div>
+
             {pages[currentPage] && (
               <div
                 onTouchStart={(e) => {
@@ -444,7 +494,6 @@ export const Reader: React.FC = () => {
                   if (touchStartX.current === null || touchStartY.current === null) return;
                   const diffX = e.changedTouches[0].clientX - touchStartX.current;
                   const diffY = Math.abs(e.changedTouches[0].clientY - touchStartY.current);
-                  // Only trigger horizontal page swipe if horizontal movement dominates vertical scroll
                   if (Math.abs(diffX) > 50 && Math.abs(diffX) > diffY) {
                     if (diffX < -50) goNextPage();
                     else if (diffX > 50) goPrevPage();
@@ -452,7 +501,7 @@ export const Reader: React.FC = () => {
                   touchStartX.current = null;
                   touchStartY.current = null;
                 }}
-                className="relative w-full min-h-[calc(100vh-60px)] bg-[#121212] flex items-center justify-center overflow-hidden"
+                className="relative w-full min-h-[calc(100vh-56px)] bg-[#121212] flex items-center justify-center overflow-hidden"
               >
                 <img
                   src={pages[currentPage].url}
@@ -466,109 +515,27 @@ export const Reader: React.FC = () => {
                   className="w-full h-auto block mx-auto object-contain"
                 />
 
-                {/* Left 40% Tap Zone -> Prev Page */}
+                {/* Completely Invisible Left Tap Zone (42% width) -> Prev Page */}
                 <div
                   onClick={goPrevPage}
-                  className="fixed inset-y-0 left-0 w-[38%] z-20 cursor-pointer group flex items-center justify-start pl-2 sm:pl-5"
-                  title={sysLang === 'id' ? 'Tap untuk Halaman Sebelumnya' : 'Previous Page'}
-                >
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#121212]/70 border border-[#c1c1c1]/25 text-[#f8f8f8] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
-                    <ChevronLeft className="w-6 h-6" />
-                  </div>
-                </div>
-
-                {/* Center 24% Tap Zone -> Toggle Fullscreen HUD */}
-                <div
-                  onClick={() => setHudVisible((v) => !v)}
-                  className="fixed inset-y-0 left-[38%] w-[24%] z-20 cursor-pointer"
-                  title={
-                    sysLang === 'id'
-                      ? 'Tap untuk Munculkan / Sembunyikan Menu'
-                      : 'Tap to Show / Hide Menu'
-                  }
+                  className="absolute inset-y-0 left-0 w-[42%] z-20 cursor-pointer"
                 />
 
-                {/* Right 38% Tap Zone -> Next Page */}
+                {/* Completely Invisible Center Tap Zone (16% width) -> Toggle Top Bar */}
+                <div
+                  onClick={() => {
+                    setShowTapHint(false);
+                    setHudVisible((v) => !v);
+                  }}
+                  className="absolute inset-y-0 left-[42%] w-[16%] z-20 cursor-pointer"
+                />
+
+                {/* Completely Invisible Right Tap Zone (42% width) -> Next Page */}
                 <div
                   onClick={goNextPage}
-                  className="fixed inset-y-0 right-0 w-[38%] z-20 cursor-pointer group flex items-center justify-end pr-2 sm:pr-5"
-                  title={sysLang === 'id' ? 'Tap untuk Halaman Selanjutnya' : 'Next Page'}
-                >
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#f9cb55]/90 text-[#121212] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
-                    <ChevronRight className="w-6 h-6" />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Floating Bottom Page Slider & Controls (Auto-hides with HUD or stays compact) */}
-            <div
-              className={`fixed bottom-3 inset-x-3 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-xl z-40 transition-all duration-300 ${
-                hudVisible
-                  ? 'translate-y-0 opacity-100'
-                  : 'translate-y-24 opacity-0 pointer-events-none'
-              }`}
-            >
-              <div className="space-y-2.5 bg-[#1b1b1b]/95 backdrop-blur-xl border border-[#c1c1c1]/25 p-3 sm:p-4 rounded-2xl shadow-2xl text-[#f8f8f8]">
-                <div className="flex items-center justify-between text-xs font-semibold">
-                  <button
-                    onClick={goPrevPage}
-                    disabled={currentPage === 0 && !prevChapter}
-                    className="px-3.5 py-2 rounded-xl bg-[#2a2a2a] text-[#f8f8f8] disabled:opacity-30 hover:bg-[#f9cb55] hover:text-[#121212] transition-colors flex items-center gap-1"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                    Prev
-                  </button>
-
-                  <div className="flex items-center gap-2">
-                    <span className="font-manga text-sm tracking-wider text-[#f9cb55]">
-                      PAGE {currentPage + 1} / {pages.length}
-                    </span>
-                    <button
-                      onClick={toggleFullscreen}
-                      className="p-1.5 rounded-lg bg-[#2a2a2a] hover:bg-[#f9cb55] hover:text-[#121212] transition-colors"
-                      title="Fullscreen"
-                    >
-                      {isFullscreen ? (
-                        <Minimize2 className="w-3.5 h-3.5" />
-                      ) : (
-                        <Maximize2 className="w-3.5 h-3.5" />
-                      )}
-                    </button>
-                  </div>
-
-                  <button
-                    onClick={goNextPage}
-                    disabled={currentPage >= pages.length - 1 && !nextChapter}
-                    className="px-3.5 py-2 rounded-xl bg-[#f9cb55] text-[#121212] disabled:opacity-30 hover:scale-105 transition-transform flex items-center gap-1 font-bold"
-                  >
-                    Next
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <input
-                  type="range"
-                  min={0}
-                  max={Math.max(0, pages.length - 1)}
-                  value={currentPage}
-                  onChange={(e) => {
-                    setCurrentPage(Number(e.target.value));
-                    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
-                  }}
-                  className="w-full accent-[#f9cb55] cursor-pointer"
+                  className="absolute inset-y-0 right-0 w-[42%] z-20 cursor-pointer"
                 />
               </div>
-            </div>
-
-            {/* Minimal Page Badge when HUD is hidden in Fullscreen */}
-            {!hudVisible && (
-              <button
-                onClick={() => setHudVisible(true)}
-                className="fixed bottom-3 right-3 z-40 px-3 py-1.5 rounded-full bg-[#121212]/80 border border-[#c1c1c1]/20 text-[11px] font-bold text-[#f9cb55] backdrop-blur-md shadow-lg"
-              >
-                {currentPage + 1} / {pages.length}
-              </button>
             )}
           </div>
         ) : (
@@ -597,7 +564,9 @@ export const Reader: React.FC = () => {
         {!loading && pages.length > 0 && (
           <div className="mt-8 mx-4 sm:mx-0 p-6 rounded-3xl bg-[#ffffff] dark:bg-[#1b1b1b] text-[#121212] dark:text-[#f8f8f8] border border-[#c1c1c1]/30 dark:border-[#262626] text-center space-y-4">
             <p className="font-manga text-lg tracking-wider">
-              FINISHED CHAPTER {chapterMeta?.chapter}
+              {mode === 'tap'
+                ? `PAGE ${currentPage + 1} / ${pages.length} • CHAPTER ${chapterMeta?.chapter}`
+                : `FINISHED CHAPTER ${chapterMeta?.chapter}`}
             </p>
             <div className="flex items-center justify-center gap-4">
               {prevChapter && (
