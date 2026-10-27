@@ -256,6 +256,18 @@ export const AllBooks: React.FC = () => {
     setSearchParams(next);
   };
 
+  const handleResetFilter = () => {
+    setDraftSort('latest');
+    setDraftStatus('');
+    setDraftTipe('');
+    setDraftTag1('');
+    setDraftTag2('');
+    setSearchText('');
+    const next = new URLSearchParams();
+    if (lang) next.set('lang', lang);
+    setSearchParams(next);
+  };
+
   const goToPage = (targetPage: number) => {
     updateParam('page', String(targetPage));
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -532,7 +544,7 @@ export const AllBooks: React.FC = () => {
           </div>
 
           {/* 5. Genre 2 */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-2">
             <select
               value={draftTag2}
               onChange={(e) => setDraftTag2(e.target.value)}
@@ -551,13 +563,20 @@ export const AllBooks: React.FC = () => {
             </select>
           </div>
 
-          {/* 6. Cari Button */}
-          <div className="col-span-2 sm:col-span-1 lg:col-span-1">
+          {/* 6. Cari + Reset Buttons */}
+          <div className="col-span-2 sm:col-span-1 lg:col-span-2 flex items-center gap-2">
             <button
               type="submit"
-              className="w-full py-2.5 px-4 rounded-xl bg-[#f9cb55] hover:bg-[#eab83e] text-[#121212] font-bold text-xs sm:text-sm shadow-sm transition-all cursor-pointer"
+              className="flex-1 py-2.5 px-4 rounded-xl bg-[#f9cb55] hover:bg-[#eab83e] text-[#121212] font-bold text-xs sm:text-sm shadow-sm transition-all cursor-pointer"
             >
               {sysLang === 'id' ? 'Cari' : 'Filter'}
+            </button>
+            <button
+              type="button"
+              onClick={handleResetFilter}
+              className="py-2.5 px-3.5 rounded-xl bg-[#ececec] dark:bg-[#2a2a2a] hover:bg-[#e0e0e0] dark:hover:bg-[#343434] text-[#121212] dark:text-[#f8f8f8] border border-[#c1c1c1]/40 dark:border-[#3a3a3a] font-semibold text-xs sm:text-sm transition-all cursor-pointer"
+            >
+              Reset
             </button>
           </div>
         </form>

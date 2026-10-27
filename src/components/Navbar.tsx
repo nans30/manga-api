@@ -125,7 +125,7 @@ export const Navbar: React.FC = () => {
               C
             </div>
             <span className="font-manga text-2xl tracking-wider text-[#121212] dark:text-[#f8f8f8] leading-none">
-              CIARAN
+              Ciarán
             </span>
           </Link>
 
@@ -140,7 +140,7 @@ export const Navbar: React.FC = () => {
               }`}
             >
               <NavHomeIcon active={isHome} className="w-4 h-4" />
-              <span className="font-manga text-sm">NOW</span>
+              <span className="font-manga text-sm">Ciarán</span>
             </Link>
 
             <Link

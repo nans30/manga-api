@@ -138,7 +138,7 @@ export const Home: React.FC = () => {
               C
             </div>
             <h1 className="font-manga text-3xl sm:text-4xl tracking-wider text-[#121212] dark:text-[#f8f8f8]">
-              NOW
+              Ciarán
             </h1>
             <button
               onClick={fetchLiveHomeData}
