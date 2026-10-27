@@ -64,6 +64,9 @@ export const Reader: React.FC = () => {
   );
   const [autoNavigating, setAutoNavigating] = useState<boolean>(false);
   const autoNavigatingRef = useRef<boolean>(false);
+  const [countdown, setCountdown] = useState<number>(3);
+  const autoNextCancelled = useRef<boolean>(false);
+  const chapterLoadedAt = useRef<number>(0);
   const [quality, setQuality] = useState<'data-saver' | 'data'>('data-saver');
   const [currentPage, setCurrentPage] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -239,7 +242,10 @@ export const Reader: React.FC = () => {
     setError('');
     setCurrentPage(0);
     autoNavigatingRef.current = false;
+    autoNextCancelled.current = false;
+    chapterLoadedAt.current = Date.now();
     setAutoNavigating(false);
+    setCountdown(3);
     setShowEndPrompt(false);
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
 
@@ -275,7 +281,10 @@ export const Reader: React.FC = () => {
         }
       })
       .catch((err) => setError(err.message || 'Gagal memuat halaman komik'))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        chapterLoadedAt.current = Date.now();
+      });
   }, [chapterId, quality, mangaIdParam]);
 
   // Update reading progress percentage as user flips/scrolls pages
@@ -435,11 +444,28 @@ export const Reader: React.FC = () => {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [mode, isFullscreen, goNextPage, goPrevPage]);
 
+  const cancelAutoNext = useCallback(() => {
+    autoNavigatingRef.current = false;
+    autoNextCancelled.current = true;
+    setAutoNavigating(false);
+    setCountdown(3);
+  }, []);
+
+  const proceedNextChapterImmediately = useCallback(() => {
+    if (!nextChapter) return;
+    autoNavigatingRef.current = false;
+    navigate(
+      `/read/${nextChapter.id}?mangaId=${activeMangaId}&lang=${langParam}`,
+      { replace: true }
+    );
+  }, [nextChapter, activeMangaId, langParam, navigate]);
+
   // Track scroll events both for Scroll mode page index & preventing accidental Tap during scroll
   useEffect(() => {
     const onScroll = () => {
       lastScrollTime.current = Date.now();
-      if (mode !== 'scroll' || pages.length === 0) return;
+      if (mode !== 'scroll' || pages.length === 0 || loading) return;
+
       const imgs = document.querySelectorAll('[data-page-idx]');
       const viewportCenter = window.innerHeight / 2;
       for (let i = 0; i < imgs.length; i++) {
@@ -450,33 +476,80 @@ export const Reader: React.FC = () => {
         }
       }
 
-      // Auto-load next chapter when scrolled to the bottom in Scroll mode
       const scrollBottom = window.innerHeight + window.scrollY;
       const docHeight = document.documentElement.scrollHeight;
-      if (scrollBottom >= docHeight - 160) {
-        if (nextChapter && autoNextOnScroll && !autoNavigatingRef.current) {
-          autoNavigatingRef.current = true;
-          setAutoNavigating(true);
-        } else if (!nextChapter && !autoNavigatingRef.current) {
+
+      // If user scrolls back up by at least 300px from bottom, cancel any pending auto-next countdown
+      if (scrollBottom < docHeight - 300) {
+        if (autoNextCancelled.current) {
+          autoNextCancelled.current = false; // Reset cancel flag so future intentional scroll-to-bottom works
+        }
+        if (autoNavigatingRef.current) {
+          autoNavigatingRef.current = false;
+          setAutoNavigating(false);
+          setCountdown(3);
+        }
+        return;
+      }
+
+      // Guard: do not auto-navigate if chapter was loaded less than 2.5 seconds ago (prevents jump on load)
+      const timeSinceLoad = Date.now() - chapterLoadedAt.current;
+      if (timeSinceLoad < 2500) return;
+
+      // Guard: ensure the document height is genuinely expanded (images rendered)
+      if (docHeight <= window.innerHeight + 400) return;
+
+      // Guard: user must be on/near the end of pages (e.g. at least page length - 2)
+      const isNearEndPages = pages.length <= 2 || currentPage >= pages.length - 2;
+      if (!isNearEndPages) return;
+
+      // Auto-load next chapter when scrolled to the bottom in Scroll mode
+      if (scrollBottom >= docHeight - 120) {
+        if (nextChapter && autoNextOnScroll) {
+          if (!autoNavigatingRef.current && !autoNextCancelled.current) {
+            autoNavigatingRef.current = true;
+            setCountdown(3);
+            setAutoNavigating(true);
+          }
+        } else if (!nextChapter && !autoNavigatingRef.current && !showEndPrompt) {
           setShowEndPrompt(true);
         }
       }
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, [mode, pages.length, nextChapter, autoNextOnScroll]);
+  }, [
+    mode,
+    pages.length,
+    nextChapter,
+    autoNextOnScroll,
+    loading,
+    currentPage,
+    showEndPrompt,
+  ]);
 
-  // Handle smooth auto-navigation to next chapter on scroll bottom
+  // Handle 3s countdown & cancellation for smooth auto-navigation to next chapter on scroll bottom
   useEffect(() => {
-    if (autoNavigating && nextChapter) {
-      const timer = setTimeout(() => {
-        navigate(
-          `/read/${nextChapter.id}?mangaId=${activeMangaId}&lang=${langParam}`,
-          { replace: true }
-        );
-      }, 700);
-      return () => clearTimeout(timer);
+    if (!autoNavigating || !nextChapter) {
+      setCountdown(3);
+      return;
     }
+
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          navigate(
+            `/read/${nextChapter.id}?mangaId=${activeMangaId}&lang=${langParam}`,
+            { replace: true }
+          );
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
   }, [autoNavigating, nextChapter, activeMangaId, langParam, navigate]);
 
   return (
@@ -1056,22 +1129,56 @@ export const Reader: React.FC = () => {
           </div>
         )}
 
-        {/* Floating Auto-Navigating to Next Chapter Banner */}
+        {/* Floating Auto-Navigating Countdown Indicator with Cancel & Open Now */}
         {autoNavigating && nextChapter && (
-          <div className="fixed bottom-6 inset-x-4 max-w-sm mx-auto z-50 p-4 rounded-2xl bg-[#121212]/95 border border-[#f9cb55] backdrop-blur-xl shadow-2xl text-center space-y-2 animate-in fade-in slide-in-from-bottom duration-300">
-            <div className="flex items-center justify-center gap-2 text-xs font-bold text-[#f9cb55]">
-              <Loader2 className="w-4 h-4 animate-spin text-[#f9cb55]" />
+          <div className="fixed bottom-6 inset-x-4 max-w-sm mx-auto z-50 p-4 rounded-2xl bg-[#151515]/95 border-2 border-[#f9cb55] backdrop-blur-xl shadow-2xl space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="flex items-center justify-between">
+              <div className="inline-flex items-center gap-2 text-xs font-bold text-[#f9cb55]">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#f9cb55] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#f9cb55]"></span>
+                </span>
+                <span>
+                  {sysLang === 'id'
+                    ? `Menuju Chapter ${nextChapter.chapter}`
+                    : `Next: Chapter ${nextChapter.chapter}`}
+                </span>
+              </div>
+              <button
+                onClick={cancelAutoNext}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#262626] hover:bg-[#333] text-xs font-semibold text-[#f8f8f8] border border-[#3f3f3f] cursor-pointer transition-colors"
+                title={sysLang === 'id' ? 'Batalkan pindah chapter otomatis' : 'Cancel auto next'}
+              >
+                <X className="w-3.5 h-3.5 text-[#e57373]" />
+                <span>{sysLang === 'id' ? 'Batal' : 'Cancel'}</span>
+              </button>
+            </div>
+
+            {/* Visual Countdown Progress Bar */}
+            <div className="w-full bg-[#252525] h-1.5 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-[#f9cb55] to-[#f59e0b] transition-all ease-linear"
+                style={{
+                  width: `${Math.max(0, (countdown / 3) * 100)}%`,
+                  transitionDuration: '1000ms',
+                }}
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-xs text-[#c1c1c1] pt-0.5">
               <span>
                 {sysLang === 'id'
-                  ? `Membuka Chapter ${nextChapter.chapter}...`
-                  : `Loading Chapter ${nextChapter.chapter}...`}
+                  ? `Otomatis pindah dalam ${countdown} dtk...`
+                  : `Switching in ${countdown}s...`}
               </span>
+              <button
+                onClick={proceedNextChapterImmediately}
+                className="font-bold text-[#f9cb55] hover:underline cursor-pointer inline-flex items-center gap-1"
+              >
+                <span>{sysLang === 'id' ? 'Buka Sekarang' : 'Open Now'}</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
             </div>
-            <p className="text-[11px] text-[#c1c1c1]">
-              {sysLang === 'id'
-                ? 'Telah mencapai bagian akhir chapter'
-                : 'Reached the end of chapter'}
-            </p>
           </div>
         )}
 
