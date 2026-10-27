@@ -897,8 +897,9 @@ app.get('/api/manga/:id/chapters', async (req: Request, res: Response) => {
 
     const { lang, limit: safeLimit, offset: safeOffset } =
       ChapterFeedParamsSchema.parse(req.query);
+    const preferLang = req.query.prefer === 'en' ? 'en' : 'id';
 
-    const feedCacheKey = `chapters:${id}:${lang}:${safeLimit}:${safeOffset}`;
+    const feedCacheKey = `chapters:${id}:${lang}:${preferLang}:${safeLimit}:${safeOffset}`;
     const cachedFeed = apiResponseCache.get(feedCacheKey);
     if (cachedFeed) {
       res.json(cachedFeed);
@@ -934,7 +935,7 @@ app.get('/api/manga/:id/chapters', async (req: Request, res: Response) => {
     }
 
     const json: any = response.json();
-    const chapters = (json.data || [])
+    const rawChapters = (json.data || [])
       .filter(
         (ch: any) =>
           !ch.attributes?.externalUrl && (ch.attributes?.pages || 0) > 0
@@ -946,7 +947,7 @@ app.get('/api/manga/:id/chapters', async (req: Request, res: Response) => {
         );
         return {
           id: ch.id,
-          chapter: attr.chapter || 'Oneshot',
+          chapter: String(attr.chapter || 'Oneshot').trim(),
           volume: attr.volume || null,
           title: attr.title || '',
           translatedLanguage: attr.translatedLanguage || 'en',
@@ -956,9 +957,26 @@ app.get('/api/manga/:id/chapters', async (req: Request, res: Response) => {
         };
       });
 
+    // Deduplicate by chapter/episode number so 12 episodes in 2 languages stays 12 episodes (not 24)
+    const chapterMap = new Map<string, any>();
+    for (const ch of rawChapters) {
+      const key = ch.chapter;
+      const existing = chapterMap.get(key);
+      if (!existing) {
+        chapterMap.set(key, ch);
+      } else if (
+        existing.translatedLanguage !== preferLang &&
+        ch.translatedLanguage === preferLang
+      ) {
+        // Prefer the chapter matching user's preferred language when lang='all'
+        chapterMap.set(key, ch);
+      }
+    }
+    const chapters = Array.from(chapterMap.values());
+
     const payload = {
       data: chapters,
-      total: json.total || chapters.length,
+      total: chapters.length,
     };
     apiResponseCache.set(feedCacheKey, payload, 60_000);
     res.json(payload);

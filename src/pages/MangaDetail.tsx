@@ -99,16 +99,29 @@ export const MangaDetail: React.FC = () => {
     if (!id) return;
     setChaptersLoading(true);
 
-    fetch(`/api/manga/${id}/chapters?lang=${langFilter}`)
+    fetch(`/api/manga/${id}/chapters?lang=${langFilter}&prefer=${sysLang}`)
       .then((r) => r.json())
       .then((json) => {
         if (json.data) {
-          setChapters(json.data);
+          // Ensure each episode/chapter number is counted once (no duplicate count across languages)
+          const uniqueMap = new Map<string, Chapter>();
+          for (const ch of json.data as Chapter[]) {
+            const key = String(ch.chapter).trim();
+            const existing = uniqueMap.get(key);
+            if (
+              !existing ||
+              (existing.translatedLanguage !== sysLang &&
+                ch.translatedLanguage === sysLang)
+            ) {
+              uniqueMap.set(key, ch);
+            }
+          }
+          setChapters(Array.from(uniqueMap.values()));
         }
       })
       .catch(() => {})
       .finally(() => setChaptersLoading(false));
-  }, [id, langFilter]);
+  }, [id, langFilter, sysLang]);
 
   const handleToggleBookmark = () => {
     if (!manga) return;

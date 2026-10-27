@@ -190,20 +190,34 @@ export const Reader: React.FC = () => {
     });
   }, [currentPage, mangaInfo, chapterId, pages.length, chapterMeta]);
 
-  // Load sibling chapters for Prev / Next navigation
+  // Load sibling chapters for Prev / Next navigation (Deduplicated by episode number)
   useEffect(() => {
     const activeMangaId = chapterMeta?.mangaId || mangaIdParam;
     if (!activeMangaId) return;
 
-    fetch(`/api/manga/${activeMangaId}/chapters?lang=${langParam}`)
+    fetch(`/api/manga/${activeMangaId}/chapters?lang=${langParam}&prefer=${sysLang}`)
       .then((r) => r.json())
       .then((json) => {
         if (json.data) {
-          setChapterList(json.data);
+          const uniqueMap = new Map<string, Chapter>();
+          for (const ch of json.data as Chapter[]) {
+            const key = String(ch.chapter).trim();
+            const existing = uniqueMap.get(key);
+            if (
+              !existing ||
+              ch.id === chapterId ||
+              (existing.id !== chapterId &&
+                existing.translatedLanguage !== sysLang &&
+                ch.translatedLanguage === sysLang)
+            ) {
+              uniqueMap.set(key, ch);
+            }
+          }
+          setChapterList(Array.from(uniqueMap.values()));
         }
       })
       .catch(() => {});
-  }, [chapterMeta?.mangaId, mangaIdParam, langParam]);
+  }, [chapterMeta?.mangaId, mangaIdParam, langParam, sysLang, chapterId]);
 
   const activeMangaId = chapterMeta?.mangaId || mangaIdParam;
   const currentIndex = chapterList.findIndex((c) => c.id === chapterId);
