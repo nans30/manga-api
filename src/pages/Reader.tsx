@@ -12,6 +12,8 @@ import {
   getSavedFitMode,
   setSavedFitMode,
   ReaderFitMode,
+  getSavedAutoNextOnScroll,
+  setSavedAutoNextOnScroll,
   getTheme,
   setTheme,
   ThemeMode,
@@ -57,6 +59,11 @@ export const Reader: React.FC = () => {
   const [mode, setMode] = useState<ReaderViewMode>(() => getSavedReaderMode());
   const [spreadMode, setSpreadMode] = useState<ReaderSpreadMode>(() => getSavedSpreadMode());
   const [fitMode, setFitMode] = useState<ReaderFitMode>(() => getSavedFitMode());
+  const [autoNextOnScroll, setAutoNextOnScroll] = useState<boolean>(() =>
+    getSavedAutoNextOnScroll()
+  );
+  const [autoNavigating, setAutoNavigating] = useState<boolean>(false);
+  const autoNavigatingRef = useRef<boolean>(false);
   const [quality, setQuality] = useState<'data-saver' | 'data'>('data-saver');
   const [currentPage, setCurrentPage] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -231,6 +238,9 @@ export const Reader: React.FC = () => {
     setLoading(true);
     setError('');
     setCurrentPage(0);
+    autoNavigatingRef.current = false;
+    setAutoNavigating(false);
+    setShowEndPrompt(false);
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
 
     fetch(`/api/chapter/${chapterId}?quality=${quality}`)
@@ -439,10 +449,35 @@ export const Reader: React.FC = () => {
           break;
         }
       }
+
+      // Auto-load next chapter when scrolled to the bottom in Scroll mode
+      const scrollBottom = window.innerHeight + window.scrollY;
+      const docHeight = document.documentElement.scrollHeight;
+      if (scrollBottom >= docHeight - 160) {
+        if (nextChapter && autoNextOnScroll && !autoNavigatingRef.current) {
+          autoNavigatingRef.current = true;
+          setAutoNavigating(true);
+        } else if (!nextChapter && !autoNavigatingRef.current) {
+          setShowEndPrompt(true);
+        }
+      }
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, [mode, pages.length]);
+  }, [mode, pages.length, nextChapter, autoNextOnScroll]);
+
+  // Handle smooth auto-navigation to next chapter on scroll bottom
+  useEffect(() => {
+    if (autoNavigating && nextChapter) {
+      const timer = setTimeout(() => {
+        navigate(
+          `/read/${nextChapter.id}?mangaId=${activeMangaId}&lang=${langParam}`,
+          { replace: true }
+        );
+      }, 700);
+      return () => clearTimeout(timer);
+    }
+  }, [autoNavigating, nextChapter, activeMangaId, langParam, navigate]);
 
   return (
     <div className="min-h-screen bg-[#121212] text-[#f8f8f8] transition-colors select-none">
@@ -688,6 +723,33 @@ export const Reader: React.FC = () => {
                 </button>
               </div>
 
+              {/* Auto Next Chapter on Scroll Bottom Toggle */}
+              <div className="flex items-center gap-2">
+                <span className="text-[#6e6e6e] dark:text-[#c1c1c1] font-medium">
+                  {sysLang === 'id' ? 'Auto Next Scroll Bawah:' : 'Auto Next on Scroll:'}
+                </span>
+                <button
+                  onClick={() => {
+                    const next = !autoNextOnScroll;
+                    setAutoNextOnScroll(next);
+                    setSavedAutoNextOnScroll(next);
+                  }}
+                  className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
+                    autoNextOnScroll
+                      ? 'bg-[#f9cb55] text-[#121212]'
+                      : 'bg-[#ececec] dark:bg-[#252525] text-[#6e6e6e] dark:text-[#c1c1c1]'
+                  }`}
+                >
+                  {autoNextOnScroll
+                    ? sysLang === 'id'
+                      ? 'Aktif'
+                      : 'Enabled'
+                    : sysLang === 'id'
+                    ? 'Nonaktif'
+                    : 'Disabled'}
+                </button>
+              </div>
+
               {pages.length > 1 && (
                 <div className="flex items-center gap-3 w-full sm:w-72">
                   <span className="text-[#6e6e6e] dark:text-[#c1c1c1] shrink-0">
@@ -897,6 +959,39 @@ export const Reader: React.FC = () => {
                 }`}
               />
             ))}
+
+            {/* Seamless Next Chapter Transition Banner in Scroll Mode */}
+            {nextChapter && (
+              <div className="py-10 px-4 text-center border-t border-[#c1c1c1]/20 bg-gradient-to-b from-transparent to-[#181818] space-y-3">
+                <div className="inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-2xl bg-[#f9cb55]/15 border border-[#f9cb55]/50 text-[#f9cb55] text-xs font-bold shadow-md">
+                  <Loader2 className="w-4 h-4 animate-spin text-[#f9cb55]" />
+                  <span>
+                    {autoNextOnScroll
+                      ? sysLang === 'id'
+                        ? `Scroll mentok bawah untuk langsung membuka Chapter ${nextChapter.chapter} →`
+                        : `Scroll to bottom to auto-open Chapter ${nextChapter.chapter} →`
+                      : sysLang === 'id'
+                      ? `Tersedia Chapter ${nextChapter.chapter}`
+                      : `Chapter ${nextChapter.chapter} available`}
+                  </span>
+                </div>
+                <div>
+                  <button
+                    onClick={() => {
+                      navigate(
+                        `/read/${nextChapter.id}?mangaId=${activeMangaId}&lang=${langParam}`,
+                        { replace: true }
+                      );
+                    }}
+                    className="px-6 py-2.5 rounded-xl bg-[#f9cb55] hover:bg-[#eab83e] text-[#121212] font-manga text-xs sm:text-sm tracking-wider font-bold shadow-lg transition-all cursor-pointer"
+                  >
+                    {sysLang === 'id'
+                      ? `BUKA CHAPTER ${nextChapter.chapter} SEKARANG →`
+                      : `OPEN CHAPTER ${nextChapter.chapter} NOW →`}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -958,6 +1053,25 @@ export const Reader: React.FC = () => {
                 {sysLang === 'id' ? 'Tutup' : 'Dismiss'}
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Floating Auto-Navigating to Next Chapter Banner */}
+        {autoNavigating && nextChapter && (
+          <div className="fixed bottom-6 inset-x-4 max-w-sm mx-auto z-50 p-4 rounded-2xl bg-[#121212]/95 border border-[#f9cb55] backdrop-blur-xl shadow-2xl text-center space-y-2 animate-in fade-in slide-in-from-bottom duration-300">
+            <div className="flex items-center justify-center gap-2 text-xs font-bold text-[#f9cb55]">
+              <Loader2 className="w-4 h-4 animate-spin text-[#f9cb55]" />
+              <span>
+                {sysLang === 'id'
+                  ? `Membuka Chapter ${nextChapter.chapter}...`
+                  : `Loading Chapter ${nextChapter.chapter}...`}
+              </span>
+            </div>
+            <p className="text-[11px] text-[#c1c1c1]">
+              {sysLang === 'id'
+                ? 'Telah mencapai bagian akhir chapter'
+                : 'Reached the end of chapter'}
+            </p>
           </div>
         )}
 

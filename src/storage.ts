@@ -10,6 +10,7 @@ const THEME_KEY = 'ciaran_theme_v1';
 const READER_MODE_KEY = 'ciaran_reader_mode_v1';
 const READER_SPREAD_KEY = 'ciaran_reader_spread_v1';
 const READER_FIT_KEY = 'ciaran_reader_fit_v1';
+const READER_AUTONEXT_KEY = 'ciaran_reader_autonext_v1';
 const SYS_LANG_KEY = 'ciaran_sys_lang_v1';
 
 export type ThemeMode = 'dark' | 'light';
@@ -160,6 +161,20 @@ export function getSavedFitMode(): ReaderFitMode {
 export function setSavedFitMode(mode: ReaderFitMode) {
   try {
     localStorage.setItem(READER_FIT_KEY, mode);
+  } catch {}
+}
+
+export function getSavedAutoNextOnScroll(): boolean {
+  try {
+    const saved = localStorage.getItem(READER_AUTONEXT_KEY);
+    if (saved !== null) return saved === 'true';
+  } catch {}
+  return true; // Enabled by default
+}
+
+export function setSavedAutoNextOnScroll(enabled: boolean) {
+  try {
+    localStorage.setItem(READER_AUTONEXT_KEY, String(enabled));
   } catch {}
 }
 
