@@ -130,11 +130,26 @@ export const Reader: React.FC = () => {
 
   const enterFullscreen = async () => {
     try {
-      if (!document.fullscreenElement) {
-        await document.documentElement.requestFullscreen();
+      const doc = document as any;
+      const elem = document.documentElement as any;
+      if (
+        !doc.fullscreenElement &&
+        !doc.webkitFullscreenElement &&
+        !doc.mozFullScreenElement &&
+        !doc.msFullscreenElement
+      ) {
+        if (elem.requestFullscreen) {
+          await elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) {
+          await elem.webkitRequestFullscreen();
+        } else if (elem.mozRequestFullScreen) {
+          await elem.mozRequestFullScreen();
+        } else if (elem.msRequestFullscreen) {
+          await elem.msRequestFullscreen();
+        }
       }
     } catch {
-      // Fallback for mobile browsers without requestFullscreen
+      // Fallback for mobile browsers without requestFullscreen (visual fullscreen)
     }
     setIsFullscreen(true);
     setHudVisible(false);
@@ -142,8 +157,22 @@ export const Reader: React.FC = () => {
 
   const exitFullscreen = async () => {
     try {
-      if (document.fullscreenElement) {
-        await document.exitFullscreen();
+      const doc = document as any;
+      if (
+        doc.fullscreenElement ||
+        doc.webkitFullscreenElement ||
+        doc.mozFullScreenElement ||
+        doc.msFullscreenElement
+      ) {
+        if (doc.exitFullscreen) {
+          await doc.exitFullscreen();
+        } else if (doc.webkitExitFullscreen) {
+          await doc.webkitExitFullscreen();
+        } else if (doc.mozCancelFullScreen) {
+          await doc.mozCancelFullScreen();
+        } else if (doc.msExitFullscreen) {
+          await doc.msExitFullscreen();
+        }
       }
     } catch {
       // Ignore
@@ -153,7 +182,15 @@ export const Reader: React.FC = () => {
   };
 
   const toggleFullscreen = async () => {
-    if (isFullscreen || document.fullscreenElement) {
+    const doc = document as any;
+    const fsActive = Boolean(
+      isFullscreen ||
+        doc.fullscreenElement ||
+        doc.webkitFullscreenElement ||
+        doc.mozFullScreenElement ||
+        doc.msFullscreenElement
+    );
+    if (fsActive) {
       await exitFullscreen();
     } else {
       await enterFullscreen();
@@ -162,14 +199,30 @@ export const Reader: React.FC = () => {
 
   useEffect(() => {
     const onFsChange = () => {
-      const fsActive = Boolean(document.fullscreenElement);
+      const doc = document as any;
+      const fsActive = Boolean(
+        doc.fullscreenElement ||
+          doc.webkitFullscreenElement ||
+          doc.mozFullScreenElement ||
+          doc.msFullscreenElement
+      );
       setIsFullscreen(fsActive);
       if (!fsActive) {
         setHudVisible(true);
+      } else {
+        setHudVisible(false);
       }
     };
     document.addEventListener('fullscreenchange', onFsChange);
-    return () => document.removeEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    document.addEventListener('mozfullscreenchange', onFsChange);
+    document.addEventListener('MSFullscreenChange', onFsChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onFsChange);
+      document.removeEventListener('webkitfullscreenchange', onFsChange);
+      document.removeEventListener('mozfullscreenchange', onFsChange);
+      document.removeEventListener('MSFullscreenChange', onFsChange);
+    };
   }, []);
 
   // Load chapter pages
@@ -394,10 +447,10 @@ export const Reader: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#121212] text-[#f8f8f8] transition-colors select-none">
       {/* ==================== FLOATING EXIT FULLSCREEN BUTTON (Always visible when in Fullscreen / Hidden HUD) ==================== */}
-      {(isFullscreen || (!hudVisible && mode === 'tap')) && (
+      {(isFullscreen || !hudVisible) && (
         <button
           onClick={exitFullscreen}
-          className="fixed top-3 right-3 z-50 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#121212]/85 hover:bg-[#f9cb55] text-[#f8f8f8] hover:text-[#121212] border border-[#f9cb55]/60 backdrop-blur-md text-xs font-bold shadow-2xl transition-all"
+          className="fixed top-3 right-3 z-50 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#121212]/85 hover:bg-[#f9cb55] text-[#f8f8f8] hover:text-[#121212] border border-[#f9cb55]/60 backdrop-blur-md text-xs font-bold shadow-2xl transition-all cursor-pointer"
           title={sysLang === 'id' ? 'Keluar Full Screen' : 'Exit Full Screen'}
         >
           <Minimize2 className="w-4 h-4 text-[#f9cb55] group-hover:text-[#121212]" />
@@ -408,7 +461,7 @@ export const Reader: React.FC = () => {
       {/* ==================== TOP HEADER (Auto-hides in Fullscreen / Tap Tengah) ==================== */}
       <header
         className={`sticky top-0 z-50 backdrop-blur-xl bg-[#f8f8f8]/95 dark:bg-[#121212]/95 text-[#121212] dark:text-[#f8f8f8] border-b border-[#c1c1c1]/30 dark:border-[#242424] transition-all duration-300 ${
-          !hudVisible && mode === 'tap'
+          isFullscreen || !hudVisible
             ? '-translate-y-full opacity-0 pointer-events-none fixed inset-x-0'
             : 'translate-y-0 opacity-100'
         }`}
@@ -662,7 +715,9 @@ export const Reader: React.FC = () => {
         className={
           mode === 'tap'
             ? 'w-full max-w-5xl mx-auto px-0 pb-16'
-            : 'max-w-4xl mx-auto px-0 sm:px-4 pt-2 pb-24'
+            : `max-w-4xl mx-auto px-0 sm:px-4 pb-24 ${
+                isFullscreen || !hudVisible ? 'pt-0' : 'pt-2'
+              }`
         }
       >
         {loading ? (
@@ -814,7 +869,14 @@ export const Reader: React.FC = () => {
           </div>
         ) : (
           /* ==================== MODE 2: VERTICAL SCROLL (Webtoon Mode) ==================== */
-          <div className="sm:rounded-[24px] overflow-hidden border-y sm:border border-[#c1c1c1]/40 dark:border-[#262626] bg-[#121212] shadow-2xl">
+          <div
+            onClick={() => {
+              if (isTouchScrolling.current) return;
+              if (Date.now() - lastScrollTime.current < 200) return;
+              setHudVisible((v) => !v);
+            }}
+            className="sm:rounded-[24px] overflow-hidden border-y sm:border border-[#c1c1c1]/40 dark:border-[#262626] bg-[#121212] shadow-2xl cursor-pointer"
+          >
             {pages.map((p, idx) => (
               <img
                 key={p.index}
