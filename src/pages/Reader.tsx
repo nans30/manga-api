@@ -249,7 +249,10 @@ export const Reader: React.FC = () => {
     if (currentPage > 0) {
       changePagePreserveScroll(currentPage - 1);
     } else if (prevChapter) {
-      navigate(`/read/${prevChapter.id}?mangaId=${activeMangaId}&lang=${langParam}`);
+      navigate(
+        `/read/${prevChapter.id}?mangaId=${activeMangaId}&lang=${langParam}`,
+        { replace: true }
+      );
     }
   }, [
     currentPage,
@@ -269,7 +272,10 @@ export const Reader: React.FC = () => {
     if (currentPage < pages.length - 1) {
       changePagePreserveScroll(currentPage + 1);
     } else if (nextChapter) {
-      navigate(`/read/${nextChapter.id}?mangaId=${activeMangaId}&lang=${langParam}`);
+      navigate(
+        `/read/${nextChapter.id}?mangaId=${activeMangaId}&lang=${langParam}`,
+        { replace: true }
+      );
     }
   }, [
     currentPage,
@@ -356,6 +362,7 @@ export const Reader: React.FC = () => {
           {/* Left Close X */}
           <Link
             to={activeMangaId ? `/manga/${activeMangaId}` : '/'}
+            replace
             className="p-2 -ml-2 text-[#121212] dark:text-[#f8f8f8] hover:text-[#f9cb55] transition-colors"
             title="Tutup Bacaan"
           >
@@ -443,7 +450,10 @@ export const Reader: React.FC = () => {
               <select
                 value={chapterId}
                 onChange={(e) =>
-                  navigate(`/read/${e.target.value}?mangaId=${activeMangaId}&lang=${langParam}`)
+                  navigate(
+                    `/read/${e.target.value}?mangaId=${activeMangaId}&lang=${langParam}`,
+                    { replace: true }
+                  )
                 }
                 className="bg-[#ececec] dark:bg-[#1c1c1c] border border-[#c1c1c1]/30 dark:border-[#2a2a2a] rounded-xl px-3 py-1.5 text-xs font-semibold text-[#121212] dark:text-[#f8f8f8] focus:outline-none focus:border-[#f9cb55]"
               >
@@ -680,6 +690,7 @@ export const Reader: React.FC = () => {
               {prevChapter && (
                 <Link
                   to={`/read/${prevChapter.id}?mangaId=${activeMangaId}&lang=${langParam}`}
+                  replace
                   className="px-5 py-3 rounded-xl bg-[#ececec] dark:bg-[#252525] text-xs font-bold uppercase tracking-wider text-[#121212] dark:text-[#f8f8f8] hover:border-[#f9cb55]"
                 >
                   ← Ch. {prevChapter.chapter}
@@ -689,6 +700,7 @@ export const Reader: React.FC = () => {
               {nextChapter ? (
                 <Link
                   to={`/read/${nextChapter.id}?mangaId=${activeMangaId}&lang=${langParam}`}
+                  replace
                   className="px-6 py-3 rounded-xl bg-[#f9cb55] text-[#121212] font-manga text-base tracking-wider shadow-lg shadow-[#f9cb55]/20 hover:scale-105 transition-transform"
                 >
                   NEXT CHAPTER ({nextChapter.chapter}) →
@@ -696,6 +708,7 @@ export const Reader: React.FC = () => {
               ) : (
                 <Link
                   to={activeMangaId ? `/manga/${activeMangaId}` : '/'}
+                  replace
                   className="px-6 py-3 rounded-xl bg-[#f9cb55] text-[#121212] font-manga text-base tracking-wider"
                 >
                   BACK TO MANGA

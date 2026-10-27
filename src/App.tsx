@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Home } from './pages/Home';
 import { AllBooks } from './pages/AllBooks';
@@ -9,6 +9,22 @@ import { Reader } from './pages/Reader';
 import { Library } from './pages/Library';
 import { getTheme, setTheme } from './storage';
 
+function NavigationHistoryTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const fullPath = location.pathname + location.search;
+    if (
+      !location.pathname.startsWith('/manga/') &&
+      !location.pathname.startsWith('/read/')
+    ) {
+      sessionStorage.setItem('ciaran_last_main_path', fullPath);
+    }
+  }, [location.pathname, location.search]);
+
+  return null;
+}
+
 export function App() {
   useEffect(() => {
     setTheme(getTheme());
@@ -16,6 +32,7 @@ export function App() {
 
   return (
     <BrowserRouter>
+      <NavigationHistoryTracker />
       <div className="min-h-screen bg-[#f8f8f8] dark:bg-[#121212] text-[#121212] dark:text-[#f8f8f8] font-poppins flex flex-col transition-colors duration-300">
         <Navbar />
         <div className="flex-1">

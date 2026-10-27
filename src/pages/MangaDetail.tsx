@@ -191,7 +191,11 @@ export const MangaDetail: React.FC = () => {
         {/* Top Bar */}
         <div className="flex items-center justify-between">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              const returnPath =
+                sessionStorage.getItem('ciaran_last_main_path') || '/';
+              navigate(returnPath, { replace: true });
+            }}
             className="p-2 -ml-2 text-[#121212] dark:text-[#f8f8f8] hover:text-[#f9cb55] transition-colors"
             aria-label="Close"
           >
