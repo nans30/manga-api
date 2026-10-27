@@ -52,10 +52,14 @@ export const Reader: React.FC = () => {
   const [showTapHint, setShowTapHint] = useState(false);
   const [theme, setThemeState] = useState<ThemeMode>(() => getTheme());
   const [mangaInfo, setMangaInfo] = useState<any>(null);
+  const [containerMinHeight, setContainerMinHeight] = useState<number>(0);
 
-  // Touch swipe tracking for mobile Tap mode
+  // Touch & scroll tracking so scrolling never triggers page jump or scroll-to-top
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
+  const isTouchScrolling = useRef<boolean>(false);
+  const lastScrollTime = useRef<number>(0);
+  const imgRef = useRef<HTMLImageElement | null>(null);
 
   // Show the Kiri / Kanan hint briefly (2.2s) only at the beginning when in Tap mode
   useEffect(() => {
@@ -81,26 +85,45 @@ export const Reader: React.FC = () => {
     setTheme(next);
   };
 
-  const toggleFullscreen = async () => {
+  const enterFullscreen = async () => {
     try {
       if (!document.fullscreenElement) {
         await document.documentElement.requestFullscreen();
-        setIsFullscreen(true);
-        setHudVisible(false);
-      } else {
-        await document.exitFullscreen();
-        setIsFullscreen(false);
-        setHudVisible(true);
       }
     } catch {
-      setIsFullscreen((prev) => !prev);
-      setHudVisible((prev) => !prev);
+      // Fallback for mobile browsers without requestFullscreen
+    }
+    setIsFullscreen(true);
+    setHudVisible(false);
+  };
+
+  const exitFullscreen = async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      }
+    } catch {
+      // Ignore
+    }
+    setIsFullscreen(false);
+    setHudVisible(true);
+  };
+
+  const toggleFullscreen = async () => {
+    if (isFullscreen || document.fullscreenElement) {
+      await exitFullscreen();
+    } else {
+      await enterFullscreen();
     }
   };
 
   useEffect(() => {
     const onFsChange = () => {
-      setIsFullscreen(Boolean(document.fullscreenElement));
+      const fsActive = Boolean(document.fullscreenElement);
+      setIsFullscreen(fsActive);
+      if (!fsActive) {
+        setHudVisible(true);
+      }
     };
     document.addEventListener('fullscreenchange', onFsChange);
     return () => document.removeEventListener('fullscreenchange', onFsChange);
@@ -190,25 +213,59 @@ export const Reader: React.FC = () => {
       ? chapterList[currentIndex + 1]
       : null;
 
+  // Preserve scroll position when turning pages so it NEVER jumps unexpectedly to the top
+  const changePagePreserveScroll = useCallback((nextPageIdx: number) => {
+    const savedScrollY = window.scrollY;
+    if (imgRef.current) {
+      const h = imgRef.current.getBoundingClientRect().height;
+      if (h > 100) setContainerMinHeight(h);
+    }
+    setCurrentPage(nextPageIdx);
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: savedScrollY, behavior: 'instant' as ScrollBehavior });
+    });
+  }, []);
+
   const goPrevPage = useCallback(() => {
+    // Ignore accidental tap immediately after a vertical scroll gesture
+    if (isTouchScrolling.current || Date.now() - lastScrollTime.current < 180) {
+      return;
+    }
     setShowTapHint(false);
     if (currentPage > 0) {
-      setCurrentPage((p) => p - 1);
-      window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+      changePagePreserveScroll(currentPage - 1);
     } else if (prevChapter) {
       navigate(`/read/${prevChapter.id}?mangaId=${activeMangaId}&lang=${langParam}`);
     }
-  }, [currentPage, prevChapter, navigate, activeMangaId, langParam]);
+  }, [
+    currentPage,
+    prevChapter,
+    navigate,
+    activeMangaId,
+    langParam,
+    changePagePreserveScroll,
+  ]);
 
   const goNextPage = useCallback(() => {
+    // Ignore accidental tap immediately after a vertical scroll gesture
+    if (isTouchScrolling.current || Date.now() - lastScrollTime.current < 180) {
+      return;
+    }
     setShowTapHint(false);
     if (currentPage < pages.length - 1) {
-      setCurrentPage((p) => p + 1);
-      window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+      changePagePreserveScroll(currentPage + 1);
     } else if (nextChapter) {
       navigate(`/read/${nextChapter.id}?mangaId=${activeMangaId}&lang=${langParam}`);
     }
-  }, [currentPage, pages.length, nextChapter, navigate, activeMangaId, langParam]);
+  }, [
+    currentPage,
+    pages.length,
+    nextChapter,
+    navigate,
+    activeMangaId,
+    langParam,
+    changePagePreserveScroll,
+  ]);
 
   // Preload next 3 pages in background when in Tap mode for 0ms page turn
   useEffect(() => {
@@ -221,9 +278,13 @@ export const Reader: React.FC = () => {
     });
   }, [mode, currentPage, pages]);
 
-  // Keyboard Left / Right arrow & F key fullscreen support on PC
+  // Keyboard Left / Right arrow, Escape & F key fullscreen support on PC
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullscreen) {
+        exitFullscreen();
+        return;
+      }
       if (e.key === 'f' || e.key === 'F') {
         toggleFullscreen();
         return;
@@ -234,12 +295,13 @@ export const Reader: React.FC = () => {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [mode, goNextPage, goPrevPage]);
+  }, [mode, isFullscreen, goNextPage, goPrevPage]);
 
-  // Track visible page index during vertical scroll mode
+  // Track scroll events both for Scroll mode page index & preventing accidental Tap during scroll
   useEffect(() => {
-    if (mode !== 'scroll' || pages.length === 0) return;
     const onScroll = () => {
+      lastScrollTime.current = Date.now();
+      if (mode !== 'scroll' || pages.length === 0) return;
       const imgs = document.querySelectorAll('[data-page-idx]');
       const viewportCenter = window.innerHeight / 2;
       for (let i = 0; i < imgs.length; i++) {
@@ -256,6 +318,18 @@ export const Reader: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#121212] text-[#f8f8f8] transition-colors select-none">
+      {/* ==================== FLOATING EXIT FULLSCREEN BUTTON (Always visible when in Fullscreen / Hidden HUD) ==================== */}
+      {(isFullscreen || (!hudVisible && mode === 'tap')) && (
+        <button
+          onClick={exitFullscreen}
+          className="fixed top-3 right-3 z-50 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#121212]/85 hover:bg-[#f9cb55] text-[#f8f8f8] hover:text-[#121212] border border-[#f9cb55]/60 backdrop-blur-md text-xs font-bold shadow-2xl transition-all"
+          title={sysLang === 'id' ? 'Keluar Full Screen' : 'Exit Full Screen'}
+        >
+          <Minimize2 className="w-4 h-4 text-[#f9cb55] group-hover:text-[#121212]" />
+          <span>{sysLang === 'id' ? 'Tutup Fullscreen' : 'Exit Fullscreen'}</span>
+        </button>
+      )}
+
       {/* ==================== TOP HEADER (Auto-hides in Fullscreen / Tap Tengah) ==================== */}
       <header
         className={`sticky top-0 z-50 backdrop-blur-xl bg-[#f8f8f8]/95 dark:bg-[#121212]/95 text-[#121212] dark:text-[#f8f8f8] border-b border-[#c1c1c1]/30 dark:border-[#242424] transition-all duration-300 ${
@@ -423,8 +497,7 @@ export const Reader: React.FC = () => {
                     max={Math.max(0, pages.length - 1)}
                     value={currentPage}
                     onChange={(e) => {
-                      setCurrentPage(Number(e.target.value));
-                      window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+                      changePagePreserveScroll(Number(e.target.value));
                     }}
                     className="w-full accent-[#f9cb55] cursor-pointer"
                   />
@@ -461,7 +534,7 @@ export const Reader: React.FC = () => {
             </button>
           </div>
         ) : mode === 'tap' ? (
-          /* ==================== MODE 1: FULL-SCREEN TAP KANAN-KIRI (100% Clean, No Obtrusive Overlay) ==================== */
+          /* ==================== MODE 1: FULL-SCREEN TAP KANAN-KIRI (100% Clean, No Scroll Jump) ==================== */
           <div className="relative w-full">
             {/* Initial 2.2-Second Non-Intrusive Guide (Shown ONLY at the beginning, pointer-events-none) */}
             <div
@@ -486,26 +559,46 @@ export const Reader: React.FC = () => {
 
             {pages[currentPage] && (
               <div
+                style={{
+                  minHeight: containerMinHeight > 0 ? `${containerMinHeight}px` : 'calc(100vh - 56px)',
+                }}
                 onTouchStart={(e) => {
                   touchStartX.current = e.touches[0].clientX;
                   touchStartY.current = e.touches[0].clientY;
+                  isTouchScrolling.current = false;
+                }}
+                onTouchMove={(e) => {
+                  if (touchStartY.current === null || touchStartX.current === null) return;
+                  const dy = Math.abs(e.touches[0].clientY - touchStartY.current);
+                  const dx = Math.abs(e.touches[0].clientX - touchStartX.current);
+                  if (dy > 12 && dy > dx) {
+                    isTouchScrolling.current = true;
+                  }
                 }}
                 onTouchEnd={(e) => {
                   if (touchStartX.current === null || touchStartY.current === null) return;
                   const diffX = e.changedTouches[0].clientX - touchStartX.current;
                   const diffY = Math.abs(e.changedTouches[0].clientY - touchStartY.current);
-                  if (Math.abs(diffX) > 50 && Math.abs(diffX) > diffY) {
-                    if (diffX < -50) goNextPage();
-                    else if (diffX > 50) goPrevPage();
+                  if (!isTouchScrolling.current && Math.abs(diffX) > 55 && Math.abs(diffX) > diffY * 1.5) {
+                    if (diffX < -55) goNextPage();
+                    else if (diffX > 55) goPrevPage();
                   }
                   touchStartX.current = null;
                   touchStartY.current = null;
+                  setTimeout(() => {
+                    isTouchScrolling.current = false;
+                  }, 120);
                 }}
-                className="relative w-full min-h-[calc(100vh-56px)] bg-[#121212] flex items-center justify-center overflow-hidden"
+                className="relative w-full bg-[#121212] flex items-start justify-center overflow-hidden"
               >
                 <img
+                  ref={imgRef}
                   src={pages[currentPage].url}
                   alt={`Page ${currentPage + 1}`}
+                  onLoad={(e) => {
+                    const h = e.currentTarget.getBoundingClientRect().height;
+                    if (h > 100) setContainerMinHeight(h);
+                  }}
                   onError={(e) => {
                     const target = e.currentTarget;
                     if (target.src !== pages[currentPage].rawUrl) {
@@ -524,6 +617,7 @@ export const Reader: React.FC = () => {
                 {/* Completely Invisible Center Tap Zone (16% width) -> Toggle Top Bar */}
                 <div
                   onClick={() => {
+                    if (isTouchScrolling.current) return;
                     setShowTapHint(false);
                     setHudVisible((v) => !v);
                   }}
