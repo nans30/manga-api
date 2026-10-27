@@ -6,12 +6,21 @@ import {
   getSavedReaderMode,
   setSavedReaderMode,
   ReaderViewMode,
+  getSavedSpreadMode,
+  setSavedSpreadMode,
+  ReaderSpreadMode,
+  getSavedFitMode,
+  setSavedFitMode,
+  ReaderFitMode,
   getTheme,
   setTheme,
   ThemeMode,
   getCachedMangaById,
+  isBookmarked,
+  toggleBookmark,
   useSysLang,
 } from '../storage';
+import { NavBookmarkIcon } from '../components/Icons';
 import {
   X,
   Menu,
@@ -24,6 +33,9 @@ import {
   Hand,
   Maximize2,
   Minimize2,
+  BookOpen,
+  Sparkles,
+  Check,
 } from 'lucide-react';
 
 export const Reader: React.FC = () => {
@@ -43,6 +55,8 @@ export const Reader: React.FC = () => {
 
   // Two Reading Modes: 'tap' (Full-Screen Tap Kanan-Kiri) & 'scroll' (Vertical Scroll)
   const [mode, setMode] = useState<ReaderViewMode>(() => getSavedReaderMode());
+  const [spreadMode, setSpreadMode] = useState<ReaderSpreadMode>(() => getSavedSpreadMode());
+  const [fitMode, setFitMode] = useState<ReaderFitMode>(() => getSavedFitMode());
   const [quality, setQuality] = useState<'data-saver' | 'data'>('data-saver');
   const [currentPage, setCurrentPage] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -50,6 +64,9 @@ export const Reader: React.FC = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   // Brief non-intrusive hint shown ONLY at the start of Tap Kanan-Kiri mode
   const [showTapHint, setShowTapHint] = useState(false);
+  const [showEndPrompt, setShowEndPrompt] = useState(false);
+  const [bookmarked, setBookmarked] = useState(false);
+  const [bookmarkToast, setBookmarkToast] = useState('');
   const [theme, setThemeState] = useState<ThemeMode>(() => getTheme());
   const [mangaInfo, setMangaInfo] = useState<any>(null);
   const [containerMinHeight, setContainerMinHeight] = useState<number>(0);
@@ -77,6 +94,32 @@ export const Reader: React.FC = () => {
   const handleModeChange = (nextMode: ReaderViewMode) => {
     setMode(nextMode);
     setSavedReaderMode(nextMode);
+  };
+
+  const handleSpreadModeChange = (nextSpread: ReaderSpreadMode) => {
+    setSpreadMode(nextSpread);
+    setSavedSpreadMode(nextSpread);
+  };
+
+  const handleFitModeChange = (nextFit: ReaderFitMode) => {
+    setFitMode(nextFit);
+    setSavedFitMode(nextFit);
+  };
+
+  const handleToggleBookmark = () => {
+    if (!mangaInfo) return;
+    const next = toggleBookmark(mangaInfo);
+    setBookmarked(next);
+    setBookmarkToast(
+      next
+        ? sysLang === 'id'
+          ? 'Tersimpan di Bookmark!'
+          : 'Saved to Bookmarks!'
+        : sysLang === 'id'
+        ? 'Dihapus dari Bookmark'
+        : 'Removed from Bookmarks'
+    );
+    setTimeout(() => setBookmarkToast(''), 2500);
   };
 
   const toggleTheme = () => {
@@ -149,14 +192,19 @@ export const Reader: React.FC = () => {
 
           const mId = json.chapter?.mangaId || mangaIdParam;
           if (mId) {
+            setBookmarked(isBookmarked(mId));
             const cachedM = getCachedMangaById(mId);
             if (cachedM) {
               setMangaInfo(cachedM);
+              setBookmarked(isBookmarked(cachedM.id));
             } else {
               fetch(`/api/manga/${mId}`)
                 .then((r) => r.json())
                 .then((mJson) => {
-                  if (mJson.data) setMangaInfo(mJson.data);
+                  if (mJson.data) {
+                    setMangaInfo(mJson.data);
+                    setBookmarked(isBookmarked(mJson.data.id));
+                  }
                 })
                 .catch(() => {});
             }
@@ -246,8 +294,9 @@ export const Reader: React.FC = () => {
       return;
     }
     setShowTapHint(false);
+    const step = spreadMode === 'double' ? 2 : 1;
     if (currentPage > 0) {
-      changePagePreserveScroll(currentPage - 1);
+      changePagePreserveScroll(Math.max(0, currentPage - step));
     } else if (prevChapter) {
       navigate(
         `/read/${prevChapter.id}?mangaId=${activeMangaId}&lang=${langParam}`,
@@ -256,6 +305,7 @@ export const Reader: React.FC = () => {
     }
   }, [
     currentPage,
+    spreadMode,
     prevChapter,
     navigate,
     activeMangaId,
@@ -269,21 +319,22 @@ export const Reader: React.FC = () => {
       return;
     }
     setShowTapHint(false);
-    if (currentPage < pages.length - 1) {
-      changePagePreserveScroll(currentPage + 1);
-    } else if (nextChapter) {
-      navigate(
-        `/read/${nextChapter.id}?mangaId=${activeMangaId}&lang=${langParam}`,
-        { replace: true }
-      );
+    const step = spreadMode === 'double' ? 2 : 1;
+    if (currentPage + step < pages.length) {
+      changePagePreserveScroll(currentPage + step);
+    } else if (currentPage < pages.length - 1) {
+      changePagePreserveScroll(pages.length - 1);
+    } else {
+      setShowEndPrompt(true);
+      if (nextChapter) {
+        // Can open next chapter prompt
+      }
     }
   }, [
     currentPage,
+    spreadMode,
     pages.length,
     nextChapter,
-    navigate,
-    activeMangaId,
-    langParam,
     changePagePreserveScroll,
   ]);
 
@@ -385,8 +436,24 @@ export const Reader: React.FC = () => {
             </p>
           </div>
 
-          {/* Right Fullscreen + Hamburger Menu ☰ */}
+          {/* Right Bookmark + Fullscreen + Hamburger Menu ☰ */}
           <div className="flex items-center gap-1">
+            <button
+              onClick={handleToggleBookmark}
+              className="p-2 text-[#121212] dark:text-[#f8f8f8] hover:text-[#f9cb55] transition-colors relative"
+              title={
+                bookmarked
+                  ? sysLang === 'id'
+                    ? 'Hapus Bookmark'
+                    : 'Remove Bookmark'
+                  : sysLang === 'id'
+                  ? 'Simpan ke Bookmark'
+                  : 'Bookmark Manga'
+              }
+            >
+              <NavBookmarkIcon active={bookmarked} className="w-5 h-5" />
+            </button>
+
             <button
               onClick={toggleFullscreen}
               className="p-2 text-[#121212] dark:text-[#f8f8f8] hover:text-[#f9cb55] transition-colors"
@@ -514,6 +581,60 @@ export const Reader: React.FC = () => {
                 </button>
               </div>
 
+              {/* Desktop Double Page Spread Toggle */}
+              <div className="hidden md:flex items-center gap-2">
+                <span className="text-[#6e6e6e] dark:text-[#c1c1c1] font-medium">
+                  {sysLang === 'id' ? 'Tampilan PC:' : 'Desktop View:'}
+                </span>
+                <button
+                  onClick={() => handleSpreadModeChange('single')}
+                  className={`px-3 py-1.5 rounded-lg font-semibold ${
+                    spreadMode === 'single'
+                      ? 'bg-[#f9cb55] text-[#121212]'
+                      : 'bg-[#ececec] dark:bg-[#252525] text-[#6e6e6e] dark:text-[#c1c1c1]'
+                  }`}
+                >
+                  1 Halaman
+                </button>
+                <button
+                  onClick={() => handleSpreadModeChange('double')}
+                  className={`px-3 py-1.5 rounded-lg font-semibold ${
+                    spreadMode === 'double'
+                      ? 'bg-[#f9cb55] text-[#121212]'
+                      : 'bg-[#ececec] dark:bg-[#252525] text-[#6e6e6e] dark:text-[#c1c1c1]'
+                  }`}
+                >
+                  2 Halaman (Spread)
+                </button>
+              </div>
+
+              {/* Fit Width / Fit Height Scale Toggle */}
+              <div className="flex items-center gap-2">
+                <span className="text-[#6e6e6e] dark:text-[#c1c1c1] font-medium">
+                  {sysLang === 'id' ? 'Skala:' : 'Scale:'}
+                </span>
+                <button
+                  onClick={() => handleFitModeChange('width')}
+                  className={`px-3 py-1.5 rounded-lg font-semibold ${
+                    fitMode === 'width'
+                      ? 'bg-[#f9cb55] text-[#121212]'
+                      : 'bg-[#ececec] dark:bg-[#252525] text-[#6e6e6e] dark:text-[#c1c1c1]'
+                  }`}
+                >
+                  Fit Lebar
+                </button>
+                <button
+                  onClick={() => handleFitModeChange('height')}
+                  className={`px-3 py-1.5 rounded-lg font-semibold ${
+                    fitMode === 'height'
+                      ? 'bg-[#f9cb55] text-[#121212]'
+                      : 'bg-[#ececec] dark:bg-[#252525] text-[#6e6e6e] dark:text-[#c1c1c1]'
+                  }`}
+                >
+                  Fit Tinggi
+                </button>
+              </div>
+
               {pages.length > 1 && (
                 <div className="flex items-center gap-3 w-full sm:w-72">
                   <span className="text-[#6e6e6e] dark:text-[#c1c1c1] shrink-0">
@@ -619,22 +740,53 @@ export const Reader: React.FC = () => {
                 }}
                 className="relative w-full bg-[#121212] flex items-start justify-center overflow-hidden"
               >
-                <img
-                  ref={imgRef}
-                  src={pages[currentPage].url}
-                  alt={`Page ${currentPage + 1}`}
-                  onLoad={(e) => {
-                    const h = e.currentTarget.getBoundingClientRect().height;
-                    if (h > 100) setContainerMinHeight(h);
-                  }}
-                  onError={(e) => {
-                    const target = e.currentTarget;
-                    if (target.src !== pages[currentPage].rawUrl) {
-                      target.src = pages[currentPage].rawUrl;
-                    }
-                  }}
-                  className="w-full h-auto block mx-auto object-contain"
-                />
+                <div
+                  className={`w-full flex items-center justify-center gap-1.5 ${
+                    spreadMode === 'double' && pages[currentPage + 1] ? 'flex-row' : ''
+                  }`}
+                >
+                  <img
+                    ref={imgRef}
+                    src={pages[currentPage].url}
+                    alt={`Page ${currentPage + 1}`}
+                    onLoad={(e) => {
+                      const h = e.currentTarget.getBoundingClientRect().height;
+                      if (h > 100) setContainerMinHeight(h);
+                    }}
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (target.src !== pages[currentPage].rawUrl) {
+                        target.src = pages[currentPage].rawUrl;
+                      }
+                    }}
+                    className={`block object-contain transition-all ${
+                      spreadMode === 'double' && pages[currentPage + 1]
+                        ? fitMode === 'height'
+                          ? 'max-h-[88vh] w-auto max-w-[49%]'
+                          : 'w-1/2 h-auto'
+                        : fitMode === 'height'
+                        ? 'max-h-[92vh] w-auto max-w-full'
+                        : 'w-full h-auto mx-auto'
+                    }`}
+                  />
+                  {spreadMode === 'double' && pages[currentPage + 1] && (
+                    <img
+                      src={pages[currentPage + 1].url}
+                      alt={`Page ${currentPage + 2}`}
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (target.src !== pages[currentPage + 1].rawUrl) {
+                          target.src = pages[currentPage + 1].rawUrl;
+                        }
+                      }}
+                      className={`block object-contain transition-all ${
+                        fitMode === 'height'
+                          ? 'max-h-[88vh] w-auto max-w-[49%]'
+                          : 'w-1/2 h-auto'
+                      }`}
+                    />
+                  )}
+                </div>
 
                 {/* Completely Invisible Left Tap Zone (42% width) -> Prev Page */}
                 <div
@@ -676,9 +828,84 @@ export const Reader: React.FC = () => {
                     target.src = p.rawUrl;
                   }
                 }}
-                className="w-full h-auto block"
+                className={`block mx-auto ${
+                  fitMode === 'height'
+                    ? 'max-h-[92vh] w-auto max-w-full'
+                    : 'w-full h-auto'
+                }`}
               />
             ))}
+          </div>
+        )}
+
+        {/* ==================== FLOATING AUTO-NEXT CHAPTER PROMPT ==================== */}
+        {showEndPrompt && (
+          <div className="fixed bottom-6 inset-x-4 max-w-md mx-auto z-50 p-4 sm:p-5 rounded-3xl bg-[#1b1b1b]/95 text-[#f8f8f8] border border-[#f9cb55]/70 backdrop-blur-xl shadow-2xl text-center space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#f9cb55] uppercase tracking-wider">
+                <Sparkles className="w-4 h-4" />
+                {sysLang === 'id'
+                  ? `Chapter ${chapterMeta?.chapter} Selesai!`
+                  : `Chapter ${chapterMeta?.chapter} Finished!`}
+              </span>
+              <button
+                onClick={() => setShowEndPrompt(false)}
+                className="text-[#c1c1c1] hover:text-[#f8f8f8] p-1"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-xs text-[#c1c1c1]">
+              {nextChapter
+                ? sysLang === 'id'
+                  ? `Lanjut membaca ke Chapter ${nextChapter.chapter}?`
+                  : `Continue reading Chapter ${nextChapter.chapter}?`
+                : sysLang === 'id'
+                ? 'Kamu telah menyelesaikan semua chapter yang tersedia!'
+                : 'You have reached the latest available chapter!'}
+            </p>
+            <div className="flex items-center justify-center gap-2 pt-1">
+              {nextChapter ? (
+                <button
+                  onClick={() => {
+                    setShowEndPrompt(false);
+                    navigate(
+                      `/read/${nextChapter.id}?mangaId=${activeMangaId}&lang=${langParam}`,
+                      { replace: true }
+                    );
+                  }}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-[#f9cb55] text-[#121212] font-manga text-xs sm:text-sm tracking-wider font-bold shadow-lg shadow-[#f9cb55]/20 hover:scale-[1.02] active:scale-95 transition-all"
+                >
+                  {sysLang === 'id'
+                    ? `LANJUT CH. ${nextChapter.chapter} →`
+                    : `NEXT CH. ${nextChapter.chapter} →`}
+                </button>
+              ) : (
+                <Link
+                  to={activeMangaId ? `/manga/${activeMangaId}` : '/'}
+                  replace
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-[#f9cb55] text-[#121212] font-manga text-xs sm:text-sm tracking-wider font-bold"
+                >
+                  {sysLang === 'id' ? 'DETAIL KOMIK' : 'MANGA DETAIL'}
+                </Link>
+              )}
+              <button
+                onClick={() => setShowEndPrompt(false)}
+                className="py-2.5 px-3.5 rounded-xl bg-[#2a2a2a] hover:bg-[#353535] text-[#f8f8f8] text-xs font-semibold transition-colors"
+              >
+                {sysLang === 'id' ? 'Tutup' : 'Dismiss'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Floating Bookmark Toast Feedback */}
+        {bookmarkToast && (
+          <div className="fixed top-20 inset-x-0 z-50 flex justify-center px-4 pointer-events-none">
+            <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#121212]/90 border border-[#f9cb55] text-[#f8f8f8] text-xs font-bold shadow-2xl backdrop-blur-md">
+              <Check className="w-4 h-4 text-[#f9cb55]" />
+              <span>{bookmarkToast}</span>
+            </div>
           </div>
         )}
 

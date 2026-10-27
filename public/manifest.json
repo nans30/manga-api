@@ -1,0 +1,18 @@
+{
+  "name": "Ciarán Manga Reader",
+  "short_name": "Ciarán",
+  "description": "Baca Manga, Manhwa, dan Manhua Bahasa Indonesia & English secara gratis dan instan.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#121212",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

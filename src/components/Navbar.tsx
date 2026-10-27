@@ -18,7 +18,7 @@ import {
   cacheMangaObjects,
 } from '../storage';
 import { Manga } from '../types';
-import { Sun, Moon, Search, X, User, Loader2 } from 'lucide-react';
+import { Sun, Moon, Search, X, User, Loader2, Download } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const location = useLocation();
@@ -31,7 +31,25 @@ export const Navbar: React.FC = () => {
   const [searching, setSearching] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [bookmarkCount, setBookmarkCount] = useState(0);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', onPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', onPrompt);
+  }, []);
+
+  const handleInstallPwa = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      setDeferredPrompt(null);
+    }
+  };
 
   useEffect(() => {
     setTheme(theme);
@@ -265,6 +283,18 @@ export const Navbar: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {/* PWA Install Button (surfaces automatically if browser supports install) */}
+            {deferredPrompt && (
+              <button
+                onClick={handleInstallPwa}
+                className="hidden lg:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#f9cb55] hover:bg-[#eab83e] text-[#121212] font-manga text-xs tracking-wider font-bold shadow-sm transition-all"
+                title={sysLang === 'id' ? 'Install Aplikasi Ciarán' : 'Install Ciarán App'}
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>INSTALL APP</span>
+              </button>
+            )}
 
             {/* System Language Icon Switcher (ID <-> EN) right next to Light/Dark Mode */}
             <button

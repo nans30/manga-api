@@ -14,6 +14,8 @@ import {
   getSavedReaderMode,
   setSavedReaderMode,
   ReaderViewMode,
+  getStorageUsage,
+  clearAppCache,
   useSysLang,
   getMangaDescription,
 } from '../storage';
@@ -29,6 +31,11 @@ import {
   Moon,
   Hand,
   Rows,
+  HardDrive,
+  RefreshCw,
+  BookMarked,
+  BookOpen,
+  Sparkles,
 } from 'lucide-react';
 
 export const Library: React.FC = () => {
@@ -46,11 +53,36 @@ export const Library: React.FC = () => {
   );
   const [bookmarks, setBookmarks] = useState<Manga[]>([]);
   const [history, setHistory] = useState<ReadingHistoryItem[]>([]);
+  const [bookmarkCategory, setBookmarkCategory] = useState<
+    'all' | 'reading' | 'plan' | 'completed'
+  >('all');
+  const [storageInfo, setStorageInfo] = useState(() => getStorageUsage());
   const [syncMessage, setSyncMessage] = useState('');
   const [theme, setThemeState] = useState<ThemeMode>(() => getTheme());
   const [defaultReaderMode, setDefaultReaderMode] = useState<ReaderViewMode>(() =>
     getSavedReaderMode()
   );
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const onPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', onPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', onPrompt);
+  }, []);
+
+  const handleInstallPwa = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      if (choice.outcome === 'accepted') {
+        setSyncMessage('Ciarán berhasil diinstall ke perangkat Anda!');
+      }
+      setDeferredPrompt(null);
+    }
+  };
 
   useEffect(() => {
     if (activeTabParam === 'profile') setTab('profile');
@@ -61,6 +93,7 @@ export const Library: React.FC = () => {
   const refreshData = () => {
     setBookmarks(getBookmarks());
     setHistory(getReadingHistory());
+    setStorageInfo(getStorageUsage());
   };
 
   useEffect(() => {
@@ -113,6 +146,45 @@ export const Library: React.FC = () => {
   const handleReaderModePref = (next: ReaderViewMode) => {
     setDefaultReaderMode(next);
     setSavedReaderMode(next);
+  };
+
+  const countAll = bookmarks.length;
+  const countReading = bookmarks.filter((b) =>
+    history.some((h) => h.mangaId === b.id && (h.progressPercent || 0) < 100)
+  ).length;
+  const countPlan = bookmarks.filter(
+    (b) => !history.some((h) => h.mangaId === b.id)
+  ).length;
+  const countCompleted = bookmarks.filter(
+    (b) =>
+      b.status === 'completed' ||
+      b.status === 'end' ||
+      history.some((h) => h.mangaId === b.id && (h.progressPercent || 0) >= 100)
+  ).length;
+
+  const filteredBookmarks = bookmarks.filter((b) => {
+    if (bookmarkCategory === 'all') return true;
+    const h = history.find((x) => x.mangaId === b.id);
+    if (bookmarkCategory === 'reading') return h && (h.progressPercent || 0) < 100;
+    if (bookmarkCategory === 'plan') return !h;
+    if (bookmarkCategory === 'completed')
+      return (
+        b.status === 'completed' ||
+        b.status === 'end' ||
+        (h && (h.progressPercent || 0) >= 100)
+      );
+    return true;
+  });
+
+  const handleClearCache = () => {
+    clearAppCache(true);
+    refreshData();
+    setSyncMessage(
+      sysLang === 'id'
+        ? 'Cache aplikasi dibersihkan! Bookmark Anda tetap aman.'
+        : 'App cache cleared! Your bookmarks remain safe.'
+    );
+    setTimeout(() => setSyncMessage(''), 3500);
   };
 
   return (
@@ -178,7 +250,47 @@ export const Library: React.FC = () => {
 
       {/* TAB 1: SAVED BOOKMARKS */}
       {tab === 'bookmarks' && (
-        <>
+        <div className="space-y-5">
+          {/* Sub-Category Filter Tabs (Semua, Sedang Dibaca, Rencana Baca, Tamat) */}
+          {bookmarks.length > 0 && (
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+              {[
+                {
+                  id: 'all',
+                  label: sysLang === 'id' ? 'Semua' : 'All',
+                  count: countAll,
+                },
+                {
+                  id: 'reading',
+                  label: sysLang === 'id' ? 'Sedang Dibaca' : 'Reading',
+                  count: countReading,
+                },
+                {
+                  id: 'plan',
+                  label: sysLang === 'id' ? 'Rencana Baca' : 'Plan to Read',
+                  count: countPlan,
+                },
+                {
+                  id: 'completed',
+                  label: sysLang === 'id' ? 'Selesai' : 'Completed',
+                  count: countCompleted,
+                },
+              ].map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setBookmarkCategory(c.id as any)}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition-all ${
+                    bookmarkCategory === c.id
+                      ? 'bg-[#f9cb55] text-[#121212] shadow-sm'
+                      : 'bg-[#ececec] dark:bg-[#1e1e1e] text-[#6e6e6e] dark:text-[#c1c1c1] hover:text-[#121212] dark:hover:text-[#f8f8f8]'
+                  }`}
+                >
+                  {c.label} ({c.count})
+                </button>
+              ))}
+            </div>
+          )}
+
           {bookmarks.length === 0 ? (
             <div className="text-center py-20 rounded-3xl bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#262626] space-y-4">
               <p className="font-manga text-xl">NO SAVED BOOKS YET</p>
@@ -192,9 +304,23 @@ export const Library: React.FC = () => {
                 EXPLORE ALL BOOKS →
               </Link>
             </div>
+          ) : filteredBookmarks.length === 0 ? (
+            <div className="text-center py-16 rounded-3xl bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#262626] space-y-2">
+              <p className="font-semibold text-sm">
+                {sysLang === 'id'
+                  ? 'Tidak ada komik pada kategori ini.'
+                  : 'No comics in this category.'}
+              </p>
+              <button
+                onClick={() => setBookmarkCategory('all')}
+                className="text-xs font-bold text-[#f9cb55] underline"
+              >
+                {sysLang === 'id' ? 'Tampilkan Semua' : 'Show All'}
+              </button>
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {bookmarks.map((manga) => (
+              {filteredBookmarks.map((manga) => (
                 <div
                   key={manga.id}
                   className="flex items-start gap-4 p-3.5 rounded-2xl bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#262626]"
@@ -248,7 +374,7 @@ export const Library: React.FC = () => {
               ))}
             </div>
           )}
-        </>
+        </div>
       )}
 
       {/* TAB 2: READING HISTORY */}
@@ -390,6 +516,66 @@ export const Library: React.FC = () => {
               >
                 <Rows className="w-4 h-4" />
                 Mode Scroll
+              </button>
+            </div>
+          </div>
+
+          {/* Storage & Cache Management Card (Mencegah Cache Menumpuk) */}
+          <div className="p-6 rounded-3xl bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#262626] space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-manga text-xl tracking-wider flex items-center gap-2">
+                <HardDrive className="w-5 h-5 text-[#f9cb55]" />
+                {sysLang === 'id' ? 'PENYIMPANAN & CACHE' : 'STORAGE & CACHE'}
+              </h3>
+              <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-[#ececec] dark:bg-[#252525] text-[#f9cb55]">
+                {storageInfo.readable}
+              </span>
+            </div>
+            <p className="text-xs text-[#6e6e6e] dark:text-[#c1c1c1]">
+              {sysLang === 'id'
+                ? 'Bersihkan cache chapter sementara dan data riwayat yang menumpuk. Komik yang Anda simpan di bookmark TIDAK AKAN terhapus.'
+                : 'Clear temporary cached chapters and stale history. Your saved bookmarks will remain completely safe.'}
+            </p>
+            <div className="pt-1 flex items-center gap-3">
+              <button
+                onClick={handleClearCache}
+                className="px-5 py-2.5 rounded-xl bg-red-500/15 hover:bg-red-500/25 text-red-500 text-xs font-bold flex items-center gap-2 transition-all cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" />
+                {sysLang === 'id' ? 'Bersihkan Cache Komik' : 'Clear Comic Cache'}
+              </button>
+            </div>
+          </div>
+
+          {/* PWA Install App Card */}
+          <div className="p-6 rounded-3xl bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#262626] space-y-4">
+            <h3 className="font-manga text-xl tracking-wider flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-[#f9cb55]" />
+              {sysLang === 'id' ? 'APLIKASI CIARÁN (PWA)' : 'CIARÁN APP (PWA)'}
+            </h3>
+            <p className="text-xs text-[#6e6e6e] dark:text-[#c1c1c1]">
+              {sysLang === 'id'
+                ? 'Pasang Ciarán ke Layar Utama (Home Screen) smartphone atau desktop PC Anda untuk akses cepat dan layar penuh tanpa bilah browser.'
+                : 'Install Ciarán to your device Home Screen for instant full-screen reading without browser bars.'}
+            </p>
+            <div className="pt-1">
+              <button
+                onClick={
+                  deferredPrompt
+                    ? handleInstallPwa
+                    : () => {
+                        setSyncMessage(
+                          sysLang === 'id'
+                            ? 'Buka menu browser Anda (titik 3) lalu pilih "Tambahkan ke Layar Utama" / "Install App".'
+                            : 'Open your browser menu (3 dots) and select "Add to Home Screen" / "Install App".'
+                        );
+                        setTimeout(() => setSyncMessage(''), 5000);
+                      }
+                }
+                className="px-5 py-2.5 rounded-xl bg-[#f9cb55] hover:bg-[#eab83e] text-[#121212] font-manga text-xs tracking-wider font-bold flex items-center gap-2 shadow-md transition-all cursor-pointer"
+              >
+                <Download className="w-4 h-4" />
+                {sysLang === 'id' ? 'INSTALL KE LAYAR UTAMA' : 'INSTALL TO HOME SCREEN'}
               </button>
             </div>
           </div>

@@ -132,6 +132,15 @@ class BoundedTTLCache<V> {
     }
     this.map.set(key, { value, expiresAt: Date.now() + ttlMs });
   }
+
+  pruneExpired(): void {
+    const now = Date.now();
+    for (const [key, entry] of this.map.entries()) {
+      if (now > entry.expiresAt) {
+        this.map.delete(key);
+      }
+    }
+  }
 }
 
 const apiResponseCache = new BoundedTTLCache<any>(200, 45_000);
@@ -146,6 +155,17 @@ const rateLimitCache = new BoundedTTLCache<{ count: number; resetAt: number }>(
   1000,
   60_000
 );
+
+// Auto-sweep expired entries every 2 minutes to prevent any cache accumulation in server memory
+const sweepTimer = setInterval(() => {
+  apiResponseCache.pruneExpired();
+  serverMangaCache.pruneExpired();
+  translationCache.pruneExpired();
+  imageBinaryCache.pruneExpired();
+  dnsCache.pruneExpired();
+  rateLimitCache.pruneExpired();
+}, 120_000);
+if (typeof sweepTimer.unref === 'function') sweepTimer.unref();
 
 dnsCache.set('api.mangadex.org', '45.129.229.1', 3600_000);
 dnsCache.set('uploads.mangadex.org', '45.129.229.2', 3600_000);

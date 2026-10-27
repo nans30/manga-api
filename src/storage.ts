@@ -8,10 +8,14 @@ const HISTORY_KEY = 'ciaran_history_v1';
 const READ_CHAPTERS_KEY = 'ciaran_read_chapters_v1';
 const THEME_KEY = 'ciaran_theme_v1';
 const READER_MODE_KEY = 'ciaran_reader_mode_v1';
+const READER_SPREAD_KEY = 'ciaran_reader_spread_v1';
+const READER_FIT_KEY = 'ciaran_reader_fit_v1';
 const SYS_LANG_KEY = 'ciaran_sys_lang_v1';
 
 export type ThemeMode = 'dark' | 'light';
 export type ReaderViewMode = 'scroll' | 'tap';
+export type ReaderSpreadMode = 'single' | 'double';
+export type ReaderFitMode = 'width' | 'height';
 export type SystemLang = 'id' | 'en';
 
 // Fast, bounded in-memory LRU cache (max 250 items, zero synchronous JSON.stringify lag!)
@@ -131,6 +135,34 @@ export function setSavedReaderMode(mode: ReaderViewMode) {
   } catch {}
 }
 
+export function getSavedSpreadMode(): ReaderSpreadMode {
+  try {
+    const saved = localStorage.getItem(READER_SPREAD_KEY);
+    if (saved === 'single' || saved === 'double') return saved;
+  } catch {}
+  return 'single';
+}
+
+export function setSavedSpreadMode(mode: ReaderSpreadMode) {
+  try {
+    localStorage.setItem(READER_SPREAD_KEY, mode);
+  } catch {}
+}
+
+export function getSavedFitMode(): ReaderFitMode {
+  try {
+    const saved = localStorage.getItem(READER_FIT_KEY);
+    if (saved === 'width' || saved === 'height') return saved;
+  } catch {}
+  return 'width';
+}
+
+export function setSavedFitMode(mode: ReaderFitMode) {
+  try {
+    localStorage.setItem(READER_FIT_KEY, mode);
+  } catch {}
+}
+
 export function getBookmarks(): Manga[] {
   try {
     const raw = localStorage.getItem(BOOKMARKS_KEY);
@@ -174,12 +206,17 @@ export function getReadingHistory(): ReadingHistoryItem[] {
 export function addReadingHistory(item: ReadingHistoryItem) {
   try {
     const list = getReadingHistory().filter((h) => h.mangaId !== item.mangaId);
-    const updated = [item, ...list].slice(0, 50);
+    // Capped at 35 items to avoid storage accumulation
+    const updated = [item, ...list].slice(0, 35);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
     markChapterAsRead(item.chapterId);
     window.dispatchEvent(new Event('ciaran-storage-update'));
   } catch {
-    // ignore storage errors
+    // Auto-prune on storage quota errors
+    try {
+      const list = getReadingHistory().slice(0, 15);
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+    } catch {}
   }
 }
 
@@ -201,12 +238,45 @@ export function markChapterAsRead(chapterId: string) {
   try {
     const list = getReadChapters();
     if (!list.includes(chapterId)) {
-      const updated = [chapterId, ...list].slice(0, 1000);
+      // Capped at 300 IDs to keep localStorage lightweight
+      const updated = [chapterId, ...list].slice(0, 300);
       localStorage.setItem(READ_CHAPTERS_KEY, JSON.stringify(updated));
     }
+  } catch {}
+}
+
+export function getStorageUsage(): {
+  bytes: number;
+  readable: string;
+  percent: number;
+} {
+  try {
+    let totalBytes = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i) || '';
+      const val = localStorage.getItem(key) || '';
+      totalBytes += (key.length + val.length) * 2;
+    }
+    const kb = totalBytes / 1024;
+    const readable =
+      kb < 1024 ? `${kb.toFixed(1)} KB` : `${(kb / 1024).toFixed(2)} MB`;
+    const percent = Math.min(100, Math.round((totalBytes / (5 * 1024 * 1024)) * 100));
+    return { bytes: totalBytes, readable, percent };
   } catch {
-    // ignore
+    return { bytes: 0, readable: '0 KB', percent: 0 };
   }
+}
+
+export function clearAppCache(keepBookmarks = true): void {
+  try {
+    memoryMangaMap.clear();
+    localStorage.removeItem(READ_CHAPTERS_KEY);
+    if (!keepBookmarks) {
+      localStorage.removeItem(BOOKMARKS_KEY);
+    }
+    localStorage.removeItem(HISTORY_KEY);
+    window.dispatchEvent(new Event('ciaran-storage-update'));
+  } catch {}
 }
 
 export function exportLibraryData(): string {
