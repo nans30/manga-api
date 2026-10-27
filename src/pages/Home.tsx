@@ -166,7 +166,11 @@ export const Home: React.FC = () => {
           {/* Mobile Top Action Icons (Search, System Language Flag Icon, Light/Dark, Bag) */}
           <div className="flex md:hidden items-center gap-2.5">
             <button
-              onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent('ciaran-open-search', { detail: { query: '' } })
+                );
+              }}
               className="p-2 text-[#121212] dark:text-[#f8f8f8] hover:text-[#f9cb55] transition-colors"
               aria-label="Search"
             >
@@ -210,33 +214,6 @@ export const Home: React.FC = () => {
             </Link>
           </div>
         </div>
-
-        {/* Mobile Search Bar Expandable */}
-        {mobileSearchOpen && (
-          <form
-            onSubmit={handleMobileSearch}
-            className="md:hidden flex items-center gap-2 bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/40 dark:border-[#2b2b2b] rounded-2xl px-4 py-2.5 shadow-lg"
-          >
-            <Search className="w-4 h-4 text-[#f9cb55]" />
-            <input
-              type="text"
-              autoFocus
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder={
-                sysLang === 'id'
-                  ? 'Cari judul komik atau nama pembuat...'
-                  : 'Search manga title or author...'
-              }
-              className="flex-1 bg-transparent text-sm text-[#121212] dark:text-[#f8f8f8] placeholder:text-[#c1c1c1] focus:outline-none"
-            />
-            {searchInput && (
-              <button type="button" onClick={() => setSearchInput('')}>
-                <X className="w-4 h-4 text-[#c1c1c1]" />
-              </button>
-            )}
-          </form>
-        )}
 
         {/* NOW Main Card + Desktop Secondary Card */}
         {nowItem && (

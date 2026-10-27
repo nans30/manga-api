@@ -36,6 +36,8 @@ import {
   BookMarked,
   BookOpen,
   Sparkles,
+  Search,
+  X,
 } from 'lucide-react';
 
 export const Library: React.FC = () => {
@@ -58,6 +60,7 @@ export const Library: React.FC = () => {
   >('all');
   const [storageInfo, setStorageInfo] = useState(() => getStorageUsage());
   const [syncMessage, setSyncMessage] = useState('');
+  const [librarySearch, setLibrarySearch] = useState('');
   const [theme, setThemeState] = useState<ThemeMode>(() => getTheme());
   const [defaultReaderMode, setDefaultReaderMode] = useState<ReaderViewMode>(() =>
     getSavedReaderMode()
@@ -176,6 +179,25 @@ export const Library: React.FC = () => {
     return true;
   });
 
+  const searchedBookmarks = filteredBookmarks.filter((b) => {
+    if (!librarySearch.trim()) return true;
+    const q = librarySearch.trim().toLowerCase();
+    return (
+      b.title.toLowerCase().includes(q) ||
+      (b.author && b.author.toLowerCase().includes(q))
+    );
+  });
+
+  const searchedHistory = history.filter((h) => {
+    if (!librarySearch.trim()) return true;
+    const q = librarySearch.trim().toLowerCase();
+    return (
+      h.mangaTitle.toLowerCase().includes(q) ||
+      (h.author && h.author.toLowerCase().includes(q)) ||
+      String(h.chapterNumber).includes(q)
+    );
+  });
+
   const handleClearCache = () => {
     clearAppCache(true);
     refreshData();
@@ -241,6 +263,36 @@ export const Library: React.FC = () => {
         </button>
       </div>
 
+      {/* Optional Search within Library / History */}
+      {tab !== 'profile' && ((tab === 'bookmarks' && bookmarks.length > 0) || (tab === 'history' && history.length > 0)) && (
+        <div className="relative">
+          <Search className="w-4 h-4 text-[#888888] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            type="text"
+            value={librarySearch}
+            onChange={(e) => setLibrarySearch(e.target.value)}
+            placeholder={
+              tab === 'bookmarks'
+                ? sysLang === 'id'
+                  ? 'Cari di komik tersimpan...'
+                  : 'Search in saved books...'
+                : sysLang === 'id'
+                ? 'Cari di riwayat baca...'
+                : 'Search in reading history...'
+            }
+            className="w-full bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/40 dark:border-[#2b2b2b] focus:border-[#f9cb55] rounded-2xl pl-10 pr-9 py-2.5 text-xs sm:text-sm text-[#121212] dark:text-[#f8f8f8] placeholder:text-[#888888] focus:outline-none transition-colors"
+          />
+          {librarySearch && (
+            <button
+              onClick={() => setLibrarySearch('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#888888] hover:text-[#f9cb55]"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      )}
+
       {syncMessage && (
         <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-[#f9cb55]/20 border border-[#f9cb55] text-[#121212] dark:text-[#f9cb55] text-xs font-semibold">
           <CheckCircle2 className="w-4 h-4" />
@@ -304,23 +356,36 @@ export const Library: React.FC = () => {
                 EXPLORE ALL BOOKS →
               </Link>
             </div>
-          ) : filteredBookmarks.length === 0 ? (
+          ) : searchedBookmarks.length === 0 ? (
             <div className="text-center py-16 rounded-3xl bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#262626] space-y-2">
               <p className="font-semibold text-sm">
-                {sysLang === 'id'
+                {librarySearch
+                  ? sysLang === 'id'
+                    ? `Tidak ada komik tersimpan untuk "${librarySearch}"`
+                    : `No saved comics for "${librarySearch}"`
+                  : sysLang === 'id'
                   ? 'Tidak ada komik pada kategori ini.'
                   : 'No comics in this category.'}
               </p>
-              <button
-                onClick={() => setBookmarkCategory('all')}
-                className="text-xs font-bold text-[#f9cb55] underline"
-              >
-                {sysLang === 'id' ? 'Tampilkan Semua' : 'Show All'}
-              </button>
+              {librarySearch ? (
+                <button
+                  onClick={() => setLibrarySearch('')}
+                  className="text-xs font-bold text-[#f9cb55] underline"
+                >
+                  {sysLang === 'id' ? 'Hapus Pencarian' : 'Clear Search'}
+                </button>
+              ) : (
+                <button
+                  onClick={() => setBookmarkCategory('all')}
+                  className="text-xs font-bold text-[#f9cb55] underline"
+                >
+                  {sysLang === 'id' ? 'Tampilkan Semua' : 'Show All'}
+                </button>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filteredBookmarks.map((manga) => (
+              {searchedBookmarks.map((manga) => (
                 <div
                   key={manga.id}
                   className="flex items-start gap-4 p-3.5 rounded-2xl bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#262626]"
@@ -402,9 +467,23 @@ export const Library: React.FC = () => {
                 Chapter komik yang kamu baca akan tercatat otomatis di sini.
               </p>
             </div>
+          ) : searchedHistory.length === 0 ? (
+            <div className="text-center py-16 rounded-3xl bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#262626] space-y-2">
+              <p className="font-semibold text-sm">
+                {sysLang === 'id'
+                  ? `Tidak ada riwayat baca untuk "${librarySearch}"`
+                  : `No reading history for "${librarySearch}"`}
+              </p>
+              <button
+                onClick={() => setLibrarySearch('')}
+                className="text-xs font-bold text-[#f9cb55] underline"
+              >
+                {sysLang === 'id' ? 'Hapus Pencarian' : 'Clear Search'}
+              </button>
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {history.map((item) => (
+              {searchedHistory.map((item) => (
                 <div
                   key={`${item.mangaId}-${item.chapterId}`}
                   className="flex items-center gap-4 p-4 rounded-2xl bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#262626]"

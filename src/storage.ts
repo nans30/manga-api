@@ -12,6 +12,8 @@ const READER_SPREAD_KEY = 'ciaran_reader_spread_v1';
 const READER_FIT_KEY = 'ciaran_reader_fit_v1';
 const READER_AUTONEXT_KEY = 'ciaran_reader_autonext_v1';
 const SYS_LANG_KEY = 'ciaran_sys_lang_v1';
+const RECENT_SEARCHES_KEY = 'ciaran_recent_searches_v1';
+const MAX_RECENT_SEARCHES = 10;
 
 export type ThemeMode = 'dark' | 'light';
 export type ReaderViewMode = 'scroll' | 'tap';
@@ -280,6 +282,50 @@ export function getStorageUsage(): {
   } catch {
     return { bytes: 0, readable: '0 KB', percent: 0 };
   }
+}
+
+export function getRecentSearches(): string[] {
+  try {
+    const raw = localStorage.getItem(RECENT_SEARCHES_KEY);
+    if (!raw) return [];
+    const list = JSON.parse(raw);
+    return Array.isArray(list) ? list.filter((s) => typeof s === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+export function addRecentSearch(query: string): void {
+  const trimmed = query.trim();
+  if (!trimmed || trimmed.length < 2) return;
+  try {
+    const list = getRecentSearches().filter(
+      (item) => item.toLowerCase() !== trimmed.toLowerCase()
+    );
+    list.unshift(trimmed);
+    localStorage.setItem(
+      RECENT_SEARCHES_KEY,
+      JSON.stringify(list.slice(0, MAX_RECENT_SEARCHES))
+    );
+    window.dispatchEvent(new Event('ciaran-storage-update'));
+  } catch {}
+}
+
+export function removeRecentSearch(query: string): void {
+  try {
+    const list = getRecentSearches().filter(
+      (item) => item.toLowerCase() !== query.toLowerCase()
+    );
+    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(list));
+    window.dispatchEvent(new Event('ciaran-storage-update'));
+  } catch {}
+}
+
+export function clearRecentSearches(): void {
+  try {
+    localStorage.removeItem(RECENT_SEARCHES_KEY);
+    window.dispatchEvent(new Event('ciaran-storage-update'));
+  } catch {}
 }
 
 export function clearAppCache(keepBookmarks = true): void {

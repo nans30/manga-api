@@ -32,6 +32,7 @@ import {
   Calendar,
   User,
   ArrowRight,
+  Search,
 } from 'lucide-react';
 
 export const MangaDetail: React.FC = () => {
@@ -59,6 +60,8 @@ export const MangaDetail: React.FC = () => {
   const [sortAsc, setSortAsc] = useState(false);
   const [readIds, setReadIds] = useState<string[]>([]);
   const [expandedDesc, setExpandedDesc] = useState(false);
+  const [chapterSearch, setChapterSearch] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
     if (!id) return;
@@ -127,6 +130,16 @@ export const MangaDetail: React.FC = () => {
     if (!manga) return;
     const next = toggleBookmark(manga);
     setBookmarked(next);
+    setToastMessage(
+      next
+        ? sysLang === 'id'
+          ? '✓ Ditambahkan ke Koleksi'
+          : '✓ Saved to Library'
+        : sysLang === 'id'
+        ? 'Dihapus dari Koleksi'
+        : 'Removed from Library'
+    );
+    setTimeout(() => setToastMessage(''), 2500);
   };
 
   const scrollToChapters = () => {
@@ -159,7 +172,15 @@ export const MangaDetail: React.FC = () => {
     );
   }
 
-  const displayedChapters = sortAsc ? [...chapters].reverse() : chapters;
+  const filteredChapters = chapters.filter((c) => {
+    if (!chapterSearch.trim()) return true;
+    const q = chapterSearch.trim().toLowerCase();
+    return (
+      String(c.chapter).toLowerCase().includes(q) ||
+      (c.title && c.title.toLowerCase().includes(q))
+    );
+  });
+  const displayedChapters = sortAsc ? [...filteredChapters].reverse() : filteredChapters;
   const firstChapter = chapters.length > 0 ? chapters[chapters.length - 1] : null;
   const latestChapter = chapters.length > 0 ? chapters[0] : null;
   const targetChapter = firstChapter || latestChapter;
@@ -408,6 +429,29 @@ export const MangaDetail: React.FC = () => {
                 </button>
               </div>
 
+              {/* Quick Chapter Filter Input */}
+              <div className="relative w-36 sm:w-44">
+                <Search className="w-3.5 h-3.5 text-[#888888] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={chapterSearch}
+                  onChange={(e) => setChapterSearch(e.target.value)}
+                  placeholder={
+                    sysLang === 'id' ? 'Cari chapter...' : 'Search ch...'
+                  }
+                  className="w-full bg-[#ececec] dark:bg-[#1b1b1b] border border-[#c1c1c1]/40 dark:border-[#2a2a2a] focus:border-[#f9cb55] rounded-xl pl-8 pr-7 py-2 text-xs text-[#121212] dark:text-[#f8f8f8] placeholder:text-[#888888] focus:outline-none transition-colors"
+                />
+                {chapterSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setChapterSearch('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[#888888] hover:text-[#f9cb55]"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
               {/* Sort Order */}
               <button
                 onClick={() => setSortAsc(!sortAsc)}
@@ -507,6 +551,16 @@ export const MangaDetail: React.FC = () => {
           )}
         </section>
       </div>
+
+      {/* Floating Bookmark Toast Feedback */}
+      {toastMessage && (
+        <div className="fixed top-20 inset-x-0 z-50 flex justify-center px-4 pointer-events-none animate-in fade-in slide-in-from-top-4 duration-200">
+          <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#121212]/95 border border-[#f9cb55] text-[#f8f8f8] text-xs font-bold shadow-2xl backdrop-blur-md">
+            <CheckCircle2 className="w-4 h-4 text-[#f9cb55]" />
+            <span>{toastMessage}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

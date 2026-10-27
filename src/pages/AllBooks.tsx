@@ -7,7 +7,12 @@ import {
   cacheMangaObjects,
   useSysLang,
   getMangaDescription,
+  getRecentSearches,
+  addRecentSearch,
+  removeRecentSearch,
+  clearRecentSearches,
 } from '../storage';
+import { POPULAR_KEYWORDS } from '../components/SearchModal';
 import { NavBookmarkIcon, FlagIdIcon, FlagEnIcon } from '../components/Icons';
 import scrapedCache from '../data/mangadex-cache.json';
 import {
@@ -20,6 +25,9 @@ import {
   User,
   Loader2,
   Globe,
+  Clock,
+  Sparkles,
+  Filter,
 } from 'lucide-react';
 
 const cacheData: any = scrapedCache;
@@ -56,8 +64,18 @@ export const AllBooks: React.FC = () => {
   const [suggestions, setSuggestions] = useState<Manga[]>([]);
   const [searching, setSearching] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>(() =>
+    getRecentSearches()
+  );
+  const [activeIndex, setActiveIndex] = useState<number>(-1);
   const searchBoxRef = useRef<HTMLDivElement>(null);
   const [, setTick] = useState(0);
+
+  useEffect(() => {
+    const syncRecent = () => setRecentSearches(getRecentSearches());
+    window.addEventListener('ciaran-storage-update', syncRecent);
+    return () => window.removeEventListener('ciaran-storage-update', syncRecent);
+  }, []);
 
   // Local state for the 5 filter dropdowns (Update, Status, Tipe, Genre 1, Genre 2) + Cari button
   const [draftSort, setDraftSort] = useState(sort);
@@ -309,16 +327,56 @@ export const AllBooks: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSearchSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (activeIndex >= 0 && suggestions[activeIndex]) {
+      const selected = suggestions[activeIndex];
+      addRecentSearch(selected.title);
+      setDropdownOpen(false);
+      navigate(`/manga/${selected.id}`, { state: { manga: selected } });
+      return;
+    }
     setDropdownOpen(false);
+    const q = searchText.trim();
+    if (q) addRecentSearch(q);
     const next = new URLSearchParams(searchParams);
-    if (searchText.trim()) next.set('q', searchText.trim());
+    if (q) next.set('q', q);
     else next.delete('q');
     next.delete('authorId');
     next.delete('authorName');
     next.delete('page');
     setSearchParams(next);
+  };
+
+  const handleSelectKeyword = (kw: string) => {
+    setSearchText(kw);
+    addRecentSearch(kw);
+    setDropdownOpen(false);
+    const next = new URLSearchParams(searchParams);
+    next.set('q', kw);
+    next.delete('authorId');
+    next.delete('authorName');
+    next.delete('page');
+    setSearchParams(next);
+  };
+
+  const handleKeyDownSearch = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (suggestions.length > 0) {
+        setActiveIndex((prev) => (prev + 1) % suggestions.length);
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (suggestions.length > 0) {
+        setActiveIndex((prev) => (prev <= 0 ? suggestions.length - 1 : prev - 1));
+      }
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSearchSubmit();
+    } else if (e.key === 'Escape') {
+      setDropdownOpen(false);
+    }
   };
 
   const getPaginationItems = (current: number, max: number): (number | string)[] => {
@@ -367,7 +425,11 @@ export const AllBooks: React.FC = () => {
           <input
             type="text"
             value={searchText}
-            onFocus={() => setDropdownOpen(true)}
+            onFocus={() => {
+              setRecentSearches(getRecentSearches());
+              setDropdownOpen(true);
+            }}
+            onKeyDown={handleKeyDownSearch}
             onChange={(e) => {
               setSearchText(e.target.value);
               setDropdownOpen(true);
@@ -393,50 +455,142 @@ export const AllBooks: React.FC = () => {
           )}
         </form>
 
-        {/* Live Search Suggestions showing Title + Author Name */}
-        {dropdownOpen && searchText.trim().length >= 2 && (
+        {/* Live Search Suggestions + Recent Searches Dropdown */}
+        {dropdownOpen && (
           <div className="absolute left-0 right-0 top-full mt-2 rounded-2xl bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/40 dark:border-[#2b2b2b] shadow-2xl overflow-hidden z-50">
-            {searching ? (
-              <div className="p-4 flex items-center justify-center gap-2 text-xs text-[#6e6e6e] dark:text-[#c1c1c1]">
-                <Loader2 className="w-4 h-4 animate-spin text-[#f9cb55]" />
-                {sysLang === 'id' ? 'Mencari judul & pembuat...' : 'Searching title & author...'}
-              </div>
-            ) : suggestions.length === 0 ? (
-              <div className="p-4 text-center text-xs text-[#6e6e6e] dark:text-[#c1c1c1]">
-                {sysLang === 'id'
-                  ? `Tidak ada hasil untuk "${searchText}"`
-                  : `No results for "${searchText}"`}
-              </div>
+            {searchText.trim().length >= 2 ? (
+              searching ? (
+                <div className="p-4 flex items-center justify-center gap-2 text-xs text-[#6e6e6e] dark:text-[#c1c1c1]">
+                  <Loader2 className="w-4 h-4 animate-spin text-[#f9cb55]" />
+                  {sysLang === 'id' ? 'Mencari judul & pembuat...' : 'Searching title & author...'}
+                </div>
+              ) : suggestions.length === 0 ? (
+                <div className="p-4 text-center text-xs text-[#6e6e6e] dark:text-[#c1c1c1] space-y-2">
+                  <p>
+                    {sysLang === 'id'
+                      ? `Tidak ada hasil untuk "${searchText}"`
+                      : `No results for "${searchText}"`}
+                  </p>
+                  <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
+                    {POPULAR_KEYWORDS.slice(0, 5).map((kw) => (
+                      <button
+                        key={kw}
+                        type="button"
+                        onClick={() => handleSelectKeyword(kw)}
+                        className="px-2 py-1 text-[10px] rounded-lg bg-[#ececec] dark:bg-[#252525] hover:bg-[#f9cb55] hover:text-[#121212]"
+                      >
+                        {kw}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="divide-y divide-[#c1c1c1]/20 dark:divide-[#262626] max-h-80 overflow-y-auto">
+                  {suggestions.map((m, idx) => {
+                    const isActive = idx === activeIndex;
+                    return (
+                      <Link
+                        key={m.id}
+                        to={`/manga/${m.id}${lang ? `?lang=${lang}` : ''}`}
+                        state={{ manga: m }}
+                        onClick={() => {
+                          addRecentSearch(m.title);
+                          setDropdownOpen(false);
+                        }}
+                        className={`flex items-center gap-3 p-3 transition-colors ${
+                          isActive
+                            ? 'bg-[#f9cb55]/15'
+                            : 'hover:bg-[#ececec]/70 dark:hover:bg-[#242424]'
+                        }`}
+                      >
+                        <img
+                          src={m.coverUrl}
+                          alt={m.title}
+                          className="w-10 h-14 object-cover rounded-lg shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs sm:text-sm font-semibold text-[#121212] dark:text-[#f8f8f8] truncate">
+                            {m.title}
+                          </p>
+                          <p className="text-xs font-medium text-[#f9cb55] flex items-center gap-1 mt-0.5 truncate">
+                            <User className="w-3 h-3 shrink-0" />
+                            <span>{m.author}</span>
+                            {m.artist && m.artist !== m.author ? ` (${m.artist})` : ''}
+                          </p>
+                        </div>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#ececec] dark:bg-[#262626] text-[#6e6e6e] dark:text-[#c1c1c1]">
+                          {m.year || m.status.toUpperCase()}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )
             ) : (
-              <div className="divide-y divide-[#c1c1c1]/20 dark:divide-[#262626] max-h-80 overflow-y-auto">
-                {suggestions.map((m) => (
-                  <Link
-                    key={m.id}
-                    to={`/manga/${m.id}${lang ? `?lang=${lang}` : ''}`}
-                    state={{ manga: m }}
-                    onClick={() => setDropdownOpen(false)}
-                    className="flex items-center gap-3 p-3 hover:bg-[#ececec]/70 dark:hover:bg-[#242424] transition-colors"
-                  >
-                    <img
-                      src={m.coverUrl}
-                      alt={m.title}
-                      className="w-10 h-14 object-cover rounded-lg shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs sm:text-sm font-semibold text-[#121212] dark:text-[#f8f8f8] truncate">
-                        {m.title}
-                      </p>
-                      <p className="text-xs font-medium text-[#f9cb55] flex items-center gap-1 mt-0.5 truncate">
-                        <User className="w-3 h-3 shrink-0" />
-                        <span>{m.author}</span>
-                        {m.artist && m.artist !== m.author ? ` (${m.artist})` : ''}
-                      </p>
+              /* Recent Searches & Popular keywords in AllBooks search input */
+              <div className="p-4 space-y-4">
+                {recentSearches.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs font-bold text-[#888888]">
+                      <span className="flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-[#f9cb55]" />
+                        <span>{sysLang === 'id' ? 'Pencarian Terakhir' : 'Recent Searches'}</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => clearRecentSearches()}
+                        className="text-[#888888] hover:text-[#e57373] text-[11px]"
+                      >
+                        {sysLang === 'id' ? 'Hapus' : 'Clear'}
+                      </button>
                     </div>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#ececec] dark:bg-[#262626] text-[#6e6e6e] dark:text-[#c1c1c1]">
-                      {m.year || m.status.toUpperCase()}
-                    </span>
-                  </Link>
-                ))}
+                    <div className="flex flex-wrap gap-1.5">
+                      {recentSearches.slice(0, 6).map((item) => (
+                        <span
+                          key={item}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#ececec] dark:bg-[#252525] text-xs font-medium text-[#121212] dark:text-[#f8f8f8]"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => handleSelectKeyword(item)}
+                            className="hover:text-[#f9cb55]"
+                          >
+                            {item}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeRecentSearch(item);
+                            }}
+                            className="text-[#888888] hover:text-[#e57373]"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-[#888888]">
+                    <Sparkles className="w-3.5 h-3.5 text-[#f9cb55]" />
+                    <span>{sysLang === 'id' ? 'Rekomendasi Populer' : 'Popular Suggestions'}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {POPULAR_KEYWORDS.map((kw) => (
+                      <button
+                        key={kw}
+                        type="button"
+                        onClick={() => handleSelectKeyword(kw)}
+                        className="px-3 py-1.5 rounded-xl bg-[#ececec] dark:bg-[#252525] hover:bg-[#f9cb55] hover:text-[#121212] text-xs font-medium transition-colors"
+                      >
+                        {kw}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -618,6 +772,154 @@ export const AllBooks: React.FC = () => {
         </form>
       </div>
 
+      {/* Active Filters Bar */}
+      {(query ||
+        (sort && sort !== 'latest') ||
+        status ||
+        tipe ||
+        selectedTag ||
+        selectedGenre ||
+        selectedTag2 ||
+        selectedGenre2 ||
+        authorId) && (
+        <div className="flex flex-wrap items-center gap-2 p-3 sm:p-3.5 rounded-2xl bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/35 dark:border-[#2a2a2a] shadow-sm animate-in fade-in duration-150">
+          <span className="text-xs font-bold text-[#888888] flex items-center gap-1.5 mr-1">
+            <Filter className="w-3.5 h-3.5 text-[#f9cb55]" />
+            <span>{sysLang === 'id' ? 'Filter Aktif:' : 'Active Filters:'}</span>
+          </span>
+
+          {query && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#f9cb55]/20 border border-[#f9cb55]/50 text-[#121212] dark:text-[#f9cb55] text-xs font-semibold">
+              <span>{sysLang === 'id' ? `Kata Kunci: "${query}"` : `Keyword: "${query}"`}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchText('');
+                  updateParam('q', '');
+                }}
+                className="hover:text-[#e57373]"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </span>
+          )}
+
+          {sort && sort !== 'latest' && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#ececec] dark:bg-[#252525] border border-[#c1c1c1]/40 dark:border-[#333] text-xs font-medium">
+              <span>
+                {sysLang === 'id'
+                  ? `Urutan: ${sort === 'popular' ? 'Terpopuler' : 'Rating Tertinggi'}`
+                  : `Sort: ${sort === 'popular' ? 'Popular' : 'Top Rated'}`}
+              </span>
+              <button
+                type="button"
+                onClick={() => updateParam('sort', 'latest')}
+                className="hover:text-[#e57373]"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </span>
+          )}
+
+          {status && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#ececec] dark:bg-[#252525] border border-[#c1c1c1]/40 dark:border-[#333] text-xs font-medium">
+              <span>
+                {sysLang === 'id'
+                  ? `Status: ${status === 'ongoing' ? 'Berjalan' : 'Tamat'}`
+                  : `Status: ${status === 'ongoing' ? 'Ongoing' : 'Completed'}`}
+              </span>
+              <button
+                type="button"
+                onClick={() => updateParam('status', '')}
+                className="hover:text-[#e57373]"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </span>
+          )}
+
+          {tipe && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#ececec] dark:bg-[#252525] border border-[#c1c1c1]/40 dark:border-[#333] text-xs font-medium">
+              <span>Tipe: {tipe.toUpperCase()}</span>
+              <button
+                type="button"
+                onClick={() => updateParam('tipe', '')}
+                className="hover:text-[#e57373]"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </span>
+          )}
+
+          {(selectedTag || selectedGenre) && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#ececec] dark:bg-[#252525] border border-[#c1c1c1]/40 dark:border-[#333] text-xs font-medium">
+              <span>
+                Genre: {tags.find((t) => t.id === selectedTag)?.name || selectedGenre}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = new URLSearchParams(searchParams);
+                  next.delete('tag');
+                  next.delete('genre');
+                  next.delete('contentRating');
+                  setSearchParams(next);
+                }}
+                className="hover:text-[#e57373]"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </span>
+          )}
+
+          {(selectedTag2 || selectedGenre2) && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#ececec] dark:bg-[#252525] border border-[#c1c1c1]/40 dark:border-[#333] text-xs font-medium">
+              <span>
+                Genre 2: {tags.find((t) => t.id === selectedTag2)?.name || selectedGenre2}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = new URLSearchParams(searchParams);
+                  next.delete('tag2');
+                  next.delete('genre2');
+                  setSearchParams(next);
+                }}
+                className="hover:text-[#e57373]"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </span>
+          )}
+
+          {authorId && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#ececec] dark:bg-[#252525] border border-[#c1c1c1]/40 dark:border-[#333] text-xs font-medium">
+              <span>Author: {searchParams.get('authorName') || 'Dipilih'}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = new URLSearchParams(searchParams);
+                  next.delete('authorId');
+                  next.delete('authorName');
+                  setSearchParams(next);
+                }}
+                className="hover:text-[#e57373]"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </span>
+          )}
+
+          <button
+            type="button"
+            onClick={handleResetFilter}
+            className="ml-auto text-xs font-bold text-[#f9cb55] hover:underline px-2 py-1 cursor-pointer"
+          >
+            {sysLang === 'id' ? 'Reset Semua ✕' : 'Clear All ✕'}
+          </button>
+        </div>
+      )}
+
       {/* Book List */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -629,15 +931,28 @@ export const AllBooks: React.FC = () => {
           ))}
         </div>
       ) : books.length === 0 ? (
-        <div className="text-center py-20 rounded-3xl bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#262626]">
-          <p className="text-base font-semibold">
-            {sysLang === 'id' ? 'Tidak ada komik yang ditemukan' : 'No books found'}
-          </p>
-          <p className="text-xs text-[#c1c1c1] mt-1">
+        <div className="text-center py-16 px-4 rounded-3xl bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#262626] space-y-4 shadow-sm">
+          <div className="w-14 h-14 rounded-2xl bg-[#f9cb55]/15 text-[#f9cb55] flex items-center justify-center mx-auto">
+            <Search className="w-7 h-7" />
+          </div>
+          <p className="text-lg font-bold text-[#121212] dark:text-[#f8f8f8]">
             {sysLang === 'id'
-              ? 'Coba kata kunci atau kategori lain.'
-              : 'Try another keyword or category.'}
+              ? 'Tidak ada komik yang sesuai dengan filter'
+              : 'No manga matching your filter'}
           </p>
+          <p className="text-xs text-[#888888] max-w-md mx-auto">
+            {sysLang === 'id'
+              ? 'Coba kurangi kombinasi filter atau gunakan kata kunci pencarian yang lebih umum.'
+              : 'Try relaxing your filter combinations or using a broader search keyword.'}
+          </p>
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-2">
+            <button
+              onClick={handleResetFilter}
+              className="px-5 py-2.5 rounded-xl bg-[#f9cb55] hover:bg-[#eab83e] text-[#121212] font-bold text-xs shadow-md transition-all cursor-pointer"
+            >
+              {sysLang === 'id' ? 'RESET SEMUA FILTER' : 'RESET ALL FILTERS'}
+            </button>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
