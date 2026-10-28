@@ -38,6 +38,7 @@ import {
   Sparkles,
   Search,
   X,
+  Image as ImageIcon,
 } from 'lucide-react';
 
 export const Library: React.FC = () => {
@@ -139,6 +140,64 @@ export const Library: React.FC = () => {
       setTimeout(() => setSyncMessage(''), 3500);
     };
     reader.readAsText(file);
+  };
+
+  const downloadAsset = async (
+    url: string,
+    filename: string,
+    asPng = false,
+    width = 1024,
+    height = 1024
+  ) => {
+    try {
+      const res = await fetch(url);
+      const svgText = await res.text();
+
+      if (!asPng) {
+        const blob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
+        const downloadUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(downloadUrl);
+        setSyncMessage(`✓ Berhasil mengunduh ${filename}`);
+        setTimeout(() => setSyncMessage(''), 3000);
+        return;
+      }
+
+      // Convert SVG to High-Resolution PNG via Canvas
+      const img = new Image();
+      const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
+      const blobUrl = URL.createObjectURL(svgBlob);
+
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob((pngBlob) => {
+            if (pngBlob) {
+              const pngUrl = URL.createObjectURL(pngBlob);
+              const a = document.createElement('a');
+              a.href = pngUrl;
+              a.download = filename.replace(/\.svg$/, '.png');
+              a.click();
+              URL.revokeObjectURL(pngUrl);
+              setSyncMessage(`✓ Berhasil mengunduh ${filename.replace(/\.svg$/, '.png')}`);
+              setTimeout(() => setSyncMessage(''), 3000);
+            }
+            URL.revokeObjectURL(blobUrl);
+          }, 'image/png');
+        }
+      };
+      img.src = blobUrl;
+    } catch {
+      setSyncMessage('Gagal mengunduh aset logo.');
+      setTimeout(() => setSyncMessage(''), 3000);
+    }
   };
 
   const handleThemeChange = (next: ThemeMode) => {
@@ -715,6 +774,152 @@ export const Library: React.FC = () => {
                 <Download className="w-4 h-4" />
                 {sysLang === 'id' ? 'INSTALL KE LAYAR UTAMA' : 'INSTALL TO HOME SCREEN'}
               </button>
+            </div>
+          </div>
+
+          {/* Brand Assets, Logo & Mockup Download Section */}
+          <div className="md:col-span-2 p-6 sm:p-8 rounded-3xl bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#262626] space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="font-manga text-xl sm:text-2xl tracking-wider flex items-center gap-2">
+                  <ImageIcon className="w-5 h-5 text-[#f9cb55]" />
+                  {sysLang === 'id' ? 'LOGO & BRAND ASSETS KIT' : 'LOGO & BRAND ASSETS KIT'}
+                </h3>
+                <p className="text-xs sm:text-sm text-[#6e6e6e] dark:text-[#c1c1c1] mt-1">
+                  {sysLang === 'id'
+                    ? 'Simpan dan download logo resmi Ciarán (Vektor SVG, PNG High-Resolution, Mockup Smartphone 3D, dan Banner).'
+                    : 'Download official Ciarán assets (Vector SVG, High-Res PNG, 3D Smartphone Mockup, and Social Banner).'}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Asset 1: App Icon */}
+              <div className="p-4 rounded-2xl bg-[#ececec]/50 dark:bg-[#222225] border border-[#c1c1c1]/30 dark:border-[#2f2f36] flex flex-col items-center text-center space-y-3">
+                <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-lg border border-black/10">
+                  <img src="/brand/ciaran-icon.svg" alt="Ciaran Icon" className="w-full h-full object-contain" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-xs">App Icon (512x512)</h4>
+                  <p className="text-[11px] text-[#888888]">Squircle Icon</p>
+                </div>
+                <div className="flex items-center gap-2 w-full pt-1">
+                  <button
+                    onClick={() => downloadAsset('/brand/ciaran-icon.svg', 'ciaran-icon.svg')}
+                    className="flex-1 py-1.5 px-2 rounded-lg bg-[#ffffff] dark:bg-[#2c2c32] hover:border-[#f9cb55] border border-[#c1c1c1]/40 dark:border-[#3a3a42] text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer"
+                  >
+                    <Download className="w-3 h-3 text-[#f9cb55]" /> SVG
+                  </button>
+                  <button
+                    onClick={() => downloadAsset('/brand/ciaran-icon.svg', 'ciaran-icon.png', true, 512, 512)}
+                    className="flex-1 py-1.5 px-2 rounded-lg bg-[#f9cb55] hover:bg-[#eab83e] text-[#121212] text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer"
+                  >
+                    <Download className="w-3 h-3" /> PNG
+                  </button>
+                </div>
+              </div>
+
+              {/* Asset 2: Logo Horizontal (Light) */}
+              <div className="p-4 rounded-2xl bg-[#ececec]/50 dark:bg-[#222225] border border-[#c1c1c1]/30 dark:border-[#2f2f36] flex flex-col items-center text-center space-y-3">
+                <div className="w-full h-24 rounded-2xl bg-white p-2 flex items-center justify-center shadow-sm border border-black/5">
+                  <img src="/brand/ciaran-logo-horizontal.svg" alt="Ciaran Logo Light" className="max-w-full max-h-full object-contain" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-xs">Logo Horizontal (Light)</h4>
+                  <p className="text-[11px] text-[#888888]">Header &amp; Wordmark</p>
+                </div>
+                <div className="flex items-center gap-2 w-full pt-1">
+                  <button
+                    onClick={() => downloadAsset('/brand/ciaran-logo-horizontal.svg', 'ciaran-logo-light.svg')}
+                    className="flex-1 py-1.5 px-2 rounded-lg bg-[#ffffff] dark:bg-[#2c2c32] hover:border-[#f9cb55] border border-[#c1c1c1]/40 dark:border-[#3a3a42] text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer"
+                  >
+                    <Download className="w-3 h-3 text-[#f9cb55]" /> SVG
+                  </button>
+                  <button
+                    onClick={() => downloadAsset('/brand/ciaran-logo-horizontal.svg', 'ciaran-logo-light.png', true, 1680, 480)}
+                    className="flex-1 py-1.5 px-2 rounded-lg bg-[#f9cb55] hover:bg-[#eab83e] text-[#121212] text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer"
+                  >
+                    <Download className="w-3 h-3" /> PNG
+                  </button>
+                </div>
+              </div>
+
+              {/* Asset 3: Logo Dark Card */}
+              <div className="p-4 rounded-2xl bg-[#ececec]/50 dark:bg-[#222225] border border-[#c1c1c1]/30 dark:border-[#2f2f36] flex flex-col items-center text-center space-y-3">
+                <div className="w-full h-24 rounded-2xl bg-[#121212] p-2 flex items-center justify-center shadow-sm border border-[#27272a]">
+                  <img src="/brand/ciaran-logo-dark.svg" alt="Ciaran Logo Dark" className="max-w-full max-h-full object-contain" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-xs">Logo Dark Card</h4>
+                  <p className="text-[11px] text-[#888888]">Dark Background</p>
+                </div>
+                <div className="flex items-center gap-2 w-full pt-1">
+                  <button
+                    onClick={() => downloadAsset('/brand/ciaran-logo-dark.svg', 'ciaran-logo-dark.svg')}
+                    className="flex-1 py-1.5 px-2 rounded-lg bg-[#ffffff] dark:bg-[#2c2c32] hover:border-[#f9cb55] border border-[#c1c1c1]/40 dark:border-[#3a3a42] text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer"
+                  >
+                    <Download className="w-3 h-3 text-[#f9cb55]" /> SVG
+                  </button>
+                  <button
+                    onClick={() => downloadAsset('/brand/ciaran-logo-dark.svg', 'ciaran-logo-dark.png', true, 1680, 480)}
+                    className="flex-1 py-1.5 px-2 rounded-lg bg-[#f9cb55] hover:bg-[#eab83e] text-[#121212] text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer"
+                  >
+                    <Download className="w-3 h-3" /> PNG
+                  </button>
+                </div>
+              </div>
+
+              {/* Asset 4: 3D App Mockup */}
+              <div className="p-4 rounded-2xl bg-[#ececec]/50 dark:bg-[#222225] border border-[#c1c1c1]/30 dark:border-[#2f2f36] flex flex-col items-center text-center space-y-3">
+                <div className="w-full h-24 rounded-2xl bg-[#121212] p-1 flex items-center justify-center shadow-sm border border-[#27272a] overflow-hidden">
+                  <img src="/brand/ciaran-mockup.svg" alt="Ciaran 3D Mockup" className="max-w-full max-h-full object-contain" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-xs">3D Smartphone Mockup</h4>
+                  <p className="text-[11px] text-[#888888]">Device Presentation</p>
+                </div>
+                <div className="flex items-center gap-2 w-full pt-1">
+                  <button
+                    onClick={() => downloadAsset('/brand/ciaran-mockup.svg', 'ciaran-mockup.svg')}
+                    className="flex-1 py-1.5 px-2 rounded-lg bg-[#ffffff] dark:bg-[#2c2c32] hover:border-[#f9cb55] border border-[#c1c1c1]/40 dark:border-[#3a3a42] text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer"
+                  >
+                    <Download className="w-3 h-3 text-[#f9cb55]" /> SVG
+                  </button>
+                  <button
+                    onClick={() => downloadAsset('/brand/ciaran-mockup.svg', 'ciaran-mockup.png', true, 2000, 1600)}
+                    className="flex-1 py-1.5 px-2 rounded-lg bg-[#f9cb55] hover:bg-[#eab83e] text-[#121212] text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer"
+                  >
+                    <Download className="w-3 h-3" /> PNG
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Social Banner Asset */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-[#ececec]/50 dark:bg-[#222225] border border-[#c1c1c1]/30 dark:border-[#2f2f36] flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-28 h-16 rounded-xl overflow-hidden shadow-sm shrink-0 border border-black/10">
+                  <img src="/brand/ciaran-banner.svg" alt="Ciaran Banner" className="w-full h-full object-cover" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm">Social Media &amp; Promo Banner (1200x630)</h4>
+                  <p className="text-xs text-[#888888]">Cocok untuk OpenGraph, Twitter/X, Discord, atau banner promosi.</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => downloadAsset('/brand/ciaran-banner.svg', 'ciaran-banner.svg')}
+                  className="py-2 px-3.5 rounded-xl bg-[#ffffff] dark:bg-[#2c2c32] hover:border-[#f9cb55] border border-[#c1c1c1]/40 dark:border-[#3a3a42] text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5 text-[#f9cb55]" /> Unduh SVG
+                </button>
+                <button
+                  onClick={() => downloadAsset('/brand/ciaran-banner.svg', 'ciaran-banner.png', true, 1200, 630)}
+                  className="py-2 px-4 rounded-xl bg-[#f9cb55] hover:bg-[#eab83e] text-[#121212] text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" /> Unduh PNG High-Res
+                </button>
+              </div>
             </div>
           </div>
 

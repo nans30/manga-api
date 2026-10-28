@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 240" width="840" height="240" fill="none">
+  <defs>
+    <linearGradient id="iconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fed766" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+    <filter id="iconDrop" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- Left Icon -->
+  <g transform="translate(40, 36)" filter="url(#iconDrop)">
+    <rect width="168" height="168" rx="42" fill="url(#iconGrad)" />
+    <g transform="translate(12, 12) scale(2.25)">
+      <path
+        d="M44.5 21.5L39.5 16.5H23.5L17.5 22.5V41.5L23.5 47.5H39.5L45 42L39.5 36.5L36.5 39.5H26.5L25 38V26L26.5 24.5H36.5L39.5 27.5L44.5 21.5Z"
+        fill="#121212"
+      />
+    </g>
+  </g>
+
+  <!-- Brand Typography -->
+  <text x="248" y="140" font-family="'Impact', 'Bangers', 'Arial Black', sans-serif" font-size="108" font-weight="900" letter-spacing="4" fill="#121212">
+    Ciarán
+  </text>
+
+  <!-- Tagline / Subtitle Pill -->
+  <rect x="252" y="162" width="280" height="34" rx="10" fill="#f9cb55" fill-opacity="0.25" />
+  <text x="264" y="185" font-family="'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="800" letter-spacing="3" fill="#d97706">
+    MANGA &amp; WEBTOON READER
+  </text>
+</svg>

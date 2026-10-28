@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fed766" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="125%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#000000" flood-opacity="0.35" />
+    </filter>
+    <filter id="glyphShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- App Icon Squircle Container -->
+  <rect x="32" y="32" width="448" height="448" rx="112" fill="url(#bgGrad)" filter="url(#shadow)" />
+  <rect x="32" y="32" width="448" height="448" rx="112" stroke="#ffffff" stroke-width="4" stroke-opacity="0.3" fill="none" />
+
+  <!-- Iconic Manga 'C' Cutout Symbol -->
+  <g transform="translate(64, 64) scale(6)" filter="url(#glyphShadow)">
+    <path
+      d="M44.5 21.5L39.5 16.5H23.5L17.5 22.5V41.5L23.5 47.5H39.5L45 42L39.5 36.5L36.5 39.5H26.5L25 38V26L26.5 24.5H36.5L39.5 27.5L44.5 21.5Z"
+      fill="#121212"
+    />
+  </g>
+</svg>
