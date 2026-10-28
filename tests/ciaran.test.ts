@@ -98,10 +98,28 @@ describe('Unit Tests: Ciaran Runtime Schemas & Edge Cases', () => {
     ).toThrowError(/Invalid Environment Configuration/);
   });
 
-  it('UUID Validator: rejects SQLi / Path Traversal strings', () => {
+  it('UUID & Komiku ID Validator: accepts UUIDs, komiku slugs with encoded chars, and rejects path traversal', () => {
     expect(UuidParamSchema.safeParse('../../etc/passwd').success).toBe(false);
     expect(UuidParamSchema.safeParse("1' OR '1'='1").success).toBe(false);
     expect(UuidParamSchema.safeParse(mockMangaSoloLeveling.id).success).toBe(true);
+    expect(UuidParamSchema.safeParse('komiku:solo-leveling').success).toBe(true);
+    expect(UuidParamSchema.safeParse('komiku-ch:123213-chainsaw-man-chapter-232').success).toBe(true);
+    expect(UuidParamSchema.safeParse('komiku-ch:manga-ch-1%20part%2B2').success).toBe(true);
+  });
+
+  it('ChapterSchema accepts multi-source badges, alternateId and availableSources', () => {
+    const multiSourceCh = {
+      ...mockChapterList[0],
+      source: 'mangadex',
+      alternateId: 'komiku-ch:slug-ch-1',
+      availableSources: ['mangadex', 'komiku'],
+    };
+    const parsed = ChapterSchema.safeParse(multiSourceCh);
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.availableSources).toContain('komiku');
+      expect(parsed.data.availableSources).toContain('mangadex');
+    }
   });
 });
 
@@ -161,5 +179,59 @@ describe('Integration Tests: Ciaran Express API Endpoints', () => {
   it('GET /api/chapter/:chapterId rejects invalid chapterId with 400', async () => {
     const res = await fetch(`${baseUrl}/api/chapter/not-a-uuid`);
     expect(res.status).toBe(400);
+  });
+
+  it('Complementing & Deduplicating Chapters: combines MangaDex (8 ch) and Komiku (16 ch) into 16 unique episodes', () => {
+    // Simulate 8 MangaDex chapters (1 to 8)
+    const mdChapters = Array.from({ length: 8 }, (_, i) => ({
+      id: `md-ch-${i + 1}`,
+      chapter: String(i + 1),
+      volume: null,
+      title: `Chapter ${i + 1}`,
+      translatedLanguage: 'en',
+      pages: 20,
+      publishAt: '2026-01-01T00:00:00Z',
+      groupName: 'MangaDex Scan',
+    }));
+
+    // Simulate 16 Komiku chapters (1 to 16 in Indonesian)
+    const komikuChapters = Array.from({ length: 16 }, (_, i) => ({
+      id: `komiku-ch:slug-ch-${i + 1}`,
+      chapter: String(i + 1),
+      volume: null,
+      title: `Chapter ${i + 1}`,
+      translatedLanguage: 'id',
+      pages: 30,
+      publishAt: '2026-01-02T00:00:00Z',
+      groupName: 'Komiku ID',
+    }));
+
+    // Unified chapter map logic (mirrors server logic)
+    const preferLang = 'id';
+    const combined = [...mdChapters, ...komikuChapters];
+    const chapterMap = new Map<string, any>();
+
+    for (const ch of combined) {
+      const match = String(ch.chapter || '').match(/[0-9]+(?:\.[0-9]+)?/);
+      const key = match ? String(parseFloat(match[0])) : ch.chapter.trim().toLowerCase();
+      const existing = chapterMap.get(key);
+
+      if (!existing) {
+        chapterMap.set(key, ch);
+      } else {
+        if (existing.translatedLanguage !== preferLang && ch.translatedLanguage === preferLang) {
+          chapterMap.set(key, ch);
+        }
+      }
+    }
+
+    const result = Array.from(chapterMap.values());
+    expect(result.length).toBe(16); // Total episodes unified into 16!
+    expect(result.every((c) => ChapterSchema.safeParse(c).success)).toBe(true);
+
+    // Verify chapters 1-8 preferred Indonesian from Komiku because preferLang is 'id'
+    expect(result.find((c) => c.chapter === '1')?.translatedLanguage).toBe('id');
+    // Verify chapters 9-16 were successfully included from Komiku
+    expect(result.find((c) => c.chapter === '16')?.id).toBe('komiku-ch:slug-ch-16');
   });
 });

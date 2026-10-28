@@ -146,6 +146,7 @@ class BoundedTTLCache<V> {
 const apiResponseCache = new BoundedTTLCache<any>(200, 45_000);
 const serverMangaCache = new BoundedTTLCache<any>(500, 1800_000);
 const translationCache = new BoundedTTLCache<string>(1500, 86400_000);
+const mangaLinkCache = new BoundedTTLCache<string>(1000, 86400_000);
 const imageBinaryCache = new BoundedTTLCache<{ buffer: Buffer; mime: string }>(
   60,
   600_000
@@ -161,6 +162,7 @@ const sweepTimer = setInterval(() => {
   apiResponseCache.pruneExpired();
   serverMangaCache.pruneExpired();
   translationCache.pruneExpired();
+  mangaLinkCache.pruneExpired();
   imageBinaryCache.pruneExpired();
   dnsCache.pruneExpired();
   rateLimitCache.pruneExpired();
@@ -802,6 +804,8 @@ async function fetchKomikuMangaDetailAndChapters(slug: string): Promise<{
       pages: 35,
       publishAt: parseKomikuDateToIso(rMatch[3]),
       groupName: 'Komiku ID',
+      source: 'komiku',
+      availableSources: ['komiku'],
     });
   }
 
@@ -1191,6 +1195,167 @@ app.get('/api/proxy-image', async (req: Request, res: Response) => {
   }
 });
 
+function parseChapterNumber(chStr: string): number {
+  const match = String(chStr || '').match(/[0-9]+(?:\.[0-9]+)?/);
+  if (!match) return -1;
+  const n = parseFloat(match[0]);
+  return Number.isFinite(n) ? n : -1;
+}
+
+function getChapterKey(chStr: string): string {
+  const num = parseChapterNumber(chStr);
+  if (num >= 0) {
+    return Number.isInteger(num) ? String(num) : String(num);
+  }
+  return String(chStr || '').trim().toLowerCase();
+}
+
+function normalizeTitle(title: string): string {
+  if (!title) return '';
+  return String(title)
+    .toLowerCase()
+    .replace(/[–—−-]/g, ' ')
+    .replace(/[×*_:!?,.'"`"“”\(\)\[\]{}~/\\#+]/g, ' ')
+    .replace(/\s*(?:bahasa\s+indonesia|indonesia|indo|color(?:ed)?|warna)\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function isMatchingTitle(titleA: string, titleB: string): boolean {
+  if (!titleA || !titleB) return false;
+  const normA = normalizeTitle(titleA);
+  const normB = normalizeTitle(titleB);
+  if (!normA || !normB) return false;
+  if (normA === normB) return true;
+
+  const cleanA = normA.replace(/\bx\b/g, '').replace(/\s+/g, ' ').trim();
+  const cleanB = normB.replace(/\bx\b/g, '').replace(/\s+/g, ' ').trim();
+  if (cleanA && cleanA === cleanB) return true;
+
+  const wordsA = normA.split(' ').filter(Boolean);
+  const wordsB = normB.split(' ').filter(Boolean);
+  if (wordsA.length >= 2 && wordsB.length >= 2) {
+    const setA = new Set(wordsA);
+    const common = wordsB.filter((w) => setA.has(w));
+    const overlapRatio = (common.length * 2) / (wordsA.length + wordsB.length);
+    if (overlapRatio >= 0.8) return true;
+  }
+  return false;
+}
+
+async function findKomikuSlugForManga(
+  mangaId: string,
+  mangaTitle?: string,
+  altTitles?: string[]
+): Promise<string | null> {
+  const cachedSlug = mangaLinkCache.get(mangaId);
+  if (cachedSlug) return cachedSlug;
+
+  let title = mangaTitle;
+  const alternatives = altTitles ? [...altTitles] : [];
+  if (!title) {
+    const cached = serverMangaCache.get(mangaId);
+    if (cached) {
+      title = cached.title;
+      if (cached.altTitle) alternatives.push(cached.altTitle);
+    }
+  }
+
+  if (!title) {
+    try {
+      const res = await dohGet(`${MANGADEX_API}/manga/${mangaId}`);
+      if (res.ok) {
+        const j: any = res.json();
+        const attr = j.data?.attributes;
+        if (attr) {
+          title =
+            attr.title?.en ||
+            attr.title?.ja ||
+            (Object.values(attr.title || {})[0] as string) ||
+            '';
+          if (Array.isArray(attr.altTitles)) {
+            for (const at of attr.altTitles) {
+              const val = Object.values(at || {})[0] as string;
+              if (val) alternatives.push(val);
+            }
+          }
+        }
+      }
+    } catch {}
+  }
+
+  if (!title) return null;
+
+  const candidates = [title, title.replace(/[:\-–].*$/, '').trim()].filter(
+    (s, idx, arr) => s && arr.indexOf(s) === idx
+  );
+
+  for (const q of candidates) {
+    try {
+      const kList = await fetchKomikuMangaList({ q });
+      for (const item of kList.list) {
+        if (
+          isMatchingTitle(item.title, title) ||
+          alternatives.some((alt) => isMatchingTitle(item.title, alt))
+        ) {
+          const slug = item.id.replace(/^komiku:/, '');
+          mangaLinkCache.set(mangaId, slug);
+          mangaLinkCache.set(`komiku:${slug}`, mangaId);
+          return slug;
+        }
+      }
+    } catch {}
+  }
+
+  return null;
+}
+
+async function findMangaDexIdForKomiku(
+  komikuSlug: string,
+  komikuTitle?: string
+): Promise<string | null> {
+  const komikuId = `komiku:${komikuSlug}`;
+  const cachedMdId = mangaLinkCache.get(komikuId);
+  if (cachedMdId) return cachedMdId;
+
+  let title = komikuTitle;
+  if (!title) {
+    const cached = serverMangaCache.get(komikuId);
+    if (cached) title = cached.title;
+  }
+
+  if (!title) return null;
+
+  const candidates = [title, title.replace(/[:\-–].*$/, '').trim()].filter(
+    (s, idx, arr) => s && arr.indexOf(s) === idx
+  );
+
+  for (const q of candidates) {
+    try {
+      const res = await dohGet(
+        `${MANGADEX_API}/manga?title=${encodeURIComponent(q)}&limit=5`
+      );
+      if (res.ok) {
+        const j: any = res.json();
+        for (const m of j.data || []) {
+          const mTitle =
+            m.attributes?.title?.en ||
+            m.attributes?.title?.ja ||
+            (Object.values(m.attributes?.title || {})[0] as string) ||
+            '';
+          if (isMatchingTitle(mTitle, title)) {
+            mangaLinkCache.set(komikuId, m.id);
+            mangaLinkCache.set(m.id, komikuSlug);
+            return m.id;
+          }
+        }
+      }
+    } catch {}
+  }
+
+  return null;
+}
+
 // ============================================================================
 // 2. Get Manga List (Komiku.org for Bahasa Indonesia + MangaDex for Global/EN)
 // ============================================================================
@@ -1376,21 +1541,77 @@ app.get('/api/manga', async (req: Request, res: Response) => {
     }
 
     // Merge both languages together when All Languages (!lang) is selected
+    // Unifies identical manga between MangaDex and Komiku so episodes complement each other
     let list: any[] = mdList;
     const komikuItems = komikuMergedRes?.list || [];
     if (shouldFetchKomikuAlso && komikuItems.length > 0) {
       const merged: any[] = [];
-      const seen = new Set<string>();
+      const seenTitles = new Map<string, number>();
+      const seenIds = new Set<string>();
       const maxCount = Math.max(komikuItems.length, mdList.length);
 
       for (let i = 0; i < maxCount; i++) {
-        if (komikuItems[i] && !seen.has(komikuItems[i].id)) {
-          merged.push(komikuItems[i]);
-          seen.add(komikuItems[i].id);
+        const kItem = komikuItems[i];
+        if (kItem && !seenIds.has(kItem.id)) {
+          const normTitle = normalizeTitle(kItem.title);
+          let matchedIdx = seenTitles.get(normTitle);
+          if (matchedIdx === undefined) {
+            for (let idx = 0; idx < merged.length; idx++) {
+              if (isMatchingTitle(merged[idx].title, kItem.title)) {
+                matchedIdx = idx;
+                break;
+              }
+            }
+          }
+
+          if (matchedIdx !== undefined) {
+            const existing = merged[matchedIdx];
+            if (!existing.id.startsWith('komiku:')) {
+              mangaLinkCache.set(existing.id, kItem.id.replace(/^komiku:/, ''));
+              mangaLinkCache.set(kItem.id, existing.id);
+              const chA = parseChapterNumber(existing.lastChapter);
+              const chB = parseChapterNumber(kItem.lastChapter);
+              if (chB > chA && kItem.lastChapter) {
+                existing.lastChapter = kItem.lastChapter;
+              }
+            }
+            seenIds.add(kItem.id);
+          } else {
+            merged.push(kItem);
+            seenIds.add(kItem.id);
+            seenTitles.set(normTitle, merged.length - 1);
+          }
         }
-        if (mdList[i] && !seen.has(mdList[i].id)) {
-          merged.push(mdList[i]);
-          seen.add(mdList[i].id);
+
+        const mItem = mdList[i];
+        if (mItem && !seenIds.has(mItem.id)) {
+          const normTitle = normalizeTitle(mItem.title);
+          let matchedIdx = seenTitles.get(normTitle);
+          if (matchedIdx === undefined) {
+            for (let idx = 0; idx < merged.length; idx++) {
+              if (isMatchingTitle(merged[idx].title, mItem.title)) {
+                matchedIdx = idx;
+                break;
+              }
+            }
+          }
+
+          if (matchedIdx !== undefined) {
+            const existing = merged[matchedIdx];
+            mangaLinkCache.set(mItem.id, existing.id.replace(/^komiku:/, ''));
+            mangaLinkCache.set(existing.id, mItem.id);
+            const chA = parseChapterNumber(mItem.lastChapter);
+            const chB = parseChapterNumber(existing.lastChapter);
+            if (chB > chA && existing.lastChapter) {
+              mItem.lastChapter = existing.lastChapter;
+            }
+            merged[matchedIdx] = mItem;
+            seenIds.add(mItem.id);
+          } else {
+            merged.push(mItem);
+            seenIds.add(mItem.id);
+            seenTitles.set(normTitle, merged.length - 1);
+          }
         }
       }
       list = merged.slice(0, safeLimit);
@@ -1507,6 +1728,27 @@ app.get('/api/manga/:id', async (req: Request, res: Response) => {
 
     await ensureBilingualDescriptions([formatted]);
 
+    // Sync latest chapter with Komiku if Komiku has a higher chapter count
+    try {
+      const kSlug = await findKomikuSlugForManga(
+        id,
+        formatted.title,
+        formatted.altTitle ? [formatted.altTitle] : []
+      );
+      if (kSlug) {
+        const kDetail = await fetchKomikuMangaDetailAndChapters(kSlug);
+        if (kDetail && kDetail.chapters.length > 0) {
+          const kMax = parseChapterNumber(
+            kDetail.manga.lastChapter || kDetail.chapters[0]?.chapter
+          );
+          const mdMax = parseChapterNumber(formatted.lastChapter);
+          if (kMax > mdMax) {
+            formatted.lastChapter = String(kMax);
+          }
+        }
+      }
+    } catch {}
+
     let rating = formatted.rating || null;
     let follows = formatted.follows || null;
     if (statsRes && statsRes.ok) {
@@ -1534,12 +1776,7 @@ app.get('/api/manga/:id', async (req: Request, res: Response) => {
   }
 });
 
-function parseChapterNumber(chStr: string): number {
-  const n = parseFloat(String(chStr || '').replace(/[^0-9.]/g, ''));
-  return Number.isFinite(n) ? n : -1;
-}
-
-// 5. Get Manga Chapters Feed (Supports Komiku.org + Auto-Fallback to Komiku for Bahasa Indonesia!)
+// 5. Get Manga Chapters Feed (Unified MangaDex + Komiku.org Complementation)
 app.get('/api/manga/:id/chapters', async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
@@ -1552,35 +1789,6 @@ app.get('/api/manga/:id/chapters', async (req: Request, res: Response) => {
       ChapterFeedParamsSchema.parse(req.query);
     const preferLang = req.query.prefer === 'en' ? 'en' : 'id';
 
-    // Direct Komiku.org manga chapters
-    if (id.startsWith('komiku:')) {
-      if (lang === 'en') {
-        res.setHeader('X-Cache', 'HIT');
-        res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300');
-        res.json({ data: [], total: 0 });
-        return;
-      }
-      const cachedKomikuCh = apiResponseCache.get(`chapters:${id}:all`);
-      if (cachedKomikuCh) {
-        res.setHeader('X-Cache', 'HIT');
-        res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300');
-        res.json(cachedKomikuCh);
-        return;
-      }
-      const slug = id.slice('komiku:'.length);
-      const komikuResult = await fetchKomikuMangaDetailAndChapters(slug);
-      const chList = komikuResult?.chapters || [];
-      const payload = {
-        data: chList,
-        total: chList.length,
-      };
-      apiResponseCache.set(`chapters:${id}:all`, payload, 120_000);
-      res.setHeader('X-Cache', 'MISS');
-      res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300');
-      res.json(payload);
-      return;
-    }
-
     const feedCacheKey = `chapters:${id}:${lang}:${preferLang}:${safeLimit}:${safeOffset}`;
     const cachedFeed = apiResponseCache.get(feedCacheKey);
     if (cachedFeed) {
@@ -1590,97 +1798,191 @@ app.get('/api/manga/:id/chapters', async (req: Request, res: Response) => {
       return;
     }
 
-    const params = new URLSearchParams();
-    params.append('limit', String(safeLimit));
-    params.append('offset', String(safeOffset));
-    params.append('includes[]', 'scanlation_group');
-    params.append('contentRating[]', 'safe');
-    params.append('contentRating[]', 'suggestive');
-    params.append('contentRating[]', 'erotica');
-    params.append('order[chapter]', 'desc');
-    params.append('order[publishAt]', 'desc');
-    params.append('includeEmptyPages', '0');
+    const rawChapters: any[] = [];
 
-    if (lang === 'id') {
-      params.append('translatedLanguage[]', 'id');
-    } else if (lang === 'en') {
-      params.append('translatedLanguage[]', 'en');
-    } else {
-      params.append('translatedLanguage[]', 'id');
-      params.append('translatedLanguage[]', 'en');
-    }
+    if (id.startsWith('komiku:')) {
+      const slug = id.slice('komiku:'.length);
+      const komikuResult = await fetchKomikuMangaDetailAndChapters(slug);
+      if (komikuResult?.chapters) {
+        rawChapters.push(...komikuResult.chapters);
+      }
 
-    const response = await dohGet(
-      `${MANGADEX_API}/manga/${id}/feed?${params.toString()}`
-    );
-
-    if (!response.ok) {
-      throw new Error(`MangaDex feed error: ${response.status}`);
-    }
-
-    const json: any = response.json();
-    const rawChapters = (json.data || [])
-      .filter(
-        (ch: any) =>
-          !ch.attributes?.externalUrl && (ch.attributes?.pages || 0) > 0
-      )
-      .map((ch: any) => {
-        const attr = ch.attributes || {};
-        const groupRel = (ch.relationships || []).find(
-          (r: any) => r.type === 'scanlation_group'
-        );
-        return {
-          id: ch.id,
-          chapter: String(attr.chapter || 'Oneshot').trim(),
-          volume: attr.volume || null,
-          title: attr.title || '',
-          translatedLanguage: attr.translatedLanguage || 'en',
-          pages: attr.pages || 0,
-          publishAt: attr.publishAt || attr.createdAt,
-          groupName: groupRel?.attributes?.name || 'No Group',
-        };
-      });
-
-    // If user wants Bahasa Indonesia ('id' or preferLang='id') and MangaDex has 0 Indonesian chapters,
-    // automatically search Komiku.org by manga title to provide complete Bahasa Indonesia chapters!
-    const hasIdChapters = rawChapters.some((c: any) => c.translatedLanguage === 'id');
-    if (!hasIdChapters && (lang === 'id' || preferLang === 'id')) {
+      // Complement with MangaDex chapters (e.g. English chapters or higher chapters)
       try {
-        const cachedManga = serverMangaCache.get(id);
-        const searchTitle = cachedManga?.title || '';
-        if (searchTitle) {
-          const kSearch = await fetchKomikuMangaList({ q: searchTitle });
-          const firstMatch = kSearch.list[0];
-          if (firstMatch && firstMatch.id.startsWith('komiku:')) {
-            const kSlug = firstMatch.id.slice('komiku:'.length);
+        const mangaTitle = komikuResult?.manga?.title;
+        const mdId = await findMangaDexIdForKomiku(slug, mangaTitle);
+        if (mdId) {
+          const params = new URLSearchParams();
+          params.append('limit', '500');
+          params.append('includes[]', 'scanlation_group');
+          params.append('contentRating[]', 'safe');
+          params.append('contentRating[]', 'suggestive');
+          params.append('contentRating[]', 'erotica');
+          params.append('order[chapter]', 'desc');
+          params.append('order[publishAt]', 'desc');
+          params.append('includeEmptyPages', '0');
+
+          if (lang === 'id') {
+            params.append('translatedLanguage[]', 'id');
+          } else if (lang === 'en') {
+            params.append('translatedLanguage[]', 'en');
+          } else {
+            params.append('translatedLanguage[]', 'id');
+            params.append('translatedLanguage[]', 'en');
+          }
+
+          const mdRes = await dohGet(
+            `${MANGADEX_API}/manga/${mdId}/feed?${params.toString()}`
+          );
+          if (mdRes.ok) {
+            const json: any = mdRes.json();
+            const mdChs = (json.data || [])
+              .filter(
+                (ch: any) =>
+                  !ch.attributes?.externalUrl && (ch.attributes?.pages || 0) > 0
+              )
+              .map((ch: any) => {
+                const attr = ch.attributes || {};
+                const groupRel = (ch.relationships || []).find(
+                  (r: any) => r.type === 'scanlation_group'
+                );
+                return {
+                  id: ch.id,
+                  chapter: String(attr.chapter || 'Oneshot').trim(),
+                  volume: attr.volume || null,
+                  title: attr.title || '',
+                  translatedLanguage: attr.translatedLanguage || 'en',
+                  pages: attr.pages || 0,
+                  publishAt: attr.publishAt || attr.createdAt,
+                  groupName: groupRel?.attributes?.name || 'No Group',
+                  source: 'mangadex',
+                  availableSources: ['mangadex'],
+                };
+              });
+            rawChapters.push(...mdChs);
+          }
+        }
+      } catch {}
+    } else {
+      // id is MangaDex UUID
+      const params = new URLSearchParams();
+      params.append('limit', String(safeLimit));
+      params.append('offset', String(safeOffset));
+      params.append('includes[]', 'scanlation_group');
+      params.append('contentRating[]', 'safe');
+      params.append('contentRating[]', 'suggestive');
+      params.append('contentRating[]', 'erotica');
+      params.append('order[chapter]', 'desc');
+      params.append('order[publishAt]', 'desc');
+      params.append('includeEmptyPages', '0');
+
+      if (lang === 'id') {
+        params.append('translatedLanguage[]', 'id');
+      } else if (lang === 'en') {
+        params.append('translatedLanguage[]', 'en');
+      } else {
+        params.append('translatedLanguage[]', 'id');
+        params.append('translatedLanguage[]', 'en');
+      }
+
+      const response = await dohGet(
+        `${MANGADEX_API}/manga/${id}/feed?${params.toString()}`
+      );
+
+      if (response.ok) {
+        const json: any = response.json();
+        const mdChs = (json.data || [])
+          .filter(
+            (ch: any) =>
+              !ch.attributes?.externalUrl && (ch.attributes?.pages || 0) > 0
+          )
+          .map((ch: any) => {
+            const attr = ch.attributes || {};
+            const groupRel = (ch.relationships || []).find(
+              (r: any) => r.type === 'scanlation_group'
+            );
+            return {
+              id: ch.id,
+              chapter: String(attr.chapter || 'Oneshot').trim(),
+              volume: attr.volume || null,
+              title: attr.title || '',
+              translatedLanguage: attr.translatedLanguage || 'en',
+              pages: attr.pages || 0,
+              publishAt: attr.publishAt || attr.createdAt,
+              groupName: groupRel?.attributes?.name || 'No Group',
+              source: 'mangadex',
+              availableSources: ['mangadex'],
+            };
+          });
+        rawChapters.push(...mdChs);
+      }
+
+      // Check Komiku for complementary Indonesian chapters (so MangaDex + Komiku chapters unify!)
+      if (lang !== 'en') {
+        try {
+          const kSlug = await findKomikuSlugForManga(id);
+          if (kSlug) {
             const kDetail = await fetchKomikuMangaDetailAndChapters(kSlug);
             if (kDetail && kDetail.chapters.length > 0) {
               rawChapters.push(...kDetail.chapters);
             }
           }
+        } catch {
+          // Ignore Komiku complement error
         }
-      } catch {
-        // Ignore Komiku fallback error
       }
     }
 
-    // Deduplicate by chapter/episode number so 12 episodes in 2 languages stays 12 episodes (not 24)
+    // Deduplicate & complement by normalized episode key so that missing chapters are filled in
+    // and total unique episodes reach the full combined count (e.g. 16 instead of 8)
     const chapterMap = new Map<string, any>();
     for (const ch of rawChapters) {
       if (lang === 'id' && ch.translatedLanguage !== 'id') continue;
       if (lang === 'en' && ch.translatedLanguage !== 'en') continue;
 
-      const key = ch.chapter;
+      const chSource: 'mangadex' | 'komiku' = ch.id.startsWith('komiku-ch:') ? 'komiku' : 'mangadex';
+      ch.source = chSource;
+
+      const key = getChapterKey(ch.chapter);
       const existing = chapterMap.get(key);
       if (!existing) {
+        ch.availableSources = [chSource];
         chapterMap.set(key, ch);
-      } else if (
-        existing.translatedLanguage !== preferLang &&
-        ch.translatedLanguage === preferLang
-      ) {
-        chapterMap.set(key, ch);
+      } else {
+        const existingSource: 'mangadex' | 'komiku' =
+          existing.id.startsWith('komiku-ch:') ? 'komiku' : 'mangadex';
+        existing.source = existingSource;
+
+        const allSources = new Set<'mangadex' | 'komiku'>([
+          ...(existing.availableSources || [existingSource]),
+          chSource,
+        ]);
+        const sourcesArray = Array.from(allSources);
+
+        // Preference:
+        // 1. Prefer chapter matching preferLang
+        if (
+          existing.translatedLanguage !== preferLang &&
+          ch.translatedLanguage === preferLang
+        ) {
+          ch.availableSources = sourcesArray;
+          ch.alternateId = existing.id;
+          chapterMap.set(key, ch);
+        } else {
+          existing.availableSources = sourcesArray;
+          existing.alternateId = ch.id;
+          // 2. If both have the same language: prefer MangaDex for scanlation details
+          if (existing.translatedLanguage === ch.translatedLanguage) {
+            if (existing.id.startsWith('komiku-ch:') && !ch.id.startsWith('komiku-ch:')) {
+              ch.availableSources = sourcesArray;
+              ch.alternateId = existing.id;
+              chapterMap.set(key, ch);
+            }
+          }
+        }
       }
     }
+
     const chapters = Array.from(chapterMap.values()).sort(
       (a, b) => parseChapterNumber(b.chapter) - parseChapterNumber(a.chapter)
     );

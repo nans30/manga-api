@@ -9,7 +9,7 @@ export const UuidParamSchema = z
     (val) =>
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
         val
-      ) || /^komiku(-ch)?:[a-z0-9._-]+$/i.test(val),
+      ) || /^komiku(-ch)?:[a-z0-9._%~+-]+$/i.test(val),
     { message: 'Format UUID atau ID Komik tidak valid' }
   );
 
@@ -90,6 +90,9 @@ export const ChapterSchema = z.object({
   pages: z.number().int().positive(),
   publishAt: z.string().min(1),
   groupName: z.string().default('No Group'),
+  source: z.enum(['mangadex', 'komiku']).optional(),
+  alternateId: z.string().optional(),
+  availableSources: z.array(z.enum(['mangadex', 'komiku'])).optional(),
 });
 
 export const ChapterPageSchema = z.object({

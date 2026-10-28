@@ -37,6 +37,9 @@ export interface Chapter {
   pages: number;
   publishAt: string;
   groupName: string;
+  source?: 'mangadex' | 'komiku';
+  alternateId?: string;
+  availableSources?: Array<'mangadex' | 'komiku'>;
 }
 
 export interface ChapterPage {
