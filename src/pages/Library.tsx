@@ -895,6 +895,31 @@ export const Library: React.FC = () => {
               </div>
             </div>
 
+            {/* Photorealistic 3D Studio Mockup Hero Card */}
+            <div className="p-4 sm:p-6 rounded-2xl bg-[#ececec]/50 dark:bg-[#222225] border border-[#c1c1c1]/30 dark:border-[#2f2f36] flex flex-col md:flex-row items-center justify-between gap-5">
+              <div className="w-full md:w-64 aspect-video rounded-xl overflow-hidden shadow-lg border border-black/10 shrink-0">
+                <img src="/brand/ciaran-3d-mockup.jpg" alt="Ciaran 3D Studio Mockup" className="w-full h-full object-cover" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#f9cb55]/20 text-[#f9cb55] text-[11px] font-bold mb-1">
+                  ★ PHOTOREALISTIC 3D STUDIO MOCKUP
+                </div>
+                <h4 className="font-bold text-sm sm:text-base">Flagship Titanium Smartphone &amp; Studio Desk</h4>
+                <p className="text-xs text-[#888888] mt-1">
+                  Render photorealistic 3D ultra-HD yang menampilkan aplikasi Ciarán dalam dark mode dengan kartu merchandise akrilik.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 w-full md:w-auto">
+                <a
+                  href="/brand/ciaran-3d-mockup.jpg"
+                  download="Ciaran-3D-Device-Mockup.jpg"
+                  className="flex-1 md:flex-initial py-2.5 px-5 rounded-xl bg-[#f9cb55] hover:bg-[#eab83e] text-[#121212] font-manga text-xs tracking-wider font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+                >
+                  <Download className="w-4 h-4" /> UNDUH 3D MOCKUP (HD JPG)
+                </a>
+              </div>
+            </div>
+
             {/* Social Banner Asset */}
             <div className="p-4 sm:p-5 rounded-2xl bg-[#ececec]/50 dark:bg-[#222225] border border-[#c1c1c1]/30 dark:border-[#2f2f36] flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-4">
