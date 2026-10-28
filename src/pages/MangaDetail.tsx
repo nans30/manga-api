@@ -109,7 +109,8 @@ export const MangaDetail: React.FC = () => {
           // Ensure each episode/chapter number is counted once (no duplicate count across languages)
           const uniqueMap = new Map<string, Chapter>();
           for (const ch of json.data as Chapter[]) {
-            const key = String(ch.chapter).trim();
+            const num = parseFloat(String(ch.chapter || '').replace(/[^0-9.]/g, ''));
+            const key = Number.isFinite(num) ? String(num) : String(ch.chapter).trim().toLowerCase();
             const existing = uniqueMap.get(key);
             if (
               !existing ||
@@ -372,6 +373,29 @@ export const MangaDetail: React.FC = () => {
                 </Link>
               )}
             </div>
+
+            {/* Quick External Trackers (AniList / MyAnimeList) */}
+            <div className="flex items-center gap-2 pt-2 text-xs text-[#6e6e6e] dark:text-[#c1c1c1]">
+              <span className="font-semibold text-[11px]">{sysLang === 'id' ? 'Lacak di:' : 'Track on:'}</span>
+              <a
+                href={`https://anilist.co/search/manga?search=${encodeURIComponent(manga.title)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-2 py-1 rounded-lg bg-[#02A9FF]/10 text-[#02A9FF] border border-[#02A9FF]/20 text-[11px] font-bold hover:bg-[#02A9FF]/20 transition-all"
+                title="Buka di AniList"
+              >
+                AniList ↗
+              </a>
+              <a
+                href={`https://myanimelist.net/manga.php?q=${encodeURIComponent(manga.title)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-2 py-1 rounded-lg bg-[#2E51A2]/10 text-[#2E51A2] dark:text-[#7b9fe7] border border-[#2E51A2]/20 text-[11px] font-bold hover:bg-[#2E51A2]/20 transition-all"
+                title="Buka di MyAnimeList"
+              >
+                MyAnimeList ↗
+              </a>
+            </div>
           </div>
         </div>
 
@@ -520,6 +544,20 @@ export const MangaDetail: React.FC = () => {
                         <span className="font-manga text-base tracking-wide text-[#121212] dark:text-[#f8f8f8] group-hover:text-[#f9cb55] transition-colors">
                           CHAPTER {ch.chapter}
                         </span>
+                        {ch.source === 'komiku' ? (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                            KOMIKU
+                          </span>
+                        ) : (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+                            MANGADEX
+                          </span>
+                        )}
+                        {ch.availableSources && ch.availableSources.length > 1 && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#f9cb55]/15 text-[#f9cb55] border border-[#f9cb55]/30">
+                            2 Server
+                          </span>
+                        )}
                         {isRead && <CheckCircle2 className="w-4 h-4 text-[#f9cb55] shrink-0" />}
                       </div>
                       {ch.title && (
