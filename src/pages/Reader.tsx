@@ -38,6 +38,10 @@ import {
   BookOpen,
   Sparkles,
   Check,
+  Play,
+  Pause,
+  Eye,
+  RefreshCw,
 } from 'lucide-react';
 
 export const Reader: React.FC = () => {
@@ -80,6 +84,37 @@ export const Reader: React.FC = () => {
   const [theme, setThemeState] = useState<ThemeMode>(() => getTheme());
   const [mangaInfo, setMangaInfo] = useState<any>(null);
   const [containerMinHeight, setContainerMinHeight] = useState<number>(0);
+
+  // Auto-scroll in scroll mode
+  const [isAutoScrolling, setIsAutoScrolling] = useState<boolean>(false);
+  const [autoScrollSpeed, setAutoScrollSpeed] = useState<number>(() => {
+    const s = localStorage.getItem('ciaran_autoscroll_speed');
+    return s ? Number(s) : 2;
+  });
+  const autoScrollRaf = useRef<number | null>(null);
+
+  // Eye Care Night Tint Filter
+  const [nightFilter, setNightFilter] = useState<'normal' | 'dim80' | 'dim65' | 'sepia'>(() => {
+    return (localStorage.getItem('ciaran_night_filter') as any) || 'normal';
+  });
+
+  const handleNightFilterChange = (filter: 'normal' | 'dim80' | 'dim65' | 'sepia') => {
+    setNightFilter(filter);
+    localStorage.setItem('ciaran_night_filter', filter);
+  };
+
+  const filterStyle = React.useMemo(() => {
+    switch (nightFilter) {
+      case 'dim80':
+        return { filter: 'brightness(0.80)' };
+      case 'dim65':
+        return { filter: 'brightness(0.65) contrast(0.95)' };
+      case 'sepia':
+        return { filter: 'sepia(0.35) brightness(0.85)' };
+      default:
+        return {};
+    }
+  }, [nightFilter]);
 
   // Touch & scroll tracking so scrolling never triggers page jump or scroll-to-top
   const touchStartX = useRef<number | null>(null);
@@ -259,7 +294,7 @@ export const Reader: React.FC = () => {
           setPages(loadedPages);
           setChapterMeta(json.chapter || null);
 
-          const mId = json.chapter?.mangaId || mangaIdParam;
+          const mId = mangaIdParam || json.chapter?.mangaId;
           if (mId) {
             setBookmarked(isBookmarked(mId));
             const cachedM = getCachedMangaById(mId);
@@ -312,7 +347,7 @@ export const Reader: React.FC = () => {
 
   // Load sibling chapters for Prev / Next navigation (Deduplicated by episode number)
   useEffect(() => {
-    const activeMangaId = chapterMeta?.mangaId || mangaIdParam;
+    const activeMangaId = mangaIdParam || chapterMeta?.mangaId;
     if (!activeMangaId) return;
 
     fetch(`/api/manga/${activeMangaId}/chapters?lang=${langParam}&prefer=${sysLang}`)
@@ -321,7 +356,8 @@ export const Reader: React.FC = () => {
         if (json.data) {
           const uniqueMap = new Map<string, Chapter>();
           for (const ch of json.data as Chapter[]) {
-            const key = String(ch.chapter).trim();
+            const num = parseFloat(String(ch.chapter || '').replace(/[^0-9.]/g, ''));
+            const key = Number.isFinite(num) ? String(num) : String(ch.chapter).trim().toLowerCase();
             const existing = uniqueMap.get(key);
             if (
               !existing ||
@@ -339,13 +375,89 @@ export const Reader: React.FC = () => {
       .catch(() => {});
   }, [chapterMeta?.mangaId, mangaIdParam, langParam, sysLang, chapterId]);
 
-  const activeMangaId = chapterMeta?.mangaId || mangaIdParam;
+  const activeMangaId = mangaIdParam || chapterMeta?.mangaId;
   const currentIndex = chapterList.findIndex((c) => c.id === chapterId);
   const nextChapter = currentIndex > 0 ? chapterList[currentIndex - 1] : null;
   const prevChapter =
     currentIndex >= 0 && currentIndex < chapterList.length - 1
       ? chapterList[currentIndex + 1]
       : null;
+
+  const currentChapterObj = chapterList.find((c) => c.id === chapterId);
+  const currentSource: 'mangadex' | 'komiku' =
+    chapterId?.startsWith('komiku-ch:') ? 'komiku' : 'mangadex';
+  const alternateChapterId = currentChapterObj?.alternateId;
+
+  // 1. Preload upcoming 3 images in background for instant flipping/scrolling
+  useEffect(() => {
+    if (pages.length === 0) return;
+    const start = currentPage + 1;
+    const end = Math.min(start + 3, pages.length);
+    for (let i = start; i < end; i++) {
+      const u = pages[i]?.url;
+      if (u) {
+        const img = new Image();
+        img.src = u;
+      }
+    }
+  }, [currentPage, pages]);
+
+  // 2. Prefetch next chapter when near the end of current chapter
+  const prefetchedNextChRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!nextChapter || prefetchedNextChRef.current === nextChapter.id) return;
+    const isNearEnd =
+      mode === 'scroll'
+        ? currentPage >= Math.max(0, pages.length - 3)
+        : currentPage >= Math.max(0, pages.length - 2);
+
+    if (isNearEnd && pages.length > 0) {
+      prefetchedNextChRef.current = nextChapter.id;
+      fetch(`/api/chapter/${nextChapter.id}?quality=${quality}`)
+        .then((r) => r.json())
+        .then((json) => {
+          if (json.pages && Array.isArray(json.pages)) {
+            for (let i = 0; i < Math.min(2, json.pages.length); i++) {
+              if (json.pages[i]?.url) {
+                const img = new Image();
+                img.src = json.pages[i].url;
+              }
+            }
+          }
+        })
+        .catch(() => {});
+    }
+  }, [currentPage, nextChapter, quality, pages.length, mode]);
+
+  // 3. Auto-scroll loop for scroll mode
+  useEffect(() => {
+    if (!isAutoScrolling || mode !== 'scroll') {
+      if (autoScrollRaf.current) cancelAnimationFrame(autoScrollRaf.current);
+      return;
+    }
+
+    let running = true;
+    const step = () => {
+      if (!running) return;
+      const px =
+        autoScrollSpeed === 1
+          ? 1
+          : autoScrollSpeed === 2
+          ? 2
+          : autoScrollSpeed === 3
+          ? 3.5
+          : 5;
+      window.scrollBy(0, px);
+      autoScrollRaf.current = requestAnimationFrame(step);
+    };
+
+    autoScrollRaf.current = requestAnimationFrame(step);
+
+    return () => {
+      running = false;
+      if (autoScrollRaf.current) cancelAnimationFrame(autoScrollRaf.current);
+    };
+  }, [isAutoScrolling, autoScrollSpeed, mode]);
 
   // Preserve scroll position when turning pages so it NEVER jumps unexpectedly to the top
   const changePagePreserveScroll = useCallback((nextPageIdx: number) => {
@@ -676,7 +788,36 @@ export const Reader: React.FC = () => {
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Server / Source Badge & Switcher */}
+            <div className="flex items-center gap-1.5">
+              <span
+                className={`px-2 py-1 rounded-lg text-[10px] font-bold tracking-wider border ${
+                  currentSource === 'komiku'
+                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                    : 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20'
+                }`}
+              >
+                {currentSource.toUpperCase()}
+              </span>
+
+              {alternateChapterId && (
+                <button
+                  onClick={() =>
+                    navigate(
+                      `/read/${alternateChapterId}?mangaId=${activeMangaId}&lang=${langParam}`,
+                      { replace: true }
+                    )
+                  }
+                  className="px-2 py-1 rounded-lg text-[10px] font-bold bg-[#f9cb55]/20 text-[#f9cb55] hover:bg-[#f9cb55] hover:text-[#121212] border border-[#f9cb55]/30 transition-all flex items-center gap-1"
+                  title="Ganti ke server alternatif untuk chapter ini"
+                >
+                  <RefreshCw className="w-2.5 h-2.5" />
+                  Ganti Server
+                </button>
+              )}
+            </div>
+
             {/* Chapter Dropdown */}
             {chapterList.length > 0 && (
               <select
@@ -716,6 +857,33 @@ export const Reader: React.FC = () => {
         {menuOpen && (
           <div className="bg-[#ffffff] dark:bg-[#1b1b1b] border-t border-[#c1c1c1]/30 dark:border-[#2a2a2a] px-5 py-4 shadow-xl space-y-3">
             <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-4 text-xs">
+              {/* Eye Care / Night Dimmer Filter */}
+              <div className="flex items-center gap-2">
+                <span className="text-[#6e6e6e] dark:text-[#c1c1c1] font-medium flex items-center gap-1">
+                  <Eye className="w-3.5 h-3.5 text-[#f9cb55]" />
+                  {sysLang === 'id' ? 'Filter Mata:' : 'Eye Care:'}
+                </span>
+                {(['normal', 'dim80', 'dim65', 'sepia'] as const).map((lvl) => (
+                  <button
+                    key={lvl}
+                    onClick={() => handleNightFilterChange(lvl)}
+                    className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${
+                      nightFilter === lvl
+                        ? 'bg-[#f9cb55] text-[#121212]'
+                        : 'bg-[#ececec] dark:bg-[#252525] text-[#6e6e6e] dark:text-[#c1c1c1]'
+                    }`}
+                  >
+                    {lvl === 'normal'
+                      ? 'Normal'
+                      : lvl === 'dim80'
+                      ? '80%'
+                      : lvl === 'dim65'
+                      ? '65%'
+                      : 'Sepia'}
+                  </button>
+                ))}
+              </div>
+
               <div className="flex items-center gap-2">
                 <span className="text-[#6e6e6e] dark:text-[#c1c1c1] font-medium">
                   {sysLang === 'id' ? 'Kualitas Gambar:' : 'Image Quality:'}
@@ -931,7 +1099,8 @@ export const Reader: React.FC = () => {
                 className="relative w-full bg-[#121212] flex items-start justify-center overflow-hidden"
               >
                 <div
-                  className={`w-full flex items-center justify-center gap-1.5 ${
+                  style={filterStyle}
+                  className={`w-full flex items-center justify-center gap-1.5 transition-all ${
                     spreadMode === 'double' && pages[currentPage + 1] ? 'flex-row' : ''
                   }`}
                 >
@@ -1005,6 +1174,7 @@ export const Reader: React.FC = () => {
         ) : (
           /* ==================== MODE 2: VERTICAL SCROLL (Webtoon Mode) ==================== */
           <div
+            style={filterStyle}
             onClick={() => {
               if (isTouchScrolling.current) return;
               if (Date.now() - lastScrollTime.current < 200) return;
@@ -1179,6 +1349,48 @@ export const Reader: React.FC = () => {
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Floating Auto-Scroll Controls for Scroll Mode */}
+        {mode === 'scroll' && !loading && pages.length > 0 && (
+          <div className="fixed bottom-6 right-4 sm:right-6 z-40 flex items-center gap-1.5 p-1.5 rounded-2xl bg-[#121212]/90 backdrop-blur-md border border-[#f9cb55]/40 text-[#f8f8f8] shadow-2xl">
+            <button
+              onClick={() => setIsAutoScrolling(!isAutoScrolling)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                isAutoScrolling
+                  ? 'bg-[#f9cb55] text-[#121212]'
+                  : 'bg-[#222222] text-[#f8f8f8] hover:bg-[#333333]'
+              }`}
+              title={isAutoScrolling ? 'Jeda Auto-Scroll' : 'Mulai Auto-Scroll'}
+            >
+              {isAutoScrolling ? (
+                <Pause className="w-3.5 h-3.5" />
+              ) : (
+                <Play className="w-3.5 h-3.5" />
+              )}
+              <span>{isAutoScrolling ? 'Auto-Scroll' : 'Auto-Scroll'}</span>
+            </button>
+            {isAutoScrolling && (
+              <div className="flex items-center gap-1 pr-1">
+                {[1, 2, 3, 4].map((spd) => (
+                  <button
+                    key={spd}
+                    onClick={() => {
+                      setAutoScrollSpeed(spd);
+                      localStorage.setItem('ciaran_autoscroll_speed', String(spd));
+                    }}
+                    className={`w-6 h-6 rounded-lg text-[10px] font-bold transition-all ${
+                      autoScrollSpeed === spd
+                        ? 'bg-[#f9cb55] text-[#121212]'
+                        : 'text-[#c1c1c1] hover:text-[#f8f8f8]'
+                    }`}
+                  >
+                    {spd}x
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
