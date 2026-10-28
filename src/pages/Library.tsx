@@ -56,7 +56,7 @@ export const Library: React.FC = () => {
   const [bookmarks, setBookmarks] = useState<Manga[]>([]);
   const [history, setHistory] = useState<ReadingHistoryItem[]>([]);
   const [bookmarkCategory, setBookmarkCategory] = useState<
-    'all' | 'reading' | 'plan' | 'completed'
+    'all' | 'updates' | 'reading' | 'plan' | 'completed'
   >('all');
   const [storageInfo, setStorageInfo] = useState(() => getStorageUsage());
   const [syncMessage, setSyncMessage] = useState('');
@@ -151,7 +151,18 @@ export const Library: React.FC = () => {
     setSavedReaderMode(next);
   };
 
+  const checkHasUpdate = (b: Manga) => {
+    const h = history.find((x) => x.mangaId === b.id);
+    if (!h) return false;
+    const matchLast = String(b.lastChapter || '').match(/[0-9]+(?:\.[0-9]+)?/);
+    const lastNum = matchLast ? parseFloat(matchLast[0]) : -1;
+    const matchRead = String(h.chapterNumber || '').match(/[0-9]+(?:\.[0-9]+)?/);
+    const readNum = matchRead ? parseFloat(matchRead[0]) : -1;
+    return lastNum > 0 && readNum > 0 && lastNum > readNum;
+  };
+
   const countAll = bookmarks.length;
+  const countUpdates = bookmarks.filter(checkHasUpdate).length;
   const countReading = bookmarks.filter((b) =>
     history.some((h) => h.mangaId === b.id && (h.progressPercent || 0) < 100)
   ).length;
@@ -167,6 +178,7 @@ export const Library: React.FC = () => {
 
   const filteredBookmarks = bookmarks.filter((b) => {
     if (bookmarkCategory === 'all') return true;
+    if (bookmarkCategory === 'updates') return checkHasUpdate(b);
     const h = history.find((x) => x.mangaId === b.id);
     if (bookmarkCategory === 'reading') return h && (h.progressPercent || 0) < 100;
     if (bookmarkCategory === 'plan') return !h;
@@ -312,6 +324,15 @@ export const Library: React.FC = () => {
                   label: sysLang === 'id' ? 'Semua' : 'All',
                   count: countAll,
                 },
+                ...(countUpdates > 0
+                  ? [
+                      {
+                        id: 'updates',
+                        label: sysLang === 'id' ? '🔥 Ada Update' : '🔥 New Updates',
+                        count: countUpdates,
+                      },
+                    ]
+                  : []),
                 {
                   id: 'reading',
                   label: sysLang === 'id' ? 'Sedang Dibaca' : 'Reading',
@@ -422,18 +443,56 @@ export const Library: React.FC = () => {
                     <p className="text-xs text-[#6e6e6e] dark:text-[#c1c1c1] mt-0.5 truncate">
                       {manga.author}
                     </p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold">
-                        <Star className="w-3.5 h-3.5 fill-current text-[#f9cb55]" />
-                        5.0
-                      </span>
-                      <span className="px-2 py-0.5 rounded bg-[#f9cb55] text-[#121212] font-extrabold text-[10px]">
-                        SAVED
-                      </span>
-                    </div>
+                    {(() => {
+                      const h = history.find((x) => x.mangaId === manga.id);
+                      const matchLast = String(manga.lastChapter || '').match(/[0-9]+(?:\.[0-9]+)?/);
+                      const lastNum = matchLast ? parseFloat(matchLast[0]) : -1;
+                      const matchRead = String(h?.chapterNumber || '').match(/[0-9]+(?:\.[0-9]+)?/);
+                      const readNum = matchRead ? parseFloat(matchRead[0]) : -1;
+                      const hasUpdate = lastNum > 0 && readNum > 0 && lastNum > readNum;
+                      const diff = hasUpdate ? Math.max(1, Math.round(lastNum - readNum)) : 0;
+
+                      return (
+                        <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold">
+                            <Star className="w-3.5 h-3.5 fill-current text-[#f9cb55]" />
+                            5.0
+                          </span>
+                          <span className="px-2 py-0.5 rounded bg-[#f9cb55] text-[#121212] font-extrabold text-[10px]">
+                            SAVED
+                          </span>
+                          {hasUpdate && (
+                            <span className="px-2 py-0.5 rounded-full bg-red-500 text-white font-extrabold text-[10px] animate-pulse">
+                              +{diff} Ch Baru
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
                     <p className="text-xs text-[#6e6e6e] dark:text-[#c1c1c1] line-clamp-2 mt-2">
                       {getMangaDescription(manga, sysLang)}
                     </p>
+                    <div className="flex items-center gap-2 mt-2 pt-1.5 border-t border-[#c1c1c1]/20 dark:border-[#262626]">
+                      <span className="text-[10px] text-[#888888]">{sysLang === 'id' ? 'Lacak:' : 'Track:'}</span>
+                      <a
+                        href={`https://anilist.co/search/manga?search=${encodeURIComponent(manga.title)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] font-bold text-[#02A9FF] hover:underline"
+                        title="Buka di AniList"
+                      >
+                        AniList ↗
+                      </a>
+                      <a
+                        href={`https://myanimelist.net/manga.php?q=${encodeURIComponent(manga.title)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] font-bold text-[#2E51A2] dark:text-[#7b9fe7] hover:underline"
+                        title="Buka di MyAnimeList"
+                      >
+                        MAL ↗
+                      </a>
+                    </div>
                   </div>
                 </div>
               ))}
