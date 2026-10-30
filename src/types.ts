@@ -17,11 +17,17 @@ export interface Manga {
   year: number | null;
   contentRating: string;
   originalLanguage: string;
+  firstChapter?: string | null;
+  firstChapterId?: string | null;
   lastChapter: string | null;
   lastChapterId?: string | null;
+  badgeUp?: string | null;
+  comicType?: string;
+  primaryGenre?: string;
   updatedAt: string | null;
   coverUrl: string;
   coverUrlFull?: string;
+  coverHorizontalUrl?: string;
   author: string;
   authorId?: string;
   artist: string;

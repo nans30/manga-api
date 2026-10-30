@@ -12,6 +12,7 @@ import {
   getMangaDescription,
 } from '../storage';
 import { HeaderBagIcon, FlagIdIcon, FlagEnIcon } from '../components/Icons';
+import { MangaUpdateGridCard, MangaUpdateListCard } from '../components/ChapterUpdateCards';
 import scrapedCache from '../data/mangadex-cache.json';
 import {
   Search,
@@ -24,6 +25,10 @@ import {
   Globe,
   Clock,
   BookOpen,
+  LayoutGrid,
+  List,
+  SlidersHorizontal,
+  Loader2,
 } from 'lucide-react';
 import { formatRelativeTime } from '../components/MangaCard';
 
@@ -41,6 +46,49 @@ export const Home: React.FC = () => {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [bookmarkCount, setBookmarkCount] = useState(() => getBookmarks().length);
+
+  // Filter & View Mode state for Section 3 (Update Chapter Terbaru)
+  const [updateViewMode, setUpdateViewMode] = useState<'grid' | 'list'>('grid');
+  const [filterType, setFilterType] = useState<'' | 'manga' | 'manhwa' | 'manhua'>('');
+  const [filterSource, setFilterSource] = useState<'' | 'komiku' | 'komikindo' | 'mangadex'>('');
+  const [filterSort, setFilterSort] = useState<'latest' | 'popular' | 'rating'>('latest');
+  const [updateBooks, setUpdateBooks] = useState<Manga[]>(() => cache.latest || []);
+  const [loadingUpdates, setLoadingUpdates] = useState(false);
+
+  const fetchFilteredUpdates = useCallback(
+    async (signal?: AbortSignal) => {
+      setLoadingUpdates(true);
+      try {
+        const params = new URLSearchParams();
+        params.set('sort', filterSort);
+        params.set('limit', '24');
+        if (filterType) params.set('tipe', filterType);
+        if (filterSource) params.set('source', filterSource);
+        if (homeLang) params.set('lang', homeLang);
+
+        const res = await fetch(`/api/manga?${params.toString()}`, { signal }).then((r) =>
+          r.json()
+        );
+        if (!signal?.aborted && res.data?.length) {
+          cacheMangaObjects(res.data);
+          setUpdateBooks(res.data);
+        }
+      } catch {
+        // preserve current list on failure
+      } finally {
+        if (!signal?.aborted) {
+          setLoadingUpdates(false);
+        }
+      }
+    },
+    [filterSort, filterType, filterSource, homeLang]
+  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchFilteredUpdates(controller.signal);
+    return () => controller.abort();
+  }, [fetchFilteredUpdates]);
 
   const toggleTheme = () => {
     const next: ThemeMode = theme === 'dark' ? 'light' : 'dark';
@@ -396,15 +444,16 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* ==================== SECTION 3: ALL BOOKS ==================== */}
+      {/* ==================== SECTION 3: UPDATE CHAPTER TERBARU (Photo 1 & Photo 2 Match) ==================== */}
       <section className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        {/* Section Header: Title, Global/Lang Filter, View Switcher & Explore Link */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <h2 className="font-manga text-2xl sm:text-3xl tracking-wider text-[#121212] dark:text-[#f8f8f8]">
-              {sysLang === 'id' ? 'SEMUA KOMIK' : 'ALL BOOKS'}
+              {sysLang === 'id' ? 'KOMIK UPDATE TERBARU' : 'LATEST CHAPTER UPDATES'}
             </h2>
 
-            {/* Icon-Only Language Filter (Globe / ID / EN) */}
+            {/* Language filter switch (Globe / ID / EN) */}
             <div className="inline-flex items-center gap-1 bg-[#ffffff] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#2a2a2a] rounded-xl p-1">
               <button
                 type="button"
@@ -421,7 +470,7 @@ export const Home: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setHomeLang('id')}
-                title="Bahasa Indonesia"
+                title="Bahasa Indonesia (Komiku & Komikindo)"
                 className={`p-1.5 rounded-lg transition-all ${
                   homeLang === 'id'
                     ? 'bg-[#f9cb55] ring-2 ring-[#f9cb55]/50 shadow-sm'
@@ -433,7 +482,7 @@ export const Home: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setHomeLang('en')}
-                title="English"
+                title="English (MangaDex)"
                 className={`p-1.5 rounded-lg transition-all ${
                   homeLang === 'en'
                     ? 'bg-[#f9cb55] ring-2 ring-[#f9cb55]/50 shadow-sm'
@@ -445,105 +494,183 @@ export const Home: React.FC = () => {
             </div>
           </div>
 
-          <Link
-            to={homeLang ? `/books?lang=${homeLang}` : '/books'}
-            className="p-1.5 text-[#121212] dark:text-[#f8f8f8] hover:text-[#f9cb55] transition-colors flex items-center gap-1.5 text-xs font-semibold"
-          >
-            <span className="hidden sm:inline">
-              {sysLang === 'id' ? 'Lihat Katalog' : 'Explore Catalog'}
-            </span>
-            <ArrowRight className="w-5 h-5" />
-          </Link>
+          <div className="flex items-center gap-2.5 self-end sm:self-auto">
+            {/* View Mode Switcher: Grid (Photo 1) vs List (Photo 2) */}
+            <div className="inline-flex items-center p-1 rounded-xl bg-zinc-100 dark:bg-[#1b1b1b] border border-zinc-200 dark:border-zinc-800">
+              <button
+                type="button"
+                onClick={() => setUpdateViewMode('grid')}
+                className={`p-1.5 rounded-lg transition-all flex items-center gap-1 text-xs font-semibold ${
+                  updateViewMode === 'grid'
+                    ? 'bg-white dark:bg-zinc-800 text-[#121212] dark:text-[#f8f8f8] shadow-sm'
+                    : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'
+                }`}
+                title={sysLang === 'id' ? 'Tampilan Grid (Foto 1)' : 'Grid View'}
+              >
+                <LayoutGrid className="w-4 h-4" />
+                <span className="hidden md:inline">Grid</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setUpdateViewMode('list')}
+                className={`p-1.5 rounded-lg transition-all flex items-center gap-1 text-xs font-semibold ${
+                  updateViewMode === 'list'
+                    ? 'bg-white dark:bg-zinc-800 text-[#121212] dark:text-[#f8f8f8] shadow-sm'
+                    : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'
+                }`}
+                title={sysLang === 'id' ? 'Tampilan List Komiku (Foto 2)' : 'List View'}
+              >
+                <List className="w-4 h-4" />
+                <span className="hidden md:inline">List</span>
+              </button>
+            </div>
+
+            <Link
+              to={homeLang ? `/books?sort=latest&lang=${homeLang}` : '/books?sort=latest'}
+              className="p-1.5 text-[#121212] dark:text-[#f8f8f8] hover:text-[#f9cb55] transition-colors flex items-center gap-1 text-xs font-semibold"
+            >
+              <span className="hidden sm:inline">
+                {sysLang === 'id' ? 'Semua Update' : 'All Updates'}
+              </span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-5">
-          {allBooksPreview.map((manga) => (
-            <div
-              key={manga.id}
-              className="group flex flex-col gap-2"
-            >
-              <Link
-                to={`/manga/${manga.id}${homeLang ? `?lang=${homeLang}` : ''}`}
-                state={{ manga }}
-                className="relative aspect-[3/4.2] w-full rounded-2xl overflow-hidden bg-[#ececec] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#262626] shadow-md group-hover:shadow-lg transition-all"
+        {/* Filter Controls Bar (Type, Source, Sort) */}
+        <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-[#ffffff] dark:bg-[#181818] border border-[#c1c1c1]/35 dark:border-[#262626] shadow-sm">
+          {/* Comic Type Filter Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+            {[
+              { id: '', label: sysLang === 'id' ? 'Semua Tipe' : 'All Types' },
+              { id: 'manga', label: '🇯🇵 Manga' },
+              { id: 'manhwa', label: '🇰🇷 Manhwa' },
+              { id: 'manhua', label: '🇨🇳 Manhua' },
+            ].map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setFilterType(t.id as any)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                  filterType === t.id
+                    ? 'bg-[#f9cb55] text-[#121212] shadow-sm'
+                    : 'bg-zinc-100 dark:bg-zinc-800/80 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300'
+                }`}
               >
-                <img
-                  src={manga.coverUrl}
-                  alt={manga.title}
-                  loading="lazy"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#121212]/85 via-transparent to-transparent opacity-90" />
-                
-                {/* Source badge top left */}
-                <div className="absolute top-2 left-2 flex flex-col gap-1 items-start">
-                  {manga.id.startsWith('komikindo:') || manga.source === 'komikindo' ? (
-                    <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-purple-600 text-white shadow-sm">
-                      Komikindo
-                    </span>
-                  ) : manga.id.startsWith('komiku:') || manga.source === 'komiku' ? (
-                    <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-emerald-600 text-white shadow-sm">
-                      Komiku
-                    </span>
-                  ) : null}
-                </div>
+                {t.label}
+              </button>
+            ))}
+          </div>
 
-                {/* Country flag / origin top right */}
-                <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#121212]/85 text-[#f8f8f8] backdrop-blur-sm border border-white/10 uppercase">
-                  {manga.originalLanguage === 'ko'
-                    ? 'KR'
-                    : manga.originalLanguage === 'zh'
-                    ? 'CN'
-                    : 'JP'}
-                </span>
+          {/* Source & Sort Selects */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            {/* Source select */}
+            <select
+              value={filterSource}
+              onChange={(e) => setFilterSource(e.target.value as any)}
+              className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-xs font-medium text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700/70 focus:outline-none focus:border-[#f9cb55] cursor-pointer"
+            >
+              <option value="">{sysLang === 'id' ? 'Semua Sumber' : 'All Sources'}</option>
+              <option value="komiku">🇮🇩 Komiku</option>
+              <option value="komikindo">🟣 Komikindo</option>
+              <option value="mangadex">🌐 MangaDex</option>
+            </select>
 
-                {/* Bottom Overlay: Chapter & Relative Time (Komiku Style) */}
-                <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between text-[10px] text-zinc-200 font-semibold">
-                  {manga.lastChapter ? (
-                    <span className="px-1.5 py-0.5 rounded bg-[#121212]/85 text-[#f9cb55] flex items-center gap-1 backdrop-blur-sm border border-[#f9cb55]/30">
-                      <BookOpen className="w-2.5 h-2.5" />
-                      Ch. {manga.lastChapter}
-                    </span>
-                  ) : (
-                    <span className="px-1.5 py-0.5 rounded bg-[#121212]/85 text-zinc-300">
-                      Detail
-                    </span>
-                  )}
-                  {manga.updatedAt && (
-                    <span className="text-[10px] text-zinc-300/90 flex items-center gap-0.5 px-1 py-0.5 rounded bg-[#121212]/85 backdrop-blur-sm">
-                      <Clock className="w-2.5 h-2.5 text-[#f9cb55]" />
-                      {formatRelativeTime(manga.updatedAt)}
-                    </span>
-                  )}
-                </div>
-              </Link>
+            {/* Sort select */}
+            <select
+              value={filterSort}
+              onChange={(e) => setFilterSort(e.target.value as any)}
+              className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-xs font-medium text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700/70 focus:outline-none focus:border-[#f9cb55] cursor-pointer"
+            >
+              <option value="latest">{sysLang === 'id' ? '⚡ Update Terbaru' : '⚡ Latest'}</option>
+              <option value="popular">{sysLang === 'id' ? '🔥 Terpopuler' : '🔥 Popular'}</option>
+              <option value="rating">{sysLang === 'id' ? '⭐ Rating Tertinggi' : '⭐ Top Rated'}</option>
+            </select>
 
-              <div className="px-0.5">
-                <Link
-                  to={`/manga/${manga.id}${homeLang ? `?lang=${homeLang}` : ''}`}
-                  state={{ manga }}
-                  className="font-semibold text-xs sm:text-sm text-[#121212] dark:text-[#f8f8f8] group-hover:text-[#f9cb55] transition-colors line-clamp-1 block leading-snug"
-                >
-                  {manga.title}
-                </Link>
+            {loadingUpdates && (
+              <Loader2 className="w-4 h-4 animate-spin text-[#f9cb55] shrink-0" />
+            )}
+          </div>
+        </div>
 
-                <div className="flex items-center justify-between gap-1 mt-1 text-[11px] text-[#6e6e6e] dark:text-[#c1c1c1]">
-                  <p className="truncate flex-1">
-                    {manga.author}
-                  </p>
-                  {manga.lastChapter && (
-                    <Link
-                      to={manga.lastChapterId ? `/read/${manga.lastChapterId}` : `/manga/${manga.id}`}
-                      state={{ manga }}
-                      className="shrink-0 text-[10px] font-bold text-[#f9cb55] hover:underline"
-                    >
-                      Ch. {manga.lastChapter}
-                    </Link>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
+        {/* Manga Cards List/Grid Rendering */}
+        {loadingUpdates && updateBooks.length === 0 ? (
+          <div
+            className={
+              updateViewMode === 'grid'
+                ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5 sm:gap-4'
+                : 'grid grid-cols-1 md:grid-cols-2 gap-4'
+            }
+          >
+            {Array.from({ length: 12 }).map((_, idx) => (
+              <div
+                key={idx}
+                className={
+                  updateViewMode === 'grid'
+                    ? 'aspect-[3/4.5] rounded-xl bg-zinc-200 dark:bg-zinc-800 animate-pulse'
+                    : 'h-36 rounded-2xl bg-zinc-200 dark:bg-zinc-800 animate-pulse'
+                }
+              />
+            ))}
+          </div>
+        ) : updateBooks.length === 0 ? (
+          <div className="py-12 text-center rounded-2xl bg-white dark:bg-[#181818] border border-zinc-200 dark:border-zinc-800 p-6 space-y-2">
+            <p className="font-bold text-sm text-zinc-800 dark:text-zinc-200">
+              {sysLang === 'id'
+                ? 'Tidak ada komik yang sesuai dengan filter.'
+                : 'No comics found matching current filter.'}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setFilterType('');
+                setFilterSource('');
+                setFilterSort('latest');
+              }}
+              className="text-xs font-bold text-[#f9cb55] hover:underline"
+            >
+              {sysLang === 'id' ? 'Reset Filter' : 'Reset Filter'}
+            </button>
+          </div>
+        ) : updateViewMode === 'grid' ? (
+          /* ==================== GAMBAR 1: VERTICAL GRID MODE ==================== */
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5 sm:gap-4">
+            {updateBooks.slice(0, 18).map((manga) => (
+              <MangaUpdateGridCard
+                key={manga.id}
+                manga={manga}
+                sysLang={sysLang}
+              />
+            ))}
+          </div>
+        ) : (
+          /* ==================== GAMBAR 2: HORIZONTAL LIST MODE ==================== */
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+            {updateBooks.slice(0, 14).map((manga) => (
+              <MangaUpdateListCard
+                key={manga.id}
+                manga={manga}
+                sysLang={sysLang}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* View All Button */}
+        <div className="pt-2 flex justify-center">
+          <Link
+            to={
+              homeLang
+                ? `/books?sort=${filterSort}&tipe=${filterType}&source=${filterSource}&lang=${homeLang}`
+                : `/books?sort=${filterSort}&tipe=${filterType}&source=${filterSource}`
+            }
+            className="px-6 py-3 rounded-xl bg-white dark:bg-[#181818] border border-zinc-200 dark:border-zinc-800 hover:border-[#f9cb55] text-xs font-bold uppercase tracking-wider text-zinc-900 dark:text-zinc-100 transition-all shadow-sm flex items-center gap-2"
+          >
+            <span>
+              {sysLang === 'id' ? 'LIHAT SEMUA UPDATE DI KATALOG →' : 'BROWSE ALL UPDATES IN CATALOG →'}
+            </span>
+          </Link>
         </div>
 
         {/* ==================== FEATURED GENRE / CATEGORY CIRCLE CARDS (Photo 1 Match) ==================== */}

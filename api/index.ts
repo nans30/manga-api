@@ -614,25 +614,41 @@ function parseKomikuCatalogHtml(html: string): any[] {
     const title = titleMatch ? decodeHtmlEntities(titleMatch[1]) : slug;
 
     const imgMatch = block.match(/<img[^>]+src="([^"]+)"/i);
-    let rawCover = imgMatch ? imgMatch[1].replace(/&#038;/g, '&') : '';
+    const rawLandscapeCover = imgMatch ? imgMatch[1].replace(/&#038;/g, '&') : '';
     // Convert landscape crop (?resize=450,235) into clean portrait cover
-    rawCover = rawCover.replace(/\?resize=[^"&]+(&quality=\d+)?/i, '');
+    const cleanPortraitCover = rawLandscapeCover.replace(/\?resize=[^"&]+(&quality=\d+)?/i, '');
 
-    const coverUrl = rawCover.startsWith('https://')
-      ? `/api/proxy-image?url=${encodeURIComponent(rawCover)}`
+    const coverUrl = cleanPortraitCover.startsWith('https://')
+      ? `/api/proxy-image?url=${encodeURIComponent(cleanPortraitCover)}`
       : 'https://placehold.co/256x364/18181b/f9cb55?text=Komiku';
 
-    const typeMatch = block.match(/<b>(Manga|Manhwa|Manhua)<\/b>\s*([^<]*)/i);
-    const comicType = (typeMatch?.[1] || 'Manga').toLowerCase();
-    const primaryGenre = decodeHtmlEntities(typeMatch?.[2] || 'Action');
+    const coverHorizontalUrl = rawLandscapeCover.startsWith('https://')
+      ? `/api/proxy-image?url=${encodeURIComponent(rawLandscapeCover)}`
+      : coverUrl;
+
+    const upMatch = block.match(/<span class="up">([\s\S]*?)<\/span>/i);
+    const badgeUp = upMatch ? decodeHtmlEntities(upMatch[1]).trim().toUpperCase() : null;
+
+    const typeMatch = block.match(/<div class="tpe1_inf">\s*<b>(Manga|Manhwa|Manhua)<\/b>\s*([^<]*)/i) ||
+                      block.match(/<b>(Manga|Manhwa|Manhua)<\/b>\s*([^<]*)/i);
+    const rawComicType = (typeMatch?.[1] || 'Manga').trim();
+    const comicType = rawComicType.charAt(0).toUpperCase() + rawComicType.slice(1).toLowerCase();
+    const primaryGenre = decodeHtmlEntities((typeMatch?.[2] || 'Action').trim());
 
     const originalLanguage =
-      comicType === 'manhwa' ? 'ko' : comicType === 'manhua' ? 'zh' : 'ja';
+      comicType.toLowerCase() === 'manhwa' ? 'ko' : comicType.toLowerCase() === 'manhua' ? 'zh' : 'ja';
 
     const descMatch = block.match(/<p>([\s\S]*?)<\/p>/i);
     const descId = descMatch
-      ? decodeHtmlEntities(descMatch[1])
+      ? decodeHtmlEntities(descMatch[1]).trim()
       : `Baca komik ${title} Bahasa Indonesia terbaru di Ciaran.`;
+
+    const firstChMatch = block.match(
+      /<div class="new1">\s*<a href="\/([^/"]+)\/?"[^>]*><span>Awal:\s*<\/span>\s*<span>(?:Chapter\s*)?([^<]+)<\/span>/i
+    );
+    const firstChapterSlug = firstChMatch?.[1]?.trim() || null;
+    const firstChapter = firstChMatch?.[2]?.trim() || null;
+    const firstChapterId = firstChapterSlug ? `komiku-ch:${firstChapterSlug}` : null;
 
     const latestChMatch =
       block.match(
@@ -660,11 +676,17 @@ function parseKomikuCatalogHtml(html: string): any[] {
       year: 2025,
       contentRating: 'safe',
       originalLanguage,
+      firstChapter,
+      firstChapterId,
       lastChapter,
       lastChapterId,
+      badgeUp,
+      comicType,
+      primaryGenre,
       updatedAt,
       coverUrl,
       coverUrlFull: coverUrl,
+      coverHorizontalUrl,
       author: 'Komiku ID',
       authorId: '',
       artist: 'Komiku ID',
@@ -1032,9 +1054,10 @@ function parseKomikindoCatalogHtml(html: string): any[] {
       : 'https://placehold.co/256x364/18181b/f9cb55?text=Komikindo';
 
     const typeMatch = block.match(/<span class="typeflag\s*([^"]+)"/i);
-    const comicType = (typeMatch?.[1] || 'Manga').trim().toLowerCase();
+    const rawComicType = (typeMatch?.[1] || 'Manga').trim();
+    const comicType = rawComicType.charAt(0).toUpperCase() + rawComicType.slice(1).toLowerCase();
     const originalLanguage =
-      comicType === 'manhwa' ? 'ko' : comicType === 'manhua' ? 'zh' : 'ja';
+      comicType.toLowerCase() === 'manhwa' ? 'ko' : comicType.toLowerCase() === 'manhua' ? 'zh' : 'ja';
 
     const lastChMatch =
       block.match(
@@ -1067,19 +1090,25 @@ function parseKomikindoCatalogHtml(html: string): any[] {
       year: 2025,
       contentRating: 'safe',
       originalLanguage,
+      firstChapter: '1',
+      firstChapterId: null,
       lastChapter,
       lastChapterId,
+      badgeUp: 'UP',
+      comicType,
+      primaryGenre: comicType,
       updatedAt,
       coverUrl,
       coverUrlFull: coverUrl,
+      coverHorizontalUrl: coverUrl,
       author: 'Komikindo',
       authorId: '',
       artist: 'Komikindo',
       artistId: '',
       tags: [
         {
-          id: comicType,
-          name: comicType.toUpperCase(),
+          id: comicType.toLowerCase(),
+          name: comicType,
           group: 'genre',
         },
       ],
@@ -1467,7 +1496,11 @@ function formatManga(item: any) {
     year: attr.year || null,
     contentRating: attr.contentRating || 'safe',
     originalLanguage: attr.originalLanguage || 'ja',
+    firstChapter: '1',
     lastChapter: attr.lastChapter || null,
+    badgeUp: attr.lastChapter ? `UP ${attr.lastChapter}` : null,
+    comicType: attr.originalLanguage === 'ko' ? 'Manhwa' : attr.originalLanguage === 'zh' ? 'Manhua' : 'Manga',
+    primaryGenre: tags[0]?.name || 'Action',
     updatedAt: attr.updatedAt || null,
     coverUrl,
     coverUrlFull,
