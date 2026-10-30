@@ -64,14 +64,25 @@ export const Home: React.FC = () => {
         params.set('limit', '24');
         if (filterType) params.set('tipe', filterType);
         if (filterSource) params.set('source', filterSource);
-        if (homeLang) params.set('lang', homeLang);
+        
+        // Only attach lang if not overriding an explicit ID provider
+        if (homeLang) {
+          if (filterSource === 'komikindo' || filterSource === 'komiku') {
+            // Komiku & Komikindo are Indonesian providers
+            params.set('lang', 'id');
+          } else {
+            params.set('lang', homeLang);
+          }
+        }
 
         const res = await fetch(`/api/manga?${params.toString()}`, { signal }).then((r) =>
           r.json()
         );
-        if (!signal?.aborted && res.data?.length) {
-          cacheMangaObjects(res.data);
-          setUpdateBooks(res.data);
+        if (!signal?.aborted) {
+          if (Array.isArray(res.data)) {
+            cacheMangaObjects(res.data);
+            setUpdateBooks(res.data);
+          }
         }
       } catch {
         // preserve current list on failure

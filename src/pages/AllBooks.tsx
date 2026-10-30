@@ -204,7 +204,13 @@ export const AllBooks: React.FC = () => {
         if (selectedGenre2) params.set('genre2', selectedGenre2);
         if (contentRating) params.set('contentRating', contentRating);
         if (authorId) params.set('authorId', authorId);
-        if (lang) params.set('lang', lang);
+        if (lang) {
+          if (source === 'komikindo' || source === 'komiku') {
+            params.set('lang', 'id');
+          } else {
+            params.set('lang', lang);
+          }
+        }
         params.set('limit', String(LIMIT));
         const safeOffset = Math.min(10000 - LIMIT, Math.max(0, (page - 1) * LIMIT));
         params.set('offset', String(safeOffset));

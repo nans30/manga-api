@@ -1139,24 +1139,36 @@ async function fetchKomikindoMangaList(options: {
       page > 1
         ? `${KOMIKINDO_BASE}/page/${page}/?s=${encodeURIComponent(options.q)}`
         : `${KOMIKINDO_BASE}/?s=${encodeURIComponent(options.q)}`;
+  } else if (
+    !options.status &&
+    !options.tipe &&
+    !options.genre &&
+    (options.sort === 'latest' || !options.sort)
+  ) {
+    // REAL-TIME CHAPTER UPDATES FROM KOMIKINDO!
+    // /komik-terbaru/ contains all latest updated manga with real chapter numbers & relative time!
+    url =
+      page > 1
+        ? `${KOMIKINDO_BASE}/komik-terbaru/page/${page}/`
+        : `${KOMIKINDO_BASE}/komik-terbaru/`;
   } else {
     const params = new URLSearchParams();
     if (options.sort === 'popular') {
       params.set('order', 'popular');
-    } else if (options.sort === 'rating') {
-      params.set('order', 'rating');
     } else {
       params.set('order', 'update');
     }
 
     if (options.status === 'completed' || options.status === 'end') {
-      params.set('status', 'completed');
+      params.set('status', 'Completed');
     } else if (options.status === 'ongoing') {
-      params.set('status', 'ongoing');
+      params.set('status', 'Ongoing');
     }
 
     if (options.tipe) {
-      params.set('type', options.tipe);
+      const t = options.tipe.toLowerCase();
+      const capTipe = t === 'manhwa' ? 'Manhwa' : t === 'manhua' ? 'Manhua' : 'Manga';
+      params.set('type', capTipe);
     }
 
     if (options.genre && options.genre !== 'all') {
