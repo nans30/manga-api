@@ -98,27 +98,45 @@ describe('Unit Tests: Ciaran Runtime Schemas & Edge Cases', () => {
     ).toThrowError(/Invalid Environment Configuration/);
   });
 
-  it('UUID & Komiku ID Validator: accepts UUIDs, komiku slugs with encoded chars, and rejects path traversal', () => {
+  it('UUID, Komiku & Komikindo ID Validator: accepts UUIDs, komiku and komikindo slugs, and rejects path traversal', () => {
     expect(UuidParamSchema.safeParse('../../etc/passwd').success).toBe(false);
     expect(UuidParamSchema.safeParse("1' OR '1'='1").success).toBe(false);
     expect(UuidParamSchema.safeParse(mockMangaSoloLeveling.id).success).toBe(true);
     expect(UuidParamSchema.safeParse('komiku:solo-leveling').success).toBe(true);
     expect(UuidParamSchema.safeParse('komiku-ch:123213-chainsaw-man-chapter-232').success).toBe(true);
     expect(UuidParamSchema.safeParse('komiku-ch:manga-ch-1%20part%2B2').success).toBe(true);
+    expect(UuidParamSchema.safeParse('komikindo:solo-leveling-ragnarok').success).toBe(true);
+    expect(UuidParamSchema.safeParse('komikindo-ch:solo-leveling-ragnarok-chapter-68').success).toBe(true);
   });
 
-  it('ChapterSchema accepts multi-source badges, alternateId and availableSources', () => {
+  it('MangaQueryParamsSchema handles source/provider filter parameters correctly', () => {
+    const p1 = MangaQueryParamsSchema.parse({ source: 'komikindo' });
+    expect(p1.source).toBe('komikindo');
+
+    const p2 = MangaQueryParamsSchema.parse({ provider: 'komiku' });
+    expect(p2.provider).toBe('komiku');
+
+    const p3 = MangaQueryParamsSchema.parse({ source: 'mangadex' });
+    expect(p3.source).toBe('mangadex');
+
+    const pInvalid = MangaQueryParamsSchema.parse({ source: 'unknown-source' });
+    expect(pInvalid.source).toBe('');
+  });
+
+  it('ChapterSchema accepts multi-source badges including komikindo, alternateId and availableSources', () => {
     const multiSourceCh = {
       ...mockChapterList[0],
-      source: 'mangadex',
+      source: 'komikindo',
       alternateId: 'komiku-ch:slug-ch-1',
-      availableSources: ['mangadex', 'komiku'],
+      availableSources: ['mangadex', 'komiku', 'komikindo'],
     };
     const parsed = ChapterSchema.safeParse(multiSourceCh);
     expect(parsed.success).toBe(true);
     if (parsed.success) {
+      expect(parsed.data.source).toBe('komikindo');
       expect(parsed.data.availableSources).toContain('komiku');
       expect(parsed.data.availableSources).toContain('mangadex');
+      expect(parsed.data.availableSources).toContain('komikindo');
     }
   });
 });
@@ -175,6 +193,17 @@ describe('Integration Tests: Ciaran Express API Endpoints', () => {
     const body = (await res.json()) as { error: string };
     expect(body.error).toBe('ID Manga tidak valid');
   });
+
+  it('GET /api/manga?source=komikindo returns list from Komikindo.ch', async () => {
+    const res = await fetch(`${baseUrl}/api/manga?source=komikindo&limit=5`);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as any;
+    expect(body.source).toBe('https://komikindo.ch');
+    expect(Array.isArray(body.data)).toBe(true);
+    if (body.data.length > 0) {
+      expect(body.data[0].id.startsWith('komikindo:')).toBe(true);
+    }
+  }, 15000);
 
   it('GET /api/chapter/:chapterId rejects invalid chapterId with 400', async () => {
     const res = await fetch(`${baseUrl}/api/chapter/not-a-uuid`);

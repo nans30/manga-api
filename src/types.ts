@@ -1,3 +1,5 @@
+export type MangaSource = 'mangadex' | 'komiku' | 'komikindo';
+
 export interface MangaTag {
   id: string;
   name: string;
@@ -26,6 +28,7 @@ export interface Manga {
   tags: MangaTag[];
   rating?: string | null;
   follows?: number | null;
+  source?: MangaSource;
 }
 
 export interface Chapter {
@@ -37,9 +40,9 @@ export interface Chapter {
   pages: number;
   publishAt: string;
   groupName: string;
-  source?: 'mangadex' | 'komiku';
+  source?: MangaSource;
   alternateId?: string;
-  availableSources?: Array<'mangadex' | 'komiku'>;
+  availableSources?: Array<MangaSource>;
 }
 
 export interface ChapterPage {

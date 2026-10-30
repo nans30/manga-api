@@ -544,7 +544,11 @@ export const MangaDetail: React.FC = () => {
                         <span className="font-manga text-base tracking-wide text-[#121212] dark:text-[#f8f8f8] group-hover:text-[#f9cb55] transition-colors">
                           CHAPTER {ch.chapter}
                         </span>
-                        {ch.source === 'komiku' ? (
+                        {ch.source === 'komikindo' ? (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                            KOMIKINDO
+                          </span>
+                        ) : ch.source === 'komiku' ? (
                           <span className="px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                             KOMIKU
                           </span>
@@ -555,7 +559,7 @@ export const MangaDetail: React.FC = () => {
                         )}
                         {ch.availableSources && ch.availableSources.length > 1 && (
                           <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#f9cb55]/15 text-[#f9cb55] border border-[#f9cb55]/30">
-                            2 Server
+                            {ch.availableSources.length} Server
                           </span>
                         )}
                         {isRead && <CheckCircle2 className="w-4 h-4 text-[#f9cb55] shrink-0" />}

@@ -54,6 +54,7 @@ export const AllBooks: React.FC = () => {
   const contentRating = searchParams.get('contentRating') || '';
   const authorId = searchParams.get('authorId') || '';
   const lang = searchParams.get('lang') || ''; // '' | 'id' | 'en'
+  const source = searchParams.get('source') || searchParams.get('provider') || '';
   const page = Math.max(1, Number(searchParams.get('page') || '1'));
 
   const [books, setBooks] = useState<Manga[]>(() => getInitialCachedBooks(sort));
@@ -77,8 +78,9 @@ export const AllBooks: React.FC = () => {
     return () => window.removeEventListener('ciaran-storage-update', syncRecent);
   }, []);
 
-  // Local state for the 5 filter dropdowns (Update, Status, Tipe, Genre 1, Genre 2) + Cari button
+  // Local state for the filter dropdowns (Update, Sumber, Status, Tipe, Genre 1, Genre 2) + Cari button
   const [draftSort, setDraftSort] = useState(sort);
+  const [draftSource, setDraftSource] = useState(source);
   const [draftStatus, setDraftStatus] = useState(status);
   const [draftTipe, setDraftTipe] = useState(tipe);
   const [draftTag1, setDraftTag1] = useState(selectedTag || selectedGenre);
@@ -86,6 +88,7 @@ export const AllBooks: React.FC = () => {
 
   useEffect(() => {
     setDraftSort(sort);
+    setDraftSource(source);
     setDraftStatus(status);
     setDraftTipe(tipe);
 
@@ -101,7 +104,7 @@ export const AllBooks: React.FC = () => {
 
     setDraftTag1(resolveInitialDropdownVal(selectedTag, selectedGenre));
     setDraftTag2(resolveInitialDropdownVal(selectedTag2, selectedGenre2));
-  }, [sort, status, tipe, selectedTag, selectedGenre, selectedTag2, selectedGenre2, tags]);
+  }, [sort, source, status, tipe, selectedTag, selectedGenre, selectedTag2, selectedGenre2, tags]);
 
   // Always scroll to top when filters, search query, or page change
   useEffect(() => {
@@ -109,6 +112,7 @@ export const AllBooks: React.FC = () => {
   }, [
     query,
     sort,
+    source,
     status,
     tipe,
     selectedTag,
@@ -175,6 +179,7 @@ export const AllBooks: React.FC = () => {
         !contentRating &&
         !authorId &&
         !lang &&
+        !source &&
         page === 1;
 
       if (isDefault) {
@@ -188,6 +193,7 @@ export const AllBooks: React.FC = () => {
         const params = new URLSearchParams();
         if (query) params.set('q', query);
         params.set('sort', sort);
+        if (source) params.set('source', source);
         if (status) params.set('status', status);
         if (tipe) params.set('tipe', tipe);
         if (selectedTag) params.set('tag', selectedTag);
@@ -219,6 +225,7 @@ export const AllBooks: React.FC = () => {
     [
       query,
       sort,
+      source,
       status,
       tipe,
       selectedTag,
@@ -282,6 +289,9 @@ export const AllBooks: React.FC = () => {
     const next = new URLSearchParams(searchParams);
     next.set('sort', draftSort || 'latest');
 
+    if (draftSource) next.set('source', draftSource);
+    else next.delete('source');
+
     if (draftStatus) next.set('status', draftStatus);
     else next.delete('status');
 
@@ -312,6 +322,7 @@ export const AllBooks: React.FC = () => {
 
   const handleResetFilter = () => {
     setDraftSort('latest');
+    setDraftSource('');
     setDraftStatus('');
     setDraftTipe('');
     setDraftTag1('');
@@ -661,13 +672,13 @@ export const AllBooks: React.FC = () => {
           </div>
         </div>
 
-        {/* 5 Filter Selects + Cari Button (Exact Photo 2 Layout) */}
+        {/* Filter Selects + Action Buttons */}
         <form
           onSubmit={handleApplyFilter}
-          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-12 gap-2.5 items-center pt-1"
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2.5 items-center pt-1"
         >
           {/* 1. Update / Sort */}
-          <div className="lg:col-span-2">
+          <div>
             <select
               value={draftSort}
               onChange={(e) => setDraftSort(e.target.value)}
@@ -683,8 +694,22 @@ export const AllBooks: React.FC = () => {
             </select>
           </div>
 
-          {/* 2. Status */}
-          <div className="lg:col-span-2">
+          {/* 2. Sumber / Provider */}
+          <div>
+            <select
+              value={draftSource}
+              onChange={(e) => setDraftSource(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#f3f4f6] dark:bg-[#242424] border border-[#c1c1c1]/40 dark:border-[#333333] text-xs sm:text-sm font-medium text-[#121212] dark:text-[#f8f8f8] focus:outline-none focus:border-[#f9cb55] cursor-pointer"
+            >
+              <option value="">{sysLang === 'id' ? 'Semua Sumber' : 'All Sources'}</option>
+              <option value="mangadex">MangaDex</option>
+              <option value="komiku">Komiku</option>
+              <option value="komikindo">Komikindo</option>
+            </select>
+          </div>
+
+          {/* 3. Status */}
+          <div>
             <select
               value={draftStatus}
               onChange={(e) => setDraftStatus(e.target.value)}
@@ -699,8 +724,8 @@ export const AllBooks: React.FC = () => {
             </select>
           </div>
 
-          {/* 3. Tipe (Manga / Manhwa / Manhua) */}
-          <div className="lg:col-span-2">
+          {/* 4. Tipe (Manga / Manhwa / Manhua) */}
+          <div>
             <select
               value={draftTipe}
               onChange={(e) => setDraftTipe(e.target.value)}
@@ -713,8 +738,8 @@ export const AllBooks: React.FC = () => {
             </select>
           </div>
 
-          {/* 4. Genre 1 */}
-          <div className="lg:col-span-2">
+          {/* 5. Genre 1 */}
+          <div>
             <select
               value={draftTag1}
               onChange={(e) => setDraftTag1(e.target.value)}
@@ -733,8 +758,8 @@ export const AllBooks: React.FC = () => {
             </select>
           </div>
 
-          {/* 5. Genre 2 */}
-          <div className="lg:col-span-2">
+          {/* 6. Genre 2 */}
+          <div>
             <select
               value={draftTag2}
               onChange={(e) => setDraftTag2(e.target.value)}
@@ -753,18 +778,18 @@ export const AllBooks: React.FC = () => {
             </select>
           </div>
 
-          {/* 6. Cari + Reset Buttons */}
-          <div className="col-span-2 sm:col-span-1 lg:col-span-2 flex items-center gap-2">
+          {/* 7. Cari + Reset Buttons */}
+          <div className="col-span-2 sm:col-span-1 md:col-span-2 lg:col-span-1 flex items-center gap-2">
             <button
               type="submit"
-              className="flex-1 py-2.5 px-4 rounded-xl bg-[#f9cb55] hover:bg-[#eab83e] text-[#121212] font-bold text-xs sm:text-sm shadow-sm transition-all cursor-pointer"
+              className="flex-1 py-2.5 px-3 rounded-xl bg-[#f9cb55] hover:bg-[#eab83e] text-[#121212] font-bold text-xs sm:text-sm shadow-sm transition-all cursor-pointer"
             >
               {sysLang === 'id' ? 'Cari' : 'Filter'}
             </button>
             <button
               type="button"
               onClick={handleResetFilter}
-              className="py-2.5 px-3.5 rounded-xl bg-[#ececec] dark:bg-[#2a2a2a] hover:bg-[#e0e0e0] dark:hover:bg-[#343434] text-[#121212] dark:text-[#f8f8f8] border border-[#c1c1c1]/40 dark:border-[#3a3a3a] font-semibold text-xs sm:text-sm transition-all cursor-pointer"
+              className="py-2.5 px-3 rounded-xl bg-[#ececec] dark:bg-[#2a2a2a] hover:bg-[#e0e0e0] dark:hover:bg-[#343434] text-[#121212] dark:text-[#f8f8f8] border border-[#c1c1c1]/40 dark:border-[#3a3a3a] font-semibold text-xs sm:text-sm transition-all cursor-pointer"
             >
               Reset
             </button>
@@ -775,6 +800,7 @@ export const AllBooks: React.FC = () => {
       {/* Active Filters Bar */}
       {(query ||
         (sort && sort !== 'latest') ||
+        source ||
         status ||
         tipe ||
         selectedTag ||
@@ -787,6 +813,22 @@ export const AllBooks: React.FC = () => {
             <Filter className="w-3.5 h-3.5 text-[#f9cb55]" />
             <span>{sysLang === 'id' ? 'Filter Aktif:' : 'Active Filters:'}</span>
           </span>
+
+          {source && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#f9cb55]/20 border border-[#f9cb55]/50 text-[#121212] dark:text-[#f9cb55] text-xs font-semibold">
+              <span>
+                {sysLang === 'id' ? 'Sumber: ' : 'Source: '}
+                {source === 'mangadex' ? 'MangaDex' : source === 'komiku' ? 'Komiku' : source === 'komikindo' ? 'Komikindo' : source}
+              </span>
+              <button
+                type="button"
+                onClick={() => updateParam('source', '')}
+                className="hover:text-[#e57373]"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </span>
+          )}
 
           {query && (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#f9cb55]/20 border border-[#f9cb55]/50 text-[#121212] dark:text-[#f9cb55] text-xs font-semibold">

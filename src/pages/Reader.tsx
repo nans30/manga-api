@@ -384,8 +384,12 @@ export const Reader: React.FC = () => {
       : null;
 
   const currentChapterObj = chapterList.find((c) => c.id === chapterId);
-  const currentSource: 'mangadex' | 'komiku' =
-    chapterId?.startsWith('komiku-ch:') ? 'komiku' : 'mangadex';
+  const currentSource: 'mangadex' | 'komiku' | 'komikindo' =
+    chapterId?.startsWith('komikindo-ch:')
+      ? 'komikindo'
+      : chapterId?.startsWith('komiku-ch:')
+      ? 'komiku'
+      : 'mangadex';
   const alternateChapterId = currentChapterObj?.alternateId;
 
   // 1. Preload upcoming 3 images in background for instant flipping/scrolling
@@ -793,7 +797,9 @@ export const Reader: React.FC = () => {
             <div className="flex items-center gap-1.5">
               <span
                 className={`px-2 py-1 rounded-lg text-[10px] font-bold tracking-wider border ${
-                  currentSource === 'komiku'
+                  currentSource === 'komikindo'
+                    ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20'
+                    : currentSource === 'komiku'
                     ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
                     : 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20'
                 }`}

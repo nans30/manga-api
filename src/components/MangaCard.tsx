@@ -43,11 +43,22 @@ export const MangaCard: React.FC<MangaCardProps> = ({ manga }) => {
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent opacity-80" />
 
         {/* Status badge */}
-        <span
-          className={`absolute top-2.5 left-2.5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md backdrop-blur-md ${statusColor}`}
-        >
-          {manga.status}
-        </span>
+        <div className="absolute top-2.5 left-2.5 flex flex-col gap-1 items-start">
+          <span
+            className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md backdrop-blur-md ${statusColor}`}
+          >
+            {manga.status}
+          </span>
+          {manga.id.startsWith('komikindo:') || manga.source === 'komikindo' ? (
+            <span className="px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-purple-600/90 text-white shadow-sm backdrop-blur-md">
+              Komikindo
+            </span>
+          ) : manga.id.startsWith('komiku:') || manga.source === 'komiku' ? (
+            <span className="px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-emerald-600/90 text-white shadow-sm backdrop-blur-md">
+              Komiku
+            </span>
+          ) : null}
+        </div>
 
         {/* Origin badge */}
         <span className="absolute top-2.5 right-2.5 px-1.5 py-0.5 text-[10px] font-semibold uppercase rounded bg-zinc-950/80 text-zinc-200 border border-zinc-700/60 backdrop-blur-md">

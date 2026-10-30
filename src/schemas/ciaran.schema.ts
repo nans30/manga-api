@@ -9,7 +9,7 @@ export const UuidParamSchema = z
     (val) =>
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
         val
-      ) || /^komiku(-ch)?:[a-z0-9._%~+-]+$/i.test(val),
+      ) || /^(komiku|komikindo)(-ch)?:[a-z0-9._%~+-]+$/i.test(val),
     { message: 'Format UUID atau ID Komik tidak valid' }
   );
 
@@ -22,6 +22,11 @@ const ALLOWED_IMAGE_HOSTS = [
   '.komiku.to',
   '.komiku.id',
   '.komikid.org',
+  'komikindo.ch',
+  '.komikindo.ch',
+  'i0.wp.com',
+  '.wp.com',
+  '.lol',
 ] as const;
 
 export function isSafeMangaDexImageUrl(rawUrl: string): boolean {
@@ -79,6 +84,7 @@ export const MangaSchema = z.object({
   tags: z.array(MangaTagSchema).max(25),
   rating: z.string().nullable().optional(),
   follows: z.number().int().nonnegative().nullable().optional(),
+  source: z.enum(['mangadex', 'komiku', 'komikindo']).optional(),
 });
 
 export const ChapterSchema = z.object({
@@ -90,9 +96,9 @@ export const ChapterSchema = z.object({
   pages: z.number().int().positive(),
   publishAt: z.string().min(1),
   groupName: z.string().default('No Group'),
-  source: z.enum(['mangadex', 'komiku']).optional(),
+  source: z.enum(['mangadex', 'komiku', 'komikindo']).optional(),
   alternateId: z.string().optional(),
-  availableSources: z.array(z.enum(['mangadex', 'komiku'])).optional(),
+  availableSources: z.array(z.enum(['mangadex', 'komiku', 'komikindo'])).optional(),
 });
 
 export const ChapterPageSchema = z.object({
@@ -153,6 +159,8 @@ export const MangaQueryParamsSchema = z.object({
   demographic: z
     .enum(['', 'shounen', 'shoujo', 'josei', 'seinen'])
     .catch(''),
+  source: z.enum(['', 'all', 'mangadex', 'komiku', 'komikindo']).catch(''),
+  provider: z.enum(['', 'all', 'mangadex', 'komiku', 'komikindo']).catch(''),
 });
 
 export const ChapterFeedParamsSchema = z.object({
