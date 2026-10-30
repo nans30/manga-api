@@ -74,6 +74,7 @@ export const MangaSchema = z.object({
   contentRating: z.enum(['safe', 'suggestive', 'erotica', 'pornographic']).catch('safe'),
   originalLanguage: z.string().min(1).max(10).default('ja'),
   lastChapter: z.string().nullable(),
+  lastChapterId: z.string().nullable().optional(),
   updatedAt: z.string().nullable(),
   coverUrl: SafeCoverUrlSchema,
   coverUrlFull: SafeCoverUrlSchema.optional(),

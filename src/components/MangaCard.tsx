@@ -3,6 +3,22 @@ import { Link } from 'react-router-dom';
 import { Manga } from '../types';
 import { BookOpen, Clock } from 'lucide-react';
 
+export const formatRelativeTime = (iso: string | null) => {
+  if (!iso) return 'Baru saja';
+  const diff = Date.now() - new Date(iso).getTime();
+  if (isNaN(diff) || diff < 0) return 'Baru saja';
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Baru saja';
+  if (mins < 60) return `${mins}m lalu`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}j lalu`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}h lalu`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}bln lalu`;
+  return new Date(iso).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' });
+};
+
 interface MangaCardProps {
   manga: Manga;
 }
@@ -14,19 +30,6 @@ export const MangaCard: React.FC<MangaCardProps> = ({ manga }) => {
       : manga.status === 'completed'
       ? 'bg-sky-500/90 text-white'
       : 'bg-amber-500/90 text-white';
-
-  const formatRelativeTime = (iso: string | null) => {
-    if (!iso) return 'Baru saja';
-    const diff = Date.now() - new Date(iso).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 1) return 'Baru saja';
-    if (mins < 60) return `${mins}m lalu`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}j lalu`;
-    const days = Math.floor(hours / 24);
-    if (days < 30) return `${days}h lalu`;
-    return new Date(iso).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' });
-  };
 
   return (
     <Link

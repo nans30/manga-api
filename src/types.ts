@@ -18,6 +18,7 @@ export interface Manga {
   contentRating: string;
   originalLanguage: string;
   lastChapter: string | null;
+  lastChapterId?: string | null;
   updatedAt: string | null;
   coverUrl: string;
   coverUrlFull?: string;

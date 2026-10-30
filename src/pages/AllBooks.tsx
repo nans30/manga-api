@@ -14,6 +14,7 @@ import {
 } from '../storage';
 import { POPULAR_KEYWORDS } from '../components/SearchModal';
 import { NavBookmarkIcon, FlagIdIcon, FlagEnIcon } from '../components/Icons';
+import { formatRelativeTime } from '../components/MangaCard';
 import scrapedCache from '../data/mangadex-cache.json';
 import {
   ArrowLeft,
@@ -28,6 +29,7 @@ import {
   Clock,
   Sparkles,
   Filter,
+  BookOpen,
 } from 'lucide-react';
 
 const cacheData: any = scrapedCache;
@@ -1019,7 +1021,7 @@ export const AllBooks: React.FC = () => {
                 <Link
                   to={detailLink}
                   state={{ manga }}
-                  className="w-24 sm:w-28 aspect-[3/4] rounded-xl overflow-hidden shrink-0 bg-[#ececec] dark:bg-[#1e1e1e] shadow-md"
+                  className="relative w-24 sm:w-28 aspect-[3/4] rounded-xl overflow-hidden shrink-0 bg-[#ececec] dark:bg-[#1e1e1e] shadow-md group-hover:shadow-lg transition-shadow"
                 >
                   <img
                     src={manga.coverUrl}
@@ -1027,6 +1029,14 @@ export const AllBooks: React.FC = () => {
                     loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
+                  {/* Origin flag badge */}
+                  <span className="absolute top-1.5 right-1.5 px-1 py-0.5 rounded text-[9px] font-bold bg-[#121212]/80 text-[#f8f8f8] backdrop-blur-sm border border-white/10 uppercase">
+                    {manga.originalLanguage === 'ko'
+                      ? 'KR'
+                      : manga.originalLanguage === 'zh'
+                      ? 'CN'
+                      : 'JP'}
+                  </span>
                 </Link>
 
                 {/* Right Info */}
@@ -1070,8 +1080,34 @@ export const AllBooks: React.FC = () => {
                     </span>
                   </Link>
 
-                  {/* Rating + TOP Badge */}
-                  <div className="flex items-center gap-2.5 mt-2">
+                  {/* Latest Chapter Update Badge & Relative Time (Komiku Style) */}
+                  {manga.lastChapter && (
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                      <Link
+                        to={manga.lastChapterId ? `/read/${manga.lastChapterId}` : detailLink}
+                        state={{ manga }}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-[#f9cb55]/15 hover:bg-[#f9cb55] text-[#121212] dark:text-[#f9cb55] hover:text-[#121212] dark:hover:text-[#121212] border border-[#f9cb55]/30 hover:border-[#f9cb55] text-xs font-bold transition-all shadow-sm group/ch"
+                        title={
+                          sysLang === 'id'
+                            ? `Baca Chapter ${manga.lastChapter}`
+                            : `Read Chapter ${manga.lastChapter}`
+                        }
+                      >
+                        <BookOpen className="w-3.5 h-3.5 text-[#f9cb55] group-hover/ch:text-[#121212] transition-colors" />
+                        <span>Ch. {manga.lastChapter}</span>
+                      </Link>
+
+                      {manga.updatedAt && (
+                        <span className="inline-flex items-center gap-1 text-[11px] text-[#888888] dark:text-[#a0a0a0] font-medium">
+                          <Clock className="w-3 h-3 text-[#f9cb55]" />
+                          <span>{formatRelativeTime(manga.updatedAt)}</span>
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Rating + TOP + Source Badges */}
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
                     <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#121212] dark:text-[#f8f8f8]">
                       <Star className="w-3.5 h-3.5 fill-current text-[#121212] dark:text-[#f8f8f8]" />
                       {score}
@@ -1080,6 +1116,20 @@ export const AllBooks: React.FC = () => {
                     {isTop && (
                       <span className="px-2 py-0.5 rounded bg-[#f9cb55] text-[#121212] font-extrabold text-[10px] uppercase tracking-wider leading-none">
                         TOP
+                      </span>
+                    )}
+
+                    {manga.id.startsWith('komikindo:') || manga.source === 'komikindo' ? (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                        Komikindo
+                      </span>
+                    ) : manga.id.startsWith('komiku:') || manga.source === 'komiku' ? (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                        Komiku
+                      </span>
+                    ) : (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+                        MangaDex
                       </span>
                     )}
                   </div>

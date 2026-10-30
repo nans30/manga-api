@@ -22,7 +22,10 @@ import {
   Star,
   X,
   Globe,
+  Clock,
+  BookOpen,
 } from 'lucide-react';
+import { formatRelativeTime } from '../components/MangaCard';
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -342,7 +345,19 @@ export const Home: React.FC = () => {
                   loading="lazy"
                   className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#121212]/70 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#121212]/75 via-transparent to-transparent" />
+                
+                {/* Source Badge */}
+                {manga.id.startsWith('komikindo:') || manga.source === 'komikindo' ? (
+                  <span className="absolute top-3 left-3 px-2 py-0.5 rounded-md bg-purple-600 text-white font-extrabold text-[10px] uppercase tracking-wider shadow">
+                    Komikindo
+                  </span>
+                ) : manga.id.startsWith('komiku:') || manga.source === 'komiku' ? (
+                  <span className="absolute top-3 left-3 px-2 py-0.5 rounded-md bg-emerald-600 text-white font-extrabold text-[10px] uppercase tracking-wider shadow">
+                    Komiku
+                  </span>
+                ) : null}
+
                 <span className="absolute top-3 right-3 px-2 py-0.5 rounded-md bg-[#f9cb55] text-[#121212] font-bold text-[10px] uppercase tracking-wider">
                   {manga.originalLanguage === 'ko'
                     ? 'MANHWA'
@@ -350,6 +365,22 @@ export const Home: React.FC = () => {
                     ? 'MANHUA'
                     : 'MANGA'}
                 </span>
+
+                {/* Bottom Overlay Info (Komiku Style) */}
+                <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-xs text-zinc-200 font-semibold">
+                  {manga.lastChapter ? (
+                    <span className="px-2 py-0.5 rounded-md bg-[#121212]/85 text-[#f9cb55] flex items-center gap-1 backdrop-blur-sm border border-[#f9cb55]/30">
+                      <BookOpen className="w-3 h-3" />
+                      Ch. {manga.lastChapter}
+                    </span>
+                  ) : null}
+                  {manga.updatedAt && (
+                    <span className="text-[11px] text-zinc-300 flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[#121212]/80 backdrop-blur-sm">
+                      <Clock className="w-3 h-3 text-[#f9cb55]" />
+                      {formatRelativeTime(manga.updatedAt)}
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -357,7 +388,7 @@ export const Home: React.FC = () => {
                   {manga.title}
                 </h3>
                 <p className="text-xs text-[#6e6e6e] dark:text-[#c1c1c1] mt-0.5 truncate">
-                  {manga.lastChapter ? `Chapter ${manga.lastChapter}` : manga.author}
+                  {manga.author}
                 </p>
               </div>
             </Link>
@@ -427,35 +458,91 @@ export const Home: React.FC = () => {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-5">
           {allBooksPreview.map((manga) => (
-            <Link
+            <div
               key={manga.id}
-              to={`/manga/${manga.id}${homeLang ? `?lang=${homeLang}` : ''}`}
-              state={{ manga }}
               className="group flex flex-col gap-2"
             >
-              <div className="relative aspect-[3/3.8] w-full rounded-2xl overflow-hidden bg-[#ececec] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#262626] shadow-md">
+              <Link
+                to={`/manga/${manga.id}${homeLang ? `?lang=${homeLang}` : ''}`}
+                state={{ manga }}
+                className="relative aspect-[3/4.2] w-full rounded-2xl overflow-hidden bg-[#ececec] dark:bg-[#1b1b1b] border border-[#c1c1c1]/30 dark:border-[#262626] shadow-md group-hover:shadow-lg transition-all"
+              >
                 <img
                   src={manga.coverUrl}
                   alt={manga.title}
                   loading="lazy"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#121212]/80 via-transparent to-transparent opacity-80" />
-                {manga.lastChapter && (
-                  <span className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-md bg-[#121212]/85 text-[#f9cb55] text-[10px] font-bold backdrop-blur-sm">
-                    Ch. {manga.lastChapter}
-                  </span>
-                )}
-              </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#121212]/85 via-transparent to-transparent opacity-90" />
+                
+                {/* Source badge top left */}
+                <div className="absolute top-2 left-2 flex flex-col gap-1 items-start">
+                  {manga.id.startsWith('komikindo:') || manga.source === 'komikindo' ? (
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-purple-600 text-white shadow-sm">
+                      Komikindo
+                    </span>
+                  ) : manga.id.startsWith('komiku:') || manga.source === 'komiku' ? (
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-emerald-600 text-white shadow-sm">
+                      Komiku
+                    </span>
+                  ) : null}
+                </div>
+
+                {/* Country flag / origin top right */}
+                <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#121212]/85 text-[#f8f8f8] backdrop-blur-sm border border-white/10 uppercase">
+                  {manga.originalLanguage === 'ko'
+                    ? 'KR'
+                    : manga.originalLanguage === 'zh'
+                    ? 'CN'
+                    : 'JP'}
+                </span>
+
+                {/* Bottom Overlay: Chapter & Relative Time (Komiku Style) */}
+                <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between text-[10px] text-zinc-200 font-semibold">
+                  {manga.lastChapter ? (
+                    <span className="px-1.5 py-0.5 rounded bg-[#121212]/85 text-[#f9cb55] flex items-center gap-1 backdrop-blur-sm border border-[#f9cb55]/30">
+                      <BookOpen className="w-2.5 h-2.5" />
+                      Ch. {manga.lastChapter}
+                    </span>
+                  ) : (
+                    <span className="px-1.5 py-0.5 rounded bg-[#121212]/85 text-zinc-300">
+                      Detail
+                    </span>
+                  )}
+                  {manga.updatedAt && (
+                    <span className="text-[10px] text-zinc-300/90 flex items-center gap-0.5 px-1 py-0.5 rounded bg-[#121212]/85 backdrop-blur-sm">
+                      <Clock className="w-2.5 h-2.5 text-[#f9cb55]" />
+                      {formatRelativeTime(manga.updatedAt)}
+                    </span>
+                  )}
+                </div>
+              </Link>
+
               <div className="px-0.5">
-                <h3 className="font-semibold text-xs sm:text-sm text-[#121212] dark:text-[#f8f8f8] group-hover:text-[#f9cb55] transition-colors line-clamp-1">
+                <Link
+                  to={`/manga/${manga.id}${homeLang ? `?lang=${homeLang}` : ''}`}
+                  state={{ manga }}
+                  className="font-semibold text-xs sm:text-sm text-[#121212] dark:text-[#f8f8f8] group-hover:text-[#f9cb55] transition-colors line-clamp-1 block leading-snug"
+                >
                   {manga.title}
-                </h3>
-                <p className="text-[11px] text-[#6e6e6e] dark:text-[#c1c1c1] truncate">
-                  {manga.author}
-                </p>
+                </Link>
+
+                <div className="flex items-center justify-between gap-1 mt-1 text-[11px] text-[#6e6e6e] dark:text-[#c1c1c1]">
+                  <p className="truncate flex-1">
+                    {manga.author}
+                  </p>
+                  {manga.lastChapter && (
+                    <Link
+                      to={manga.lastChapterId ? `/read/${manga.lastChapterId}` : `/manga/${manga.id}`}
+                      state={{ manga }}
+                      className="shrink-0 text-[10px] font-bold text-[#f9cb55] hover:underline"
+                    >
+                      Ch. {manga.lastChapter}
+                    </Link>
+                  )}
+                </div>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
 

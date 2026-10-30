@@ -567,6 +567,37 @@ function cleanKomikuSlug(s: string): string {
   return encodeURI(clean);
 }
 
+function parseIndonesianRelativeTimeToIso(relStr: string): string {
+  if (!relStr) return new Date().toISOString();
+  const clean = relStr.toLowerCase().trim();
+  const now = Date.now();
+  const numMatch = clean.match(/(\d+)/);
+  const n = numMatch ? parseInt(numMatch[1], 10) : 1;
+
+  if (clean.includes('detik')) {
+    return new Date(now - n * 1000).toISOString();
+  }
+  if (clean.includes('menit') || clean.includes('mnt')) {
+    return new Date(now - n * 60 * 1000).toISOString();
+  }
+  if (clean.includes('jam')) {
+    return new Date(now - n * 3600 * 1000).toISOString();
+  }
+  if (clean.includes('hari')) {
+    return new Date(now - n * 86400 * 1000).toISOString();
+  }
+  if (clean.includes('minggu')) {
+    return new Date(now - n * 7 * 86400 * 1000).toISOString();
+  }
+  if (clean.includes('bulan')) {
+    return new Date(now - n * 30 * 86400 * 1000).toISOString();
+  }
+  if (clean.includes('tahun')) {
+    return new Date(now - n * 365 * 86400 * 1000).toISOString();
+  }
+  return new Date().toISOString();
+}
+
 function parseKomikuCatalogHtml(html: string): any[] {
   const results: any[] = [];
   const blocks = html.split(/<div class="bge">/i).slice(1);
@@ -603,10 +634,20 @@ function parseKomikuCatalogHtml(html: string): any[] {
       ? decodeHtmlEntities(descMatch[1])
       : `Baca komik ${title} Bahasa Indonesia terbaru di Ciaran.`;
 
-    const latestChMatch = block.match(
-      /Terbaru:\s*<\/span>\s*<span>\s*(?:Chapter\s*)?([^<]+)<\/span>/i
-    );
-    const lastChapter = latestChMatch ? latestChMatch[1].trim() : null;
+    const latestChMatch =
+      block.match(
+        /<div class="new1">\s*<a href="\/([^/"]+)\/?"[^>]*><span>Terbaru:\s*<\/span>\s*<span>(?:Chapter\s*)?([^<]+)<\/span>/i
+      ) ||
+      block.match(
+        /Terbaru:\s*<\/span>\s*<span>\s*(?:Chapter\s*)?([^<]+)<\/span>/i
+      );
+    const lastChapterSlug = latestChMatch?.[1] && latestChMatch[2] ? latestChMatch[1].trim() : null;
+    const lastChapter = latestChMatch ? (latestChMatch[2] || latestChMatch[1]).trim() : null;
+    const lastChapterId = lastChapterSlug ? `komiku-ch:${lastChapterSlug}` : null;
+
+    const timeMatch = block.match(/<span class="judul2">[^<]*?\|\s*([^|<]+)\s*\|/i);
+    const timeStr = timeMatch ? timeMatch[1].trim() : '';
+    const updatedAt = timeStr ? parseIndonesianRelativeTimeToIso(timeStr) : new Date().toISOString();
 
     const item = {
       id,
@@ -620,7 +661,8 @@ function parseKomikuCatalogHtml(html: string): any[] {
       contentRating: 'safe',
       originalLanguage,
       lastChapter,
-      updatedAt: new Date().toISOString(),
+      lastChapterId,
+      updatedAt,
       coverUrl,
       coverUrlFull: coverUrl,
       author: 'Komiku ID',
@@ -636,6 +678,7 @@ function parseKomikuCatalogHtml(html: string): any[] {
             },
           ]
         : [],
+      source: 'komiku' as const,
     };
     serverMangaCache.set(id, item);
     results.push(item);
@@ -995,12 +1038,21 @@ function parseKomikindoCatalogHtml(html: string): any[] {
 
     const lastChMatch =
       block.match(
+        /<div class="lsch">[\s\S]*?<a href="(?:https?:\/\/komikindo\.ch)?\/([^/"]+)\/?"[^>]*>[\s\S]*?(?:Ch\.?\s*|Chapter\s*)?([0-9.]+|[^\s<]+)[\s\S]*?<\/a>/i
+      ) ||
+      block.match(
         /<div class="lsch">[\s\S]*?<a[^>]*>[\s\S]*?(?:Ch\.?\s*|Chapter\s*)?([0-9.]+|[^\s<]+)[\s\S]*?<\/a>/i
       ) ||
       block.match(
         /<span class="datech">[\s\S]*?<a[^>]*>[\s\S]*?(?:Ch\.?\s*|Chapter\s*)?([0-9.]+|[^\s<]+)[\s\S]*?<\/a>/i
       );
-    const lastChapter = lastChMatch ? lastChMatch[1].trim() : null;
+    const lastChapterSlug = lastChMatch?.[1] && lastChMatch[2] ? lastChMatch[1].trim() : null;
+    const lastChapter = lastChMatch ? (lastChMatch[2] || lastChMatch[1]).trim() : null;
+    const lastChapterId = lastChapterSlug ? `komikindo-ch:${lastChapterSlug}` : null;
+
+    const dateMatch = block.match(/<span class="datech">([\s\S]*?)<\/span>/i);
+    const dateStr = dateMatch ? decodeHtmlEntities(dateMatch[1]).trim() : '';
+    const updatedAt = dateStr ? parseIndonesianRelativeTimeToIso(dateStr) : new Date().toISOString();
 
     const descId = `Baca komik ${title} Bahasa Indonesia terbaru di Komikindo.`;
 
@@ -1016,7 +1068,8 @@ function parseKomikindoCatalogHtml(html: string): any[] {
       contentRating: 'safe',
       originalLanguage,
       lastChapter,
-      updatedAt: new Date().toISOString(),
+      lastChapterId,
+      updatedAt,
       coverUrl,
       coverUrlFull: coverUrl,
       author: 'Komikindo',
@@ -1032,7 +1085,7 @@ function parseKomikindoCatalogHtml(html: string): any[] {
       ],
       rating: '4.8',
       follows: 10000,
-      source: 'komikindo',
+      source: 'komikindo' as const,
     };
     serverMangaCache.set(id, item);
     results.push(item);
